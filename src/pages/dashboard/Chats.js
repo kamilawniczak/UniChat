@@ -50,6 +50,11 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
   },
 }));
 
+const checkMessage = (message) => {
+  if (message.length < 20) return message;
+  return message.split("").slice(0, 20).join("") + "...";
+};
+
 const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
   const theme = useTheme();
   return (
@@ -60,7 +65,7 @@ const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
         backgroundColor:
           theme.palette.mode === "light"
             ? "#FFF"
-            : theme.palette.background.default,
+            : theme.palette.background.paper,
       }}
       p={1.4}
     >
@@ -85,7 +90,7 @@ const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
 
           <Stack spacing={0.3}>
             <Typography variant="subtitle2">{name}</Typography>{" "}
-            <Typography variant="caption">{msg}</Typography>
+            <Typography variant="caption">{checkMessage(msg)}</Typography>
           </Stack>
         </Stack>
         <Stack spacing={2} alignItems="center">
@@ -102,7 +107,7 @@ const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: 20,
-  backgroundColor: alpha(theme.palette.background.default, 1),
+  backgroundColor: alpha(theme.palette.background.paper, 1),
 
   marginRight: theme.spacing(2),
   marginLeft: 0,
@@ -133,12 +138,12 @@ const Chats = () => {
     <Box
       sx={{
         position: "relative",
-        height: "100%",
+        height: "100dvh",
         width: 320,
         backgroundColor:
           theme.palette.mode === "light"
             ? "#F8FAFF"
-            : theme.palette.background.paper,
+            : theme.palette.background.default,
         boxShadow: "0px 0px 2px rgba(0, 0 , 0 ,0.25)",
       }}
     >
@@ -172,7 +177,7 @@ const Chats = () => {
         </Stack>
         <Stack
           direction="column"
-          spacing={2}
+          spacing={1}
           sx={{
             flexGrow: 1,
             height: "100%",
@@ -183,6 +188,8 @@ const Chats = () => {
             sx={{
               overflow: "scroll",
               overflowX: "hidden",
+              scrollbarGutter: "stable",
+              scrollbarWidth: "normal",
             }}
           >
             <Stack spacing={2.4}>

@@ -1,0 +1,284 @@
+import {
+  Box,
+  Divider,
+  IconButton,
+  Link,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import {
+  DotsThreeVertical,
+  DownloadSimple,
+  Image,
+} from "@phosphor-icons/react";
+import React from "react";
+import { useState } from "react";
+import { Message_options } from "../../data";
+
+export const MediaMsg = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      <Box
+        p={1.5}
+        sx={{
+          backgroundColor: data.incoming
+            ? theme.palette.background.default
+            : theme.palette.primary.main,
+          borderRadius: 1.5,
+          width: "max-content",
+        }}
+      >
+        <Stack spacing={2}>
+          <img
+            src={data.img}
+            alt={data.message}
+            style={{
+              maxHeight: "210px",
+              borderRadius: "10px",
+            }}
+          />
+          <Typography
+            variant="body2"
+            color={data.incoming ? theme.palette.text : "#fff"}
+          >
+            {data.message}
+          </Typography>
+        </Stack>
+      </Box>{" "}
+      <MessageOptions />
+    </Stack>
+  );
+};
+export const DocMsg = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      <Box
+        p={1.5}
+        sx={{
+          backgroundColor: data.incoming
+            ? theme.palette.background.default
+            : theme.palette.primary.main,
+          borderRadius: 1.5,
+          width: "max-content",
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack
+            p={2}
+            direction="row"
+            spacing={3}
+            alignItems="center"
+            sx={{
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: 1,
+            }}
+          >
+            <Image size={48} />
+            <Typography
+              variant="caption"
+              sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
+            >
+              Abstract.png
+            </Typography>
+            <IconButton>
+              <DownloadSimple />
+            </IconButton>
+          </Stack>
+          <Typography
+            variant="body2"
+            sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
+          >
+            {data.message}
+          </Typography>
+        </Stack>
+      </Box>{" "}
+      <MessageOptions />
+    </Stack>
+  );
+};
+
+export const LinkMsg = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      <Box
+        p={1.5}
+        sx={{
+          backgroundColor: data.incoming
+            ? theme.palette.background.default
+            : theme.palette.primary.main,
+          borderRadius: 1.5,
+          width: "max-content",
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack
+            p={2}
+            spacing={3}
+            alignItems="start"
+            sx={{
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: 1,
+            }}
+          >
+            <img
+              src={data.preview}
+              alt={data.message}
+              style={{
+                maxHeight: "210px",
+                borderRadius: "10px",
+              }}
+            />
+            <Stack spacing={2}>
+              <Typography variant="subtitle2">Creating chat app</Typography>
+              <Typography
+                variant="subtitle2"
+                component={Link}
+                sx={{ color: theme.palette.primary.main }}
+                to="//https://www.youtube.com"
+              >
+                www.youtube.com
+              </Typography>
+            </Stack>
+            <Typography
+              variant="body2"
+              color={data.incoming ? theme.palette.text : "#FFF"}
+            >
+              {data.message}
+            </Typography>
+          </Stack>
+        </Stack>
+      </Box>{" "}
+      <MessageOptions />
+    </Stack>
+  );
+};
+
+export const ReplayMsg = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      <Box
+        p={1.5}
+        sx={{
+          backgroundColor: data.incoming
+            ? theme.palette.background.default
+            : theme.palette.primary.main,
+          borderRadius: 1.5,
+          width: "max-content",
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack
+            p={2}
+            direction="column"
+            spacing={3}
+            alignItems="center"
+            sx={{
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color={theme.palette.text}>
+              {data.message}
+            </Typography>
+          </Stack>
+          <Typography
+            variant="body2"
+            color={data.incoming ? theme.palette.text : "#FFF"}
+          >
+            {data.reply}
+          </Typography>
+        </Stack>
+      </Box>{" "}
+      <MessageOptions />
+    </Stack>
+  );
+};
+
+export const TextMsg = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      <Box
+        p={1.5}
+        sx={{
+          backgroundColor: data.incoming
+            ? theme.palette.background.default
+            : theme.palette.primary.main,
+          borderRadius: 1.5,
+          width: "max-content",
+        }}
+      >
+        <Typography
+          variant="body2"
+          color={data.incoming ? theme.palette.text : "#fff"}
+        >
+          {data.message}
+        </Typography>
+      </Box>
+      <MessageOptions />
+    </Stack>
+  );
+};
+
+const MessageOptions = () => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  return (
+    <>
+      <DotsThreeVertical
+        size={20}
+        id="menu-button"
+        aria-controls={open ? "demo-positioned-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+        onClick={handleClick}
+      />
+      <Menu
+        id="menu-button"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
+        <Stack spacing={1} px={1}>
+          {Message_options.map((e) => (
+            <MenuItem onClick={handleClose}>{e.title}</MenuItem>
+          ))}
+        </Stack>
+      </Menu>
+    </>
+  );
+};
+
+export const Timeline = ({ data }) => {
+  const theme = useTheme();
+  return (
+    <Stack>
+      <Divider width="4%">
+        <Typography variant="caption" sx={{ color: theme.palette.text }}>
+          {data?.text}
+        </Typography>
+      </Divider>
+    </Stack>
+  );
+};
