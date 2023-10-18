@@ -16,9 +16,12 @@ import {
 } from "@phosphor-icons/react";
 import React from "react";
 import StyledBadge from "../../components/StyledBadge";
+import { ToggleSidebar } from "../../redux/slices/app";
+import { useDispatch } from "react-redux";
 
 const Header = () => {
   const theme = useTheme();
+  const dispatch = useDispatch();
 
   return (
     <Box
@@ -38,7 +41,11 @@ const Header = () => {
         justifyContent="space-between"
         sx={{ width: "100%", height: "100%" }}
       >
-        <Stack direction="row" spacing={2}>
+        <Stack
+          direction="row"
+          spacing={2}
+          onClick={() => dispatch(ToggleSidebar())}
+        >
           <Box>
             <StyledBadge
               overlap="circular"
