@@ -58,8 +58,8 @@ const StarredMsg = () => {
           p={3}
           spacing={3}
         >
-          {Chat_History.map((e) => (
-            <Message data={e} />
+          {Chat_History.map((e, i) => (
+            <Message data={e} key={i} />
           ))}
         </Stack>
       </Stack>

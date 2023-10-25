@@ -191,7 +191,7 @@ export const ReplayMsg = ({ data, menu }) => {
             {data.reply}
           </Typography>
         </Stack>
-      </Box>{" "}
+      </Box>
       {menu && <MessageOptions />}
     </Stack>
   );
@@ -269,8 +269,10 @@ function MessageOptions() {
         }}
       >
         <Stack spacing={1} px={1}>
-          {Message_options.map((e) => (
-            <MenuItem onClick={handleClose}>{e.title}</MenuItem>
+          {Message_options.map((e, i) => (
+            <MenuItem onClick={handleClose} key={i}>
+              {e.title}
+            </MenuItem>
           ))}
         </Stack>
       </Menu>

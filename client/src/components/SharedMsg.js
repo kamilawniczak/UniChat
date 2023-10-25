@@ -31,17 +31,17 @@ const SharedMsg = () => {
       case 0:
         return (
           <Grid container spacing={2}>
-            {[0, 1, 2, 3, 4, 5, 6, 6].map((e) => (
-              <Grid item xs={4}>
+            {[0, 1, 2, 3, 4, 5, 6, 6].map((e, i) => (
+              <Grid item xs={4} key={i}>
                 <img src={faker.image.avatar()} alt={faker.name.fullName()} />
               </Grid>
             ))}
           </Grid>
         );
       case 1:
-        return SHERED_LINKS.map((e) => <LinkMsg data={e} />);
+        return SHERED_LINKS.map((e, i) => <LinkMsg data={e} key={i} />);
       case 2:
-        return SHARED_DOCS.map((e) => <DocMsg data={e} />);
+        return SHARED_DOCS.map((e, i) => <DocMsg data={e} key={i} />);
     }
   };
 
