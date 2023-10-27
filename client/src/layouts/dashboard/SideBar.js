@@ -103,6 +103,7 @@ const SideBar = () => {
 
   const handleClose = useCallback(
     (e) => {
+      setAnchorEl(null);
       switch (e) {
         case "Profile":
           navigate("/Profile");
@@ -114,10 +115,8 @@ const SideBar = () => {
           navigate("/auth/login");
           break;
         default:
-          return;
+          break;
       }
-
-      setAnchorEl(null);
     },
     [anchorEl]
   );
@@ -273,11 +272,8 @@ const SideBar = () => {
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <Stack spacing={1} px={1}>
-              {Profile_Menu.map((e) => (
-                <MenuItem
-                  onClick={() => handleClose(e.title)}
-                  key={crypto.randomUUID()}
-                >
+              {Profile_Menu.map((e, i) => (
+                <MenuItem onClick={() => handleClose(e.title)} key={i}>
                   <Stack
                     sx={{ width: 100 }}
                     direction="row"

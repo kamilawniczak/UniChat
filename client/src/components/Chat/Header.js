@@ -67,8 +67,10 @@ const ChatHeader = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const theme = useTheme();
 
-  const [conversationMenuAnchorEl, setConversationMenuAnchorEl] =
-    React.useState(null);
+  const [
+    conversationMenuAnchorEl,
+    setConversationMenuAnchorEl,
+  ] = React.useState(null);
   const openConversationMenu = Boolean(conversationMenuAnchorEl);
   const handleClickConversationMenu = (event) => {
     setConversationMenuAnchorEl(event.currentTarget);
@@ -164,8 +166,8 @@ const ChatHeader = () => {
           >
             <Box p={1}>
               <Stack spacing={1}>
-                {Conversation_Menu.map((el) => (
-                  <MenuItem onClick={handleCloseConversationMenu}>
+                {Conversation_Menu.map((el, i) => (
+                  <MenuItem onClick={handleCloseConversationMenu} key={i}>
                     <Stack
                       sx={{ minWidth: 100 }}
                       direction="row"
@@ -173,7 +175,7 @@ const ChatHeader = () => {
                       justifyContent="space-between"
                     >
                       <span>{el.title}</span>
-                    </Stack>{" "}
+                    </Stack>
                   </MenuItem>
                 ))}
               </Stack>
