@@ -121,7 +121,7 @@ const SideBar = () => {
           break;
       }
     },
-    [anchorEl]
+    [navigate]
   );
   return (
     <Box

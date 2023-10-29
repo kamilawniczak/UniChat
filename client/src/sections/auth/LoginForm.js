@@ -82,7 +82,7 @@ const LoginForm = () => {
             </Link>
             <Link
               component={RouterLink}
-              to="/auth/reset-password"
+              to="/auth/forgot-password"
               variant="body2"
               color="inherit"
               underline="always"

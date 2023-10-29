@@ -2,21 +2,32 @@ import {
   Button,
   IconButton,
   InputAdornment,
-  Link,
   Stack,
   TextField,
 } from "@mui/material";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
+import { useSearchParams } from "react-router-dom";
 import React from "react";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
+import { NewPassword } from "../../redux/slices/auth";
 
 const NewPasswordForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, formState, getValues, handleSubmit, reset } = useForm();
   const { errors } = formState;
-  const onSubmit = () => {};
+  const disaptch = useDispatch();
+  const [params] = useSearchParams();
+
+  const onSubmit = (formData) => {
+    console.log(formData);
+    try {
+      disaptch(NewPassword({ ...formData, token: params.get("token") }));
+    } catch (error) {
+      reset();
+    }
+  };
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -29,7 +40,7 @@ const NewPasswordForm = () => {
           helperText={errors?.password?.message && errors?.password?.message}
           label="Password"
           type={showPassword ? "text" : "password"}
-          error={errors?.password?.message}
+          error={!!errors?.password?.message}
           {...register("password", {
             required: "This field is required",
             minLength: {
@@ -52,15 +63,16 @@ const NewPasswordForm = () => {
           }}
         />
         <TextField
-          id="confirmPossword"
+          id="passwordConfirmed"
           fullWidth
           helperText={
-            errors?.confirmPossword?.message && errors?.confirmPossword?.message
+            errors?.passwordConfirmed?.message &&
+            errors?.passwordConfirmed?.message
           }
           label="Confirm Password"
           type={showPassword ? "text" : "password"}
-          error={errors?.confirmPossword?.message}
-          {...register("confirmPossword", {
+          error={!!errors?.passwordConfirmed?.message}
+          {...register("passwordConfirmed", {
             required: "This field is required",
             validate: (value) => {
               return (

@@ -76,6 +76,54 @@ export function LogoutUser() {
   };
 }
 
+export function ForgotPassword(formValues) {
+  return async (dispatch, getState) => {
+    try {
+      const response = await axios.post(
+        "/auth/forgot-password",
+        { ...formValues },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+
+      dispatch(
+        slice.actions.updateIsLoading({ isLoading: false, error: true })
+      );
+    }
+  };
+}
 export function getAuthValues() {
   return (store) => store.auth;
+}
+
+export function NewPassword(formValues) {
+  return async (dispatch, getState) => {
+    try {
+      const response = await axios.post(
+        "/auth/new-password",
+        { ...formValues },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      dispatch(
+        slice.actions.logIn({ isLoggedIn: true, token: response.data.token })
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+
+      dispatch(
+        slice.actions.updateIsLoading({ isLoading: false, error: true })
+      );
+    }
+  };
 }

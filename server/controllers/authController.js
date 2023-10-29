@@ -4,6 +4,7 @@ const mailService = require("../services/mailer");
 const User = require("../models/user");
 const otpGenerator = require("otp-generator");
 const otp = require("../Templates/Mail/otp");
+const resetPassword = require("../Templates/Mail/resetPassword");
 const filterObject = require("../utils/filterObject");
 const { promisify } = require("util");
 
@@ -198,18 +199,24 @@ exports.forgotPassword = async (req, res, next) => {
 
   const resetToken = user.createPasswordResetToken();
 
-  const resetURL = `http://tawk.com/auth/reset-password/?code=${resetToken}`;
-
-  console.log(resetToken);
-
   try {
     user.save({
       passwordResetToken: resetToken,
       passwordResetExpires: Date.now() + 10 * 60 * 1000,
     });
+
+    const resetURL = `http://localhost:3000/auth/new-password?token=${resetToken}`;
+
+    mailService.sendEmail({
+      from: process.env.EMAIL,
+      to: user.email,
+      subject: "Reset Password",
+      html: resetPassword(user.firstName, resetURL),
+      attachments: [],
+    });
     res.status(200).json({
       status: "success",
-      message: "Reset Password link sent to email",
+      message: "Token sent to email!",
     });
   } catch (error) {
     user.passwordResetToken = undefined;
@@ -238,8 +245,6 @@ exports.resetPassword = async (req, res, next) => {
     .createHash("sha256")
     .update(req.body.token)
     .digest("hex");
-
-  console.log(hashedToken);
 
   const user = await User.findOne({
     passwordResetToken: hashedToken,

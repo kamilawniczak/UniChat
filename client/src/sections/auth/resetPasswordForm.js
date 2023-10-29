@@ -1,12 +1,18 @@
 import { Button, Link, Stack, TextField } from "@mui/material";
+import { useDispatch } from "react-redux";
 
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { ForgotPassword } from "../../redux/slices/auth";
 
 const ResetPasswordForm = () => {
   const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
-  const onSubmit = () => {};
+
+  const dispatch = useDispatch();
+  const onSubmit = (formData) => {
+    dispatch(ForgotPassword(formData));
+  };
 
   return (
     <>
@@ -17,7 +23,7 @@ const ResetPasswordForm = () => {
             fullWidth
             helperText={!!errors?.email?.message && errors?.email?.message}
             label="Email"
-            error={errors?.email?.message}
+            error={!!errors?.email?.message}
             {...register("email", {
               required: "This field is required",
               pattern: {
