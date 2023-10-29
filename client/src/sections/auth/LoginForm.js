@@ -11,12 +11,17 @@ import React from "react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import { LoginUser } from "../../redux/slices/auth";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, formState, handleSubmit, reset } = useForm();
   const { errors } = formState;
-  const onSubmit = () => {};
+  const dispatch = useDispatch();
+  const onSubmit = (formData) => {
+    dispatch(LoginUser(formData));
+  };
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -29,7 +34,7 @@ const LoginForm = () => {
             fullWidth
             helperText={errors?.email?.message && errors?.email?.message}
             label="Email"
-            error={errors?.email?.message}
+            error={!!errors?.email?.message}
             {...register("email", {
               required: "This field is required",
               pattern: {
@@ -44,7 +49,7 @@ const LoginForm = () => {
             helperText={errors?.password?.message && errors?.password?.message}
             label="Password"
             type={showPassword ? "text" : "password"}
-            error={errors?.password?.message}
+            error={!!errors?.password?.message}
             {...register("password", { required: "This field is required" })}
             InputProps={{
               endAdornment: (
