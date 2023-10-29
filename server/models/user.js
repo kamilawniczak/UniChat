@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const { use } = require("react");
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -20,69 +19,82 @@ const userSchema = new mongoose.Schema({
     required: [true, "Email is required"],
     validate: {
       validator: (email) =>
-        String(email)
-          .toLowerCase()
-          .match(
-            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-          ),
-      messsage: (props) => `Email ${props.value} is invalid`,
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+          email
+        ),
+      message: (props) => `Email ${props.value} is invalid`,
     },
   },
   password: {
-    type: String,
-  },
-  passwordConfirmed: {
+    // unselect
     type: String,
   },
   passwordChangedAt: {
+    // unselect
     type: Date,
   },
   passwordResetToken: {
+    // unselect
     type: String,
   },
   passwordResetExpires: {
+    // unselect
     type: Date,
   },
-  createdAt: { type: Date },
-  updatedAt: { type: Date },
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  updatedAt: {
+    // unselect
+    type: Date,
+  },
   verified: {
     type: Boolean,
     default: false,
   },
   otp: {
-    type: Number,
+    type: String,
   },
-  otp_expiry_time: { type: Date },
+  otp_expiry_time: {
+    type: Date,
+  },
 });
 
-userSchema.pre("save"),
-  async (next) => {
-    if (!this.isModified("otp")) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("otp") || !this.otp) return next();
 
-    this.otp = await bcrypt.hash(this.otp, 12);
-    next();
-  };
+  this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
-userSchema.pre("save"),
-  async (next) => {
-    if (!this.isModified("password")) return next();
+  next();
+});
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password") || !this.password) return next();
+  this.password = await bcrypt.hash(this.password, 12);
 
-    this.password = await bcrypt.hash(this.password, 12);
-    next();
-  };
+  next();
+});
 
-userSchema.methods.correctPassword = async (
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew || !this.password)
+    return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
-) => {
+) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.correctOTP = async (candidateOTP, userOTP) => {
+userSchema.methods.correctOTP = async function (candidateOTP, userOTP) {
   return await bcrypt.compare(candidateOTP, userOTP);
 };
 
-userSchema.methods.createPasswordResetToken = function() {
+userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
 
   this.passwordResetToken = crypto
@@ -94,10 +106,6 @@ userSchema.methods.createPasswordResetToken = function() {
 
   return resetToken;
 };
-userSchema.methods,
-  (changedPasswordAfter = function(timestamp) {
-    return timestamp < this.passwordChangedAt;
-  });
 
 const User = new mongoose.model("User", userSchema);
 

@@ -1,40 +1,51 @@
-const sgMail = require("@sendgrid/mail");
+const nodemailer = require("nodemailer");
+const Mailgen = require("mailgen");
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+exports.sendEmail = ({ to, sender, subject, html, attachments, text }) => {
+  let config = {
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  };
 
-const sendSGEmail = async ({
-  recipient,
-  sender,
-  subject,
-  html,
-  text,
-  attachments,
-}) => {
-  try {
-    const from = sender || "contact@kamil.in";
-    const msg = {
-      to: recipient,
-      from,
-      subject,
-      html,
-      text,
-      attachments,
-    };
+  let transporter = nodemailer.createTransport(config);
 
-    return sgMail.send(msg);
-  } catch (error) {
-    console.error(error);
+  // let MailGenerator = new Mailgen({
+  //   theme: "default",
+  //   product: {
+  //     name: "Mailgen",
+  //     link: "https://mailgen.js/",
+  //   },
+  // });
 
-    if (error.response) {
-      console.error(error.response.body);
-    }
-  }
-};
+  // let response = {
+  //   body: {
+  //     name: "Daily Tuition",
+  //     intro: "Your bill has arrived!",
+  //     table: {
+  //       data: [
+  //         {
+  //           item: "Nodemailer Stack Book",
+  //           description: "A Backend application",
+  //           price: "$10.99",
+  //         },
+  //       ],
+  //     },
+  //     outro: "Looking forward to do more business",
+  //   },
+  // };
 
-exports.sendSGEmail = async (args) => {
-  if (process.env.NODE_ENV === "development") {
-    return new Promise.resolve();
-  } else {
-    return sendSGEmail(args);
-  }
+  // let mail = MailGenerator.generate(response);
+
+  let message = {
+    from: process.env.EMAIL,
+    to,
+    subject,
+    html,
+    attachments,
+  };
+
+  transporter.sendMail(message);
 };
