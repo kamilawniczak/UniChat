@@ -16,11 +16,13 @@ import logo from "../../assets/Images/logo_UniChat.png";
 import { Nav_Buttons, Profile_Menu } from "../../data";
 import { Gear } from "@phosphor-icons/react";
 import { faker } from "@faker-js/faker";
+import { useDispatch } from "react-redux";
 
 import useSettings from "../../hooks/useSettings";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCallback } from "react";
+import { LogoutUser } from "../../redux/slices/auth";
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
   width: 61,
@@ -96,6 +98,7 @@ const SideBar = () => {
   const navigate = useNavigate();
 
   const [anchorEl, setAnchorEl] = useState(null);
+  const dispatch = useDispatch();
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -273,7 +276,14 @@ const SideBar = () => {
           >
             <Stack spacing={1} px={1}>
               {Profile_Menu.map((e, i) => (
-                <MenuItem onClick={() => handleClose(e.title)} key={i}>
+                <MenuItem
+                  onClick={() => {
+                    handleClose(e.title);
+
+                    i === 2 && dispatch(LogoutUser());
+                  }}
+                  key={i}
+                >
                   <Stack
                     sx={{ width: 100 }}
                     direction="row"

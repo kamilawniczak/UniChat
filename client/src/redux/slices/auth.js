@@ -6,6 +6,7 @@ const initialState = {
   isLoggedIn: false,
   token: "",
   isLoading: false,
+  user_id: null,
 };
 
 const slice = createSlice({
@@ -21,7 +22,7 @@ const slice = createSlice({
       state.token = action.payload.token;
       state.user_id = action.payload.user_id;
     },
-    LogOut(state, action) {
+    logOut(state, action) {
       state.isLoggedIn = false;
       state.token = "";
       state.user_id = null;
@@ -66,6 +67,12 @@ export function LoginUser(formValues) {
         slice.actions.updateIsLoading({ isLoading: false, error: true })
       );
     }
+  };
+}
+
+export function LogoutUser() {
+  return (disaptch, getValues) => {
+    disaptch(slice.actions.logOut());
   };
 }
 

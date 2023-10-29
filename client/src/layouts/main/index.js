@@ -5,8 +5,6 @@ import Logo from "../../assets/Images/logo_UniChat.png";
 import { getAuthValues } from "../../redux/slices/auth";
 import { useSelector } from "react-redux";
 
-const isAuthenticated = false;
-
 const MainLayout = () => {
   const { isLoggedIn } = useSelector(getAuthValues());
 
