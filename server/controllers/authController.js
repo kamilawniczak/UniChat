@@ -4,7 +4,7 @@ const mailService = require("../services/mailer");
 const User = require("../models/user");
 const otpGenerator = require("otp-generator");
 const otp = require("../Templates/Mail/otp");
-const resetPassword = require("../Templates/Mail/resetPassword");
+const resetPassword = require("../Templates/Mail/ResetPassword");
 const filterObject = require("../utils/filterObject");
 const { promisify } = require("util");
 
@@ -126,16 +126,16 @@ exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
-      message: "Both email and password are requied",
+      message: "Both email and password are required",
     });
   }
 
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "Email or password is incorrect",
     });
@@ -145,7 +145,7 @@ exports.login = async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "logged successfully",
+    message: "Logged in successfully",
     token,
   });
 };
