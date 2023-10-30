@@ -6,19 +6,23 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import React from "react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { LoginUser } from "../../redux/slices/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { LoginUser, getIsLoadingAuth } from "../../redux/slices/auth";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, formState, handleSubmit, reset } = useForm();
   const { errors } = formState;
   const dispatch = useDispatch();
+
+  const isLoading = useSelector(getIsLoadingAuth());
+
   const onSubmit = (formData) => {
     dispatch(LoginUser(formData));
   };
@@ -32,6 +36,7 @@ const LoginForm = () => {
           <TextField
             id="email"
             fullWidth
+            disabled={isLoading}
             helperText={errors?.email?.message && errors?.email?.message}
             label="Email"
             error={!!errors?.email?.message}
@@ -46,9 +51,10 @@ const LoginForm = () => {
           <TextField
             id="password"
             fullWidth
+            disabled={isLoading}
             helperText={errors?.password?.message && errors?.password?.message}
             label="Password"
-            type={showPassword ? "text" : "password"}
+            type={showPassword && !isLoading ? "text" : "password"}
             error={!!errors?.password?.message}
             {...register("password", { required: "This field is required" })}
             InputProps={{
@@ -59,7 +65,7 @@ const LoginForm = () => {
                     onClick={handleClickShowPassword}
                     edge="end"
                   >
-                    {showPassword ? <EyeSlash /> : <Eye />}
+                    {showPassword && !isLoading ? <Eye /> : <EyeSlash />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -72,6 +78,9 @@ const LoginForm = () => {
             direction="row"
             alignItems="center"
             justifyContent="space-between"
+            sx={{
+              pointerEvents: isLoading ? "none" : "auto",
+            }}
           >
             <Link
               to="/auth/register"
@@ -91,25 +100,53 @@ const LoginForm = () => {
             </Link>
           </Stack>
 
-          <Button
-            fullWidth
-            color="inherit"
-            size="large"
-            type="submit"
-            variant="contained"
-            sx={{
-              backgroundColor: "text.primary",
-              color: (theme) =>
-                theme.palette.mode === "light" ? "common.white" : "grey.800",
-              "&hover": {
-                bgcolor: "text.primary",
+          {!isLoading ? (
+            <Button
+              fullWidth
+              color="inherit"
+              size="large"
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "text.primary",
                 color: (theme) =>
                   theme.palette.mode === "light" ? "common.white" : "grey.800",
-              },
-            }}
-          >
-            Login
-          </Button>
+                "&hover": {
+                  bgcolor: "text.primary",
+                  color: (theme) =>
+                    theme.palette.mode === "light"
+                      ? "common.white"
+                      : "grey.800",
+                },
+              }}
+            >
+              Login
+            </Button>
+          ) : (
+            <LoadingButton
+              disabled={isLoading}
+              loading
+              fullWidth
+              color="inherit"
+              size="large"
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+                "&hover": {
+                  bgcolor: "text.primary",
+                  color: (theme) =>
+                    theme.palette.mode === "light"
+                      ? "common.white"
+                      : "grey.800",
+                },
+              }}
+            >
+              Submit
+            </LoadingButton>
+          )}
         </Stack>
       </form>
     </>

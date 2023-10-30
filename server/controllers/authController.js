@@ -70,7 +70,7 @@ exports.sendOTP = async (req, res, next) => {
     attachments: [],
   });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     message: "OTP Sent Successfully!",
   });
@@ -78,6 +78,7 @@ exports.sendOTP = async (req, res, next) => {
 
 exports.verifyOTP = async (req, res, next) => {
   const { email, otp } = req.body;
+
   const user = await User.findOne({
     email,
     otp_expiry_time: { $gt: Date.now() },
@@ -98,12 +99,10 @@ exports.verifyOTP = async (req, res, next) => {
   }
 
   if (!(await user.correctOTP(otp, user.otp))) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "OTP is incorrect",
     });
-
-    return;
   }
 
   // OTP is correct
@@ -114,7 +113,7 @@ exports.verifyOTP = async (req, res, next) => {
 
   const token = signToken(user._id);
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     message: "OTP verified Successfully!",
     token: token,
@@ -143,7 +142,7 @@ exports.login = async (req, res, next) => {
 
   const token = signToken(user._id);
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     message: "Logged in successfully",
     token,
@@ -160,10 +159,9 @@ exports.protect = async (req, res, next) => {
   } else if (req.cookies.jwt) {
     token.req.cookies.jwt;
   } else {
-    res
+    return res
       .status(400)
       .json({ status: "error", message: "You are not logged in!" });
-    return;
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_TOKEN);
@@ -171,13 +169,13 @@ exports.protect = async (req, res, next) => {
   const this_user = await User.findById(decoded.userId);
 
   if (!this_user) {
-    res
+    return res
       .status(400)
       .json({ status: "error", message: "The usr doesn't exists" });
   }
 
   if (this_user.changedPasswordAfter(decoded.iat)) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: " User recentyl updated password! Please log in again",
     });
@@ -190,11 +188,10 @@ exports.protect = async (req, res, next) => {
 exports.forgotPassword = async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    res.status(400).status({
+    return res.status(400).status({
       status: "error",
       message: "There is no user with given email address",
     });
-    return;
   }
 
   const resetToken = user.createPasswordResetToken();
@@ -214,7 +211,7 @@ exports.forgotPassword = async (req, res, next) => {
       html: resetPassword(user.firstName, resetURL),
       attachments: [],
     });
-    res.status(200).json({
+    return res.status(200).json({
       status: "success",
       message: "Token sent to email!",
     });
@@ -226,7 +223,7 @@ exports.forgotPassword = async (req, res, next) => {
       validateBeforeSave: false,
     });
 
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
       message: "There was an error sending the email, Peas try again later",
     });
@@ -234,11 +231,10 @@ exports.forgotPassword = async (req, res, next) => {
 };
 exports.resetPassword = async (req, res, next) => {
   if (!req.body.token) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "Token is missing",
     });
-    return;
   }
 
   const hashedToken = crypto
@@ -252,11 +248,10 @@ exports.resetPassword = async (req, res, next) => {
   });
 
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "Token is Invalid or Expired",
     });
-    return;
   }
 
   user.password = req.body.password;
@@ -269,7 +264,7 @@ exports.resetPassword = async (req, res, next) => {
 
   const token = signToken(user._id);
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     message: "Password reset successfully",
     token,

@@ -21,7 +21,6 @@ const NewPasswordForm = () => {
   const [params] = useSearchParams();
 
   const onSubmit = (formData) => {
-    console.log(formData);
     try {
       disaptch(NewPassword({ ...formData, token: params.get("token") }));
     } catch (error) {

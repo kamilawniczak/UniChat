@@ -17,11 +17,9 @@ exports.updateMe = async (req, res, next) => {
     validateModifieldOnly: true,
   });
 
-  res
-    .status(200)
-    .json({
-      status: "success",
-      data: updated_user,
-      message: "Profile Updtd successfully",
-    });
+  return res.status(200).json({
+    status: "success",
+    data: updated_user,
+    message: "Profile Updtd successfully",
+  });
 };

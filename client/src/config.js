@@ -14,6 +14,7 @@ export const defaultSettings = {
 };
 
 export const BASE_URL = "http://localhost:8000";
+export const LENGTH_OF_OTP = 6;
 
 export const NAVBAR = {
   BASE_WIDTH: 260,

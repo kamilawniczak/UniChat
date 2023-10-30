@@ -11,12 +11,17 @@ import React from "react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import { RegisterNewUser } from "../../redux/slices/auth";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, formState, getValues, handleSubmit, reset } = useForm();
   const { errors } = formState;
-  const onSubmit = () => {};
+  const dispatch = useDispatch();
+  const onSubmit = (formData) => {
+    dispatch(RegisterNewUser(formData));
+  };
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -31,11 +36,11 @@ const RegisterForm = () => {
               errors?.firstName?.message && errors?.firstName?.message
             }
             label="First Name"
-            error={errors?.firstName?.message}
+            error={!!errors?.firstName?.message}
             {...register("firstName", {
               required: "This field is required",
               pattern: {
-                value: /^[A-Za-z]+$/,
+                value: /^[\p{L}]+$/u,
                 message: "Please enter only letters",
               },
             })}
@@ -45,11 +50,11 @@ const RegisterForm = () => {
             fullWidth
             helperText={errors?.lastName?.message && errors?.lastName?.message}
             label="Last Name"
-            error={errors?.lastName?.message}
+            error={!!errors?.lastName?.message}
             {...register("lastName", {
               required: "This field is required",
               pattern: {
-                value: /^[A-Za-z]+$/,
+                value: /^[\p{L}]+$/u,
                 message: "Please enter only letters",
               },
             })}
@@ -61,7 +66,7 @@ const RegisterForm = () => {
             fullWidth
             helperText={errors?.email?.message && errors?.email?.message}
             label="Email"
-            error={errors?.email?.message}
+            error={!!errors?.email?.message}
             {...register("email", {
               required: "This field is required",
               pattern: {
@@ -76,7 +81,7 @@ const RegisterForm = () => {
             helperText={errors?.password?.message && errors?.password?.message}
             label="Password"
             type={showPassword ? "text" : "password"}
-            error={errors?.password?.message}
+            error={!!errors?.password?.message}
             {...register("password", {
               required: "This field is required",
               minLength: {
@@ -99,16 +104,16 @@ const RegisterForm = () => {
             }}
           />
           <TextField
-            id="confirmPossword"
+            id="passwordConfirmed"
             fullWidth
             helperText={
-              errors?.confirmPossword?.message &&
-              errors?.confirmPossword?.message
+              errors?.passwordConfirmed?.message &&
+              errors?.passwordConfirmed?.message
             }
             label="Confirm Password"
             type={showPassword ? "text" : "password"}
-            error={errors?.confirmPossword?.message}
-            {...register("confirmPossword", {
+            error={!!errors?.passwordConfirmed?.message}
+            {...register("passwordConfirmed", {
               required: "This field is required",
               validate: (value) => {
                 return (

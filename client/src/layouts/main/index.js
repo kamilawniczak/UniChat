@@ -2,11 +2,11 @@ import { Container, Stack } from "@mui/material";
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import Logo from "../../assets/Images/logo_UniChat.png";
-import { getAuthValues } from "../../redux/slices/auth";
+import { getIsLoggedIn } from "../../redux/slices/auth";
 import { useSelector } from "react-redux";
 
 const MainLayout = () => {
-  const { isLoggedIn } = useSelector(getAuthValues());
+  const isLoggedIn = useSelector(getIsLoggedIn());
 
   if (isLoggedIn) {
     return <Navigate to="/app" />;
