@@ -20,7 +20,7 @@ import { useDispatch } from "react-redux";
 
 import useSettings from "../../hooks/useSettings";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCallback } from "react";
 import { LogoutUser } from "../../redux/slices/auth";
 
@@ -96,6 +96,7 @@ const SideBar = () => {
 
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const dispatch = useDispatch();
@@ -159,9 +160,8 @@ const SideBar = () => {
             spacing={3}
           >
             {Nav_Buttons.map((e) => {
-              return e.index === selected ? (
+              return handlePath(e.index) === location.pathname ? (
                 <Box
-                  onClick={() => navigate(handlePath(e.index))}
                   sx={{
                     backgroundColor: theme.palette.primary.main,
                     borderRadius: 1.5,
@@ -183,7 +183,6 @@ const SideBar = () => {
                   }}
                   onClick={() => {
                     navigate(handlePath(e.index));
-                    setSelected(e.index);
                   }}
                   key={e.index}
                 >
