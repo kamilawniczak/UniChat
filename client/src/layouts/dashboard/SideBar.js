@@ -91,7 +91,6 @@ const handlePath = (index) => {
 };
 
 const SideBar = () => {
-  const [selected, setSelected] = useState(0);
   const { onToggleMode } = useSettings();
 
   const theme = useTheme();
@@ -197,7 +196,7 @@ const SideBar = () => {
               }}
             />
 
-            {selected === 3 ? (
+            {handlePath(3) === location.pathname ? (
               <Box
                 sx={{
                   backgroundColor: theme.palette.primary.main,
@@ -211,7 +210,6 @@ const SideBar = () => {
             ) : (
               <IconButton
                 onClick={() => {
-                  setSelected(3);
                   navigate(handlePath(3));
                 }}
                 sx={{
