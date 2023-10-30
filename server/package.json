@@ -30,6 +30,7 @@
     "nodemailer": "^6.9.7",
     "npm": "^10.2.1",
     "otp-generator": "^4.0.1",
+    "socket.io": "^4.7.2",
     "xss": "^1.0.14"
   }
 }
