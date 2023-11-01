@@ -42,7 +42,7 @@ const DashboardLayout = () => {
       socket.off("request_accepted");
       socket.off("request_sent");
     };
-  }, [isLoggedIn, socket]);
+  }, [isLoggedIn, dispatch, user_id]);
 
   if (!isLoggedIn) {
     return <Navigate to="/auth/login" />;

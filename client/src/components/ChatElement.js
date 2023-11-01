@@ -8,6 +8,8 @@ import {
   useTheme,
 } from "@mui/material";
 import StyledBadge from "./StyledBadge";
+import { useDispatch } from "react-redux";
+import { SelectRoom } from "../redux/slices/app";
 
 const checkMessage = (message) => {
   if (message.length < 20) return message;
@@ -16,6 +18,7 @@ const checkMessage = (message) => {
 
 const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
   const theme = useTheme();
+  const dispatch = useDispatch();
   return (
     <Box
       sx={{
@@ -27,6 +30,9 @@ const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
             : theme.palette.background.paper,
       }}
       p={1.4}
+      onClick={() => {
+        dispatch(SelectRoom({ room_id: id }));
+      }}
     >
       <Stack
         direction="row"

@@ -14,6 +14,9 @@ const initialState = {
   users: [],
   friends: [],
   friendRequests: [],
+
+  chat_type: null,
+  room_id: null,
 };
 const slice = createSlice({
   name: "app",
@@ -46,6 +49,10 @@ const slice = createSlice({
     },
     updateFriendRequests(state, action) {
       state.friendRequests = action.payload.friendRequests;
+    },
+    selectRoom(state, action) {
+      state.chat_type = "OneToOne";
+      state.room_id = action.payload.room_id;
     },
   },
 });
@@ -128,6 +135,11 @@ export function GetFriendRequests() {
     }
   };
 }
+export function SelectRoom({ room_id }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.selectRoom({ room_id }));
+  };
+}
 
 export function getSnackBarApp() {
   return (store) => store.app.snackbar;
@@ -143,4 +155,10 @@ export function getFriends() {
 }
 export function getFriendRequests() {
   return (store) => store.app.friendRequests;
+}
+export function getChatType() {
+  return (store) => store.app.chat_type;
+}
+export function getRoomId() {
+  return (store) => store.app.room_id;
 }

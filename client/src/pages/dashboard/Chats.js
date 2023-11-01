@@ -38,7 +38,6 @@ const Chats = () => {
 
   return (
     <>
-      {" "}
       <Box
         sx={{
           position: "relative",
