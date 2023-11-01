@@ -105,8 +105,6 @@ exports.verifyOTP = async (req, res, next) => {
     });
   }
 
-  // OTP is correct
-
   user.verified = true;
   user.otp = undefined;
   await user.save({ new: true, validateModifiedOnly: true });
@@ -146,6 +144,7 @@ exports.login = async (req, res, next) => {
     status: "success",
     message: "Logged in successfully",
     token,
+    user_id: user._id,
   });
 };
 
@@ -155,29 +154,22 @@ exports.protect = async (req, res, next) => {
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
-    token = req.headers.authorization.split(" ").at(1);
+    token = req.headers.authorization.split(" ")[1];
   } else if (req.cookies.jwt) {
-    token.req.cookies.jwt;
-  } else {
-    return res
-      .status(400)
-      .json({ status: "error", message: "You are not logged in!" });
+    token = req.cookies.jwt;
   }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_TOKEN);
+  if (!token) {
+    return res.status(401).json({
+      message: "You are not logged in! Please log in to get access.",
+    });
+  }
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   const this_user = await User.findById(decoded.userId);
-
   if (!this_user) {
-    return res
-      .status(400)
-      .json({ status: "error", message: "The usr doesn't exists" });
-  }
-
-  if (this_user.changedPasswordAfter(decoded.iat)) {
-    return res.status(400).json({
-      status: "error",
-      message: " User recentyl updated password! Please log in again",
+    return res.status(401).json({
+      message: "The user belonging to this token does no longer exists.",
     });
   }
 

@@ -62,7 +62,7 @@ export function LoginUser(formValues) {
           user_id: response.data.user_id,
         })
       );
-
+      window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         OpenSnackBar({ message: response.data.message, severity: "success" })
       );
@@ -81,6 +81,7 @@ export function LoginUser(formValues) {
 
 export function LogoutUser() {
   return (dispatch, getValues) => {
+    window.localStorage.removeItem("user_id");
     dispatch(slice.actions.logOut());
     dispatch(
       OpenSnackBar({ message: "logged out seccessfully", severity: "success" })
@@ -200,6 +201,7 @@ export function VerifyEmail(formValues) {
           token: response.data.token,
         })
       );
+      window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
