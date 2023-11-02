@@ -51,6 +51,12 @@ const slice = createSlice({
       state.friendRequests = action.payload.friendRequests;
     },
     selectRoom(state, action) {
+      if (state.room_id === action.payload.room_id) {
+        state.chat_type = null;
+        state.room_id = null;
+        return;
+      }
+
       state.chat_type = "OneToOne";
       state.room_id = action.payload.room_id;
     },
