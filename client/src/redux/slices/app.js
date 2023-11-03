@@ -99,7 +99,11 @@ export function GetUsers() {
         },
       });
 
-      dispatch(slice.actions.updateUsers({ users: response.data.data }));
+      const users = response.data.data.filter(
+        (user) => user._id !== getState().auth.user_id
+      );
+
+      dispatch(slice.actions.updateUsers({ users: users }));
     } catch (error) {
       console.log(error);
     }
@@ -130,7 +134,6 @@ export function GetFriendRequests() {
           Authorization: `Bearer ${getState().auth.token}`,
         },
       });
-      console.log(response);
       dispatch(
         slice.actions.updateFriendRequests({
           friendRequests: response.data.data,

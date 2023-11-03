@@ -20,10 +20,9 @@ const UserList = () => {
 
   useEffect(() => {
     dispatch(GetUsers());
-  }, []);
+  }, [dispatch]);
 
   const users = useSelector(getUsers());
-  console.log(users);
 
   return (
     <>
@@ -38,7 +37,7 @@ const FriendsList = () => {
 
   useEffect(() => {
     dispatch(GetFriends());
-  }, []);
+  }, [dispatch]);
 
   const friends = useSelector(getFriends());
 
@@ -55,7 +54,7 @@ const FriendRequestsList = () => {
 
   useEffect(() => {
     dispatch(GetFriendRequests());
-  }, []);
+  }, [dispatch]);
 
   const friendRequests = useSelector(getFriendRequests());
 

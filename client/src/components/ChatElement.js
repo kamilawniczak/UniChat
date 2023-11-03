@@ -1,22 +1,15 @@
-import {
-  Avatar,
-  Badge,
-  Box,
-  Stack,
-  Typography,
-  styled,
-  useTheme,
-} from "@mui/material";
+import { Avatar, Badge, Box, Stack, Typography, useTheme } from "@mui/material";
 import StyledBadge from "./StyledBadge";
 import { useDispatch } from "react-redux";
 import { SelectRoom } from "../redux/slices/app";
+import { SetConversation } from "../redux/slices/conversation";
 
 const checkMessage = (message) => {
   if (message.length < 20) return message;
   return message.split("").slice(0, 20).join("") + "...";
 };
 
-const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
+const ChatElement = ({ id, name, img, msg, time, unread, online, user_id }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   return (
@@ -31,6 +24,7 @@ const ChatElement = ({ id, name, img, msg, time, unread, online }) => {
       }}
       p={1.4}
       onClick={() => {
+        dispatch(SetConversation({ user_id, room_id: id }));
         dispatch(SelectRoom({ room_id: id }));
       }}
     >

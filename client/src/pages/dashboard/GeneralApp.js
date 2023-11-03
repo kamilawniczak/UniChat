@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-pascal-case */
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import Chats from "./Chats";
 import Conversation from "../../components/Conversation";
@@ -7,7 +8,6 @@ import { useSelector } from "react-redux";
 import SharedMsg from "../../components/SharedMsg";
 
 import StarredMsg from "../../components/StarredMsg";
-import { getChatType, getRoomId } from "../../redux/slices/app";
 
 import SVG_No_Chat from "../../assets/Illustration/NoChat";
 
@@ -26,10 +26,7 @@ const handleSidebarType = (type) => {
 
 const GeneralApp = () => {
   const theme = useTheme();
-  const { sideBar } = useSelector((store) => store.app);
-
-  const room_id = useSelector(getRoomId());
-  const chat_type = useSelector(getChatType());
+  const { sideBar, room_id, chat_type } = useSelector((state) => state.app);
 
   return (
     <Stack

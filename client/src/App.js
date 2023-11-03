@@ -4,7 +4,7 @@ import ThemeProvider from "./theme";
 
 import ThemeSettings from "./components/settings";
 import { Slide, Snackbar } from "@mui/material";
-import { forwardRef, useState } from "react";
+import { forwardRef } from "react";
 import MuiAlert from "@mui/material/Alert";
 import { useDispatch, useSelector } from "react-redux";
 import { CloseSnackBar, getSnackBarApp } from "./redux/slices/app";

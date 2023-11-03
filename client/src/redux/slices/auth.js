@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 import axios from "../../utils/axios";
 import { OpenSnackBar } from "./app";
+import { socket } from "../../socket";
 
 const initialState = {
   isLoggedIn: false,
@@ -26,6 +27,7 @@ const slice = createSlice({
       state.user_id = action.payload.user_id;
     },
     logOut(state, action) {
+      socket.emit("logout", { user_id: state.user_id });
       state.isLoggedIn = false;
       state.token = "";
       state.user_id = null;
@@ -54,7 +56,6 @@ export function LoginUser(formValues) {
           },
         }
       );
-
       dispatch(
         slice.actions.logIn({
           isLoggedIn: true,
@@ -164,6 +165,7 @@ export function RegisterNewUser(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: false })
       );
+      window.localStorage.setItem("user_id", response.data.user_id);
     } catch (error) {
       console.log(error);
 
@@ -205,6 +207,7 @@ export function VerifyEmail(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
+      window.localStorage.setItem("user_id", response.data.user_id);
     } catch (error) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: true })
@@ -218,4 +221,7 @@ export function getIsLoggedIn() {
 }
 export function getIsLoadingAuth() {
   return (store) => store.auth.isLoading;
+}
+export function getUserId() {
+  return (store) => store.auth.user_id;
 }

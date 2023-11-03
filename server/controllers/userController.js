@@ -45,23 +45,32 @@ exports.getUsers = async (req, res, next) => {
   });
 };
 exports.getFriends = async (req, res, next) => {
-  const this_user = await User.findById(req.user._id);
+  const this_user = await User.findById(req.user._id.valueOf());
 
-  return res.status(200).json({
-    status: "success",
-    data: this_user.friends,
-    message: "Friend found successfully",
-  });
-};
-exports.getRequest = async (req, res, next) => {
-  const request = await FriendRequest.find({ reciever: req.user._id }).populate(
-    "sender",
-    "_id firstName lastName"
+  const this_user_friends = await Promise.all(
+    this_user.friends.map(async (friend) => {
+      return await User.findById(friend.valueOf()).select(
+        "_id firstName lastName"
+      );
+    })
   );
 
   return res.status(200).json({
     status: "success",
-    data: request,
+    data: this_user_friends,
+    message: "Friend found successfully",
+  });
+};
+exports.getRequest = async (req, res, next) => {
+  const requests = await FriendRequest.find({
+    reciever: req.user._id.valueOf(),
+  })
+    .populate("sender")
+    .select("_id firstName lastName");
+
+  return res.status(200).json({
+    status: "success",
+    data: requests,
     message: "Friend found successfully",
   });
 };
