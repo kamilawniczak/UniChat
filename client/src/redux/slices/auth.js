@@ -11,6 +11,11 @@ const initialState = {
   user_id: null,
   email: "",
   error: false,
+  userInfo: {
+    firstName: "",
+    lastName: "",
+    avatar: null,
+  },
 };
 
 const slice = createSlice({
@@ -34,6 +39,9 @@ const slice = createSlice({
     },
     updateRegisterEmail(state, action) {
       state.email = action.payload.email;
+    },
+    userInfo(state, action) {
+      state.userInfo = action.payload;
     },
   },
 });
@@ -63,6 +71,7 @@ export function LoginUser(formValues) {
           user_id: response.data.user_id,
         })
       );
+      dispatch(slice.actions.userInfo(response.data.userInfo));
       window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         OpenSnackBar({ message: response.data.message, severity: "success" })
@@ -224,4 +233,7 @@ export function getIsLoadingAuth() {
 }
 export function getUserId() {
   return (store) => store.auth.user_id;
+}
+export function getUserInfo() {
+  return (store) => store.auth.userInfo;
 }

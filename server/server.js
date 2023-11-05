@@ -128,23 +128,25 @@ io.on("connection", async (socket) => {
   socket.on("start_conversation", async (data) => {
     const { to, from } = data;
 
-    const existing_conversations = await Message.find({
-      members: { $size: 2, $all: [to, from] },
-    }).select("members");
+    try {
+      const existing_conversations = await Message.find({
+        members: { $size: 2, $all: [to, from] },
+      }).select("members");
 
-    if (existing_conversations.length === 0) {
-      let new_chat = await Message.create({
-        members: [to, from],
-      });
+      if (existing_conversations.length === 0) {
+        let new_chat = await Message.create({
+          members: [to, from],
+        });
 
-      new_chat = await Message.findById(new_chat._id).populate(
-        "members",
-        "firstName lastName _id email status"
-      );
+        const chat = await Message.findById(new_chat._id.toString()).populate(
+          "members",
+          "firstName lastName _id email status"
+        );
 
-      socket.emit("start_chat", new_chat);
-    } else {
-      socket.emit("open_chat", existing_conversations[0]);
+        socket.emit("start_chat", chat);
+      }
+    } catch (error) {
+      console.error("Error in start_conversation:", error);
     }
   });
 
@@ -161,7 +163,7 @@ io.on("connection", async (socket) => {
 
   // Handle incoming text/link messages
   socket.on("text_message", async (data) => {
-    const { message, conversation_id, from, to, type } = data;
+    const { message, conversation_id, from, to, type, subtype } = data;
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
@@ -170,6 +172,7 @@ io.on("connection", async (socket) => {
       to: to,
       from: from,
       type: type,
+      subtype: subtype || "Text",
       created_at: Date.now(),
       text: message,
     };
@@ -184,6 +187,11 @@ io.on("connection", async (socket) => {
     const lastMessage = msg.messages.at(-1);
 
     io.to(to_user?.socket_id).emit("new_message", {
+      user_info: {
+        id: from_user._id,
+        firstName: from_user.firstName,
+        lastName: from_user.lastName,
+      },
       conversation_id,
       message: lastMessage,
     });

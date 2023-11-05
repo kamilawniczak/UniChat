@@ -14,19 +14,19 @@ import {
   LinkSimple,
   PaperPlaneTilt,
   Smiley,
-  Camera,
   File,
   Image,
-  Sticker,
-  User,
 } from "@phosphor-icons/react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { useState } from "react";
 import { socket } from "../../socket";
 import { useSelector } from "react-redux";
-import { getDirectConversations } from "../../redux/slices/conversation";
+import {
+  getConversations,
+  getDirectConversations,
+} from "../../redux/slices/conversation";
 
 const StyledInput = styled(TextField)(({ theme }) => ({
   "& .MuiInputBase-input": {
@@ -42,28 +42,10 @@ const Actions = [
     title: "Photo/Video",
   },
   {
-    color: "#1b8cfe",
-    icon: <Sticker size={24} />,
-    y: 172,
-    title: "Stickers",
-  },
-  {
-    color: "#0172e4",
-    icon: <Camera size={24} />,
-    y: 242,
-    title: "Image",
-  },
-  {
     color: "#0159b2",
     icon: <File size={24} />,
-    y: 312,
+    y: 172,
     title: "Document",
-  },
-  {
-    color: "#013f7f",
-    icon: <User size={24} />,
-    y: 382,
-    title: "Contact",
   },
 ];
 
@@ -73,11 +55,16 @@ const ChatInput = ({
   setValue,
   value,
   inputRef,
+  handleMsgType,
+  handleClickEnter,
 }) => {
   const [openActions, setOpenActions] = useState(false);
+  const { isLoading } = useSelector(getConversations());
 
   return (
     <StyledInput
+      onKeyDown={handleClickEnter}
+      disabled={isLoading}
       inputRef={inputRef}
       value={value}
       onChange={(event) => {
@@ -101,6 +88,7 @@ const ChatInput = ({
                   <Fab
                     onClick={() => {
                       setOpenActions(!openActions);
+                      handleMsgType(el.title);
                     }}
                     sx={{
                       position: "absolute",
@@ -144,14 +132,6 @@ const ChatInput = ({
   );
 };
 
-function linkify(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return text.replace(
-    urlRegex,
-    (url) => `<a href="${url}" target="_blank">${url}</a>`
-  );
-}
-
 function containsUrl(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return urlRegex.test(text);
@@ -169,6 +149,7 @@ const Footer = () => {
   const [openPicker, setOpenPicker] = React.useState(false);
 
   const [value, setValue] = useState("");
+  const [type, setType] = useState("text");
   const inputRef = useRef(null);
 
   function handleEmojiClick(emoji) {
@@ -188,6 +169,49 @@ const Footer = () => {
       input.selectionStart = input.selectionEnd = selectionStart + 1;
     }
   }
+  // function linkify(text) {
+  //   const urlRegex = /(https?:\/\/[^\s]+)/g;
+  //   return text.replace(
+  //     urlRegex,
+  //     (url) => `<a href="${url}" target="_blank">${url}</a>`
+  //   );
+  // }
+
+  const handleClickEnter = (event) => {
+    if (event.key === "Enter") {
+      dataToSend();
+    }
+  };
+
+  const dataToSend = () => {
+    socket.emit("text_message", {
+      message: value,
+      conversation_id: room_id,
+      from: user_id,
+      to: current_conversation.user_id,
+      type: "msg",
+      subtype:
+        type === "text"
+          ? value.startsWith("https://")
+            ? "link"
+            : "text"
+          : type,
+    });
+
+    setType("text");
+    setValue("");
+  };
+
+  const handleMsgType = (subtype) => {
+    switch (subtype) {
+      case "Photo/Video":
+        return setType("img");
+      case "Document":
+        return setType("doc");
+      default:
+        setType("text");
+    }
+  };
 
   return (
     <Box
@@ -226,13 +250,15 @@ const Footer = () => {
                 }}
               />
             </Box>
-            {/* Chat Input */}
+
             <ChatInput
               inputRef={inputRef}
               value={value}
               setValue={setValue}
               openPicker={openPicker}
               setOpenPicker={setOpenPicker}
+              handleMsgType={handleMsgType}
+              handleClickEnter={handleClickEnter}
             />
           </Stack>
           <Box
@@ -251,14 +277,7 @@ const Footer = () => {
               <IconButton
                 onClick={() => {
                   if (value.length) {
-                    setValue("");
-                    socket.emit("text_message", {
-                      message: linkify(value),
-                      conversation_id: room_id,
-                      from: user_id,
-                      to: current_conversation.user_id,
-                      type: containsUrl(value) ? "Link" : "Text",
-                    });
+                    dataToSend();
                   }
                 }}
               >

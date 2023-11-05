@@ -46,17 +46,12 @@ const DashboardLayout = () => {
         dispatch(OpenSnackBar({ severity: "success", message: data.message }));
       });
       socket.on("start_chat", (data) => {
-        console.log(data);
-        // add / update to conversation list
         const existing_conversation = conversations.find(
           (el) => el?.id === data._id
         );
-        if (existing_conversation) {
-          // update direct conversation
-          dispatch(UpdateDirectConversation({ conversation: data }));
-        } else {
-          // add direct conversation
-          dispatch(AddDirectConversation({ conversation: data }));
+
+        if (!existing_conversation) {
+          dispatch(AddDirectConversation(data));
         }
         dispatch(SetConversation({ room_id: data._id }));
       });
@@ -69,12 +64,20 @@ const DashboardLayout = () => {
             AddDirectMessage({
               id: message?._id,
               type: "msg",
-              subtype: message.type,
+              subtype: message?.subtype,
               message: message.text,
               incoming: message.to === user_id,
               outgoing: message.from === user_id,
             })
           );
+          if (data.user_info) {
+            dispatch(
+              OpenSnackBar({
+                severity: "success",
+                message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
+              })
+            );
+          }
         }
       });
     }

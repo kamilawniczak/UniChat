@@ -139,12 +139,19 @@ exports.login = async (req, res, next) => {
   }
 
   const token = signToken(user._id);
+  const userInfo = {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    avatar: user.avatar,
+    email: user.email,
+  };
 
   return res.status(200).json({
     status: "success",
     message: "Logged in successfully",
     token,
     user_id: user._id,
+    userInfo,
   });
 };
 

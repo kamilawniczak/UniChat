@@ -24,7 +24,16 @@ const ChatElement = ({ id, name, img, msg, time, unread, online, user_id }) => {
       }}
       p={1.4}
       onClick={() => {
-        dispatch(SetConversation({ user_id, room_id: id }));
+        dispatch(
+          SetConversation({
+            user_id,
+            room_id: id,
+            userInfo: {
+              name,
+              online: online,
+            },
+          })
+        );
         dispatch(SelectRoom({ room_id: id }));
       }}
     >

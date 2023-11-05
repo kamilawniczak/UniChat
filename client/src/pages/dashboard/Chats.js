@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   IconButton,
   Stack,
@@ -25,10 +26,10 @@ import ChatElement from "../../components/ChatElement";
 import Friends from "../../sections/main/Friends";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserId } from "../../redux/slices/auth";
 import {
-  GetCurrentMessages,
   GetDirectConversations,
+  IsLoading,
+  getConversations,
   getDirectConversations,
 } from "../../redux/slices/conversation";
 
@@ -37,12 +38,19 @@ const Chats = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const user_id = window.localStorage.getItem("user_id");
   const { conversations } = useSelector(getDirectConversations());
+  const { isLoading } = useSelector(getConversations());
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(IsLoading(true));
     socket.emit("get_direct_conversations", { user_id }, async (data) => {
       dispatch(GetDirectConversations({ conversations: data }));
+      dispatch(IsLoading(false));
     });
+
+    // return () => {
+    //   dispatch(ClearConversation());
+    // };
   }, [user_id, dispatch]);
 
   const handleOpenDialog = () => {
@@ -125,21 +133,31 @@ const Chats = () => {
                 <Typography variant="subtitle2" sx={{ color: "#676767" }}>
                   Pinned
                 </Typography>
-                {conversations
-                  .filter((e) => e.pinned)
-                  .map((e) => (
-                    <ChatElement {...e} key={e.id} />
-                  ))}
+                {isLoading ||
+                  conversations
+                    .filter((e) => e.pinned)
+                    .map((e) => <ChatElement {...e} key={e.id} />)}
+                {isLoading && (
+                  <Stack justifyContent="center" alignItems="center">
+                    <CircularProgress color="success" />
+                  </Stack>
+                )}
               </Stack>
               <Stack spacing={2.4}>
                 <Typography variant="subtitle2" sx={{ color: "#676767" }}>
                   All Chats
                 </Typography>
-                {conversations
-                  .filter((e) => !e.pinned)
-                  .map((e) => {
-                    return <ChatElement {...e} key={e.id} />;
-                  })}
+                {isLoading ||
+                  conversations
+                    .filter((e) => !e.pinned)
+                    .map((e) => {
+                      return <ChatElement {...e} key={e.id} />;
+                    })}
+                {isLoading && (
+                  <Stack justifyContent="center" alignItems="center">
+                    <CircularProgress color="success" />
+                  </Stack>
+                )}
               </Stack>
             </Stack>
           </Stack>

@@ -10,6 +10,8 @@ const initialState = {
     current_meessages: [],
   },
   group_chat: {},
+  isLoading: false,
+  isLoadingMsg: false,
 };
 
 const slice = createSlice({
@@ -62,23 +64,29 @@ const slice = createSlice({
       );
     },
     addDirectConversation(state, action) {
-      const this_conversation = action.payload.conversation;
+      const this_conversation = action.payload;
       const user = this_conversation.members.find(
         (e) => e._id.toString() !== user_id
       );
-      state.direct_chat.conversations.push({
-        id: this_conversation._id,
-        user_id: user._id,
-        img: faker.image.avatar(),
-        name: `${user.firstName} ${user.lastName}`,
-        msg: faker.music.songName(),
-        time: "9:36",
-        unread: 0,
-        pinned: false,
-        online: user.status === "Online",
-      });
+
+      if (
+        !state.direct_chat.conversations.some((e) => e.user_id === user._id)
+      ) {
+        state.direct_chat.conversations.push({
+          id: this_conversation._id,
+          user_id: user._id,
+          img: faker.image.avatar(),
+          name: `${user.firstName} ${user.lastName}`,
+          msg: faker.music.songName(),
+          time: "9:36",
+          unread: 0,
+          pinned: false,
+          online: user.status === "Online",
+        });
+      }
     },
     setCurrentConversation(state, action) {
+      state.isLoadingMsg = true;
       state.direct_chat.current_meessages = null;
       state.direct_chat.current_conversation = action.payload;
     },
@@ -87,7 +95,7 @@ const slice = createSlice({
         return {
           id: el._id,
           type: "msg",
-          subtype: el.type,
+          subtype: el.subtype,
           message: el.text,
           incoming: el.to === user_id,
           outgoing: el.from === user_id,
@@ -95,13 +103,27 @@ const slice = createSlice({
       });
 
       state.direct_chat.current_meessages = formatted_messages;
+      state.isLoadingMsg = false;
     },
     addDirectMessage(state, action) {
-      const array = state.direct_chat.current_meessages;
+      const array = state?.direct_chat?.current_meessages;
+      if (array === null) return;
 
       if (array[array.length - 1].id !== action.payload.id) {
         state.direct_chat.current_meessages.push(action.payload);
       }
+    },
+    clearConversation(state) {
+      state.direct_chat.conversations = [];
+      state.direct_chat.current_conversation = null;
+      state.direct_chat.current_meessages = [];
+      state.isLoading = false;
+    },
+    isLoading(state, action) {
+      state.isLoading = action.payload;
+    },
+    isLoadingMsg(state, action) {
+      state.isLoadingMsg = action.payload;
     },
   },
 });
@@ -118,9 +140,9 @@ export function UpdateDirectConversation({ conversations }) {
     dispatch(slice.actions.updateDirectConversation({ conversations }));
   };
 }
-export function AddDirectConversation({ conversations }) {
+export function AddDirectConversation(conversations) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.addDirectConversation({ conversations }));
+    dispatch(slice.actions.addDirectConversation(conversations));
   };
 }
 export function SetConversation(current_room) {
@@ -138,7 +160,24 @@ export function AddDirectMessage(message) {
     dispatch(slice.actions.addDirectMessage(message));
   };
 }
+export function ClearConversation() {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.clearConversation());
+  };
+}
+export function IsLoading(isLoading) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.isLoading(isLoading));
+  };
+}
 
 export function getDirectConversations() {
   return (state) => state.coversations.direct_chat;
+}
+export function getConversations() {
+  return (state) => state.coversations;
+}
+export function getRoomId() {
+  return (state) =>
+    state.coversations.direct_chat?.current_conversation?.room_id;
 }
