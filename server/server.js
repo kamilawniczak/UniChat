@@ -225,6 +225,37 @@ io.on("connection", async (socket) => {
 
     // emit outgoing_message -> from user
   });
+  socket.on("pinnedConversation", async ({ user_id, room_id }, callback) => {
+    const exists = await Message.findById(room_id);
+
+    if (exists) {
+      const { pinnedBy } = exists;
+      const isPinned = pinnedBy.includes(user_id);
+
+      if (!isPinned) {
+        exists.pinnedBy.push(user_id);
+        await exists.save({
+          new: true,
+          validateModifiedOnly: true,
+        });
+      } else {
+        exists.pinnedBy = pinnedBy.filter(
+          (userId) => userId.toString() !== user_id
+        );
+
+        await exists.save({
+          new: true,
+          validateModifiedOnly: true,
+        });
+      }
+
+      await callback(exists);
+    }
+  });
+  socket.on("deleteConversation", async ({ room_id }, callback) => {
+    await Message.findByIdAndDelete(room_id);
+    callback({ message: "conversation deleted successfully", room_id });
+  });
 });
 
 process.on("unhandledRejection", (err) => {

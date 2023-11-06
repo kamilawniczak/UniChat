@@ -27,6 +27,7 @@ import Friends from "../../sections/main/Friends";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  ClearConversation,
   GetDirectConversations,
   IsLoading,
   getConversations,
@@ -36,10 +37,15 @@ import {
 const Chats = () => {
   const theme = useTheme();
   const [openDialog, setOpenDialog] = useState(false);
+
   const user_id = window.localStorage.getItem("user_id");
   const { conversations } = useSelector(getDirectConversations());
   const { isLoading } = useSelector(getConversations());
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(ClearConversation());
+  }, [conversations.length]);
 
   useEffect(() => {
     dispatch(IsLoading(true));
@@ -59,6 +65,9 @@ const Chats = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
+
+  const notPinnedConversations = conversations.filter((e) => !e.pinned);
+  const pinnedConversations = conversations.filter((e) => e.pinned);
 
   return (
     <>
@@ -105,10 +114,6 @@ const Chats = () => {
             </Stack>
           </Stack>
           <Stack spacing={1}>
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <ArchiveBox size={24} />
-              <Button>Archive</Button>
-            </Stack>
             <Divider />
           </Stack>
           <Stack
@@ -130,11 +135,19 @@ const Chats = () => {
               spacing={3}
             >
               <Stack spacing={2.4}>
-                <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                  Pinned
-                </Typography>
+                {isLoading && (
+                  <Typography variant="subtitle2" sx={{ color: "#676767" }}>
+                    Pinned
+                  </Typography>
+                )}
+                {!isLoading &&
+                  (pinnedConversations.length === 0 || (
+                    <Typography variant="subtitle2" sx={{ color: "#676767" }}>
+                      Pinned
+                    </Typography>
+                  ))}
                 {isLoading ||
-                  conversations
+                  pinnedConversations
                     .filter((e) => e.pinned)
                     .map((e) => <ChatElement {...e} key={e.id} />)}
                 {isLoading && (
@@ -147,8 +160,13 @@ const Chats = () => {
                 <Typography variant="subtitle2" sx={{ color: "#676767" }}>
                   All Chats
                 </Typography>
+
                 {isLoading ||
-                  conversations
+                  (notPinnedConversations.length === 0 && (
+                    <Typography>No chats</Typography>
+                  ))}
+                {isLoading ||
+                  notPinnedConversations
                     .filter((e) => !e.pinned)
                     .map((e) => {
                       return <ChatElement {...e} key={e.id} />;

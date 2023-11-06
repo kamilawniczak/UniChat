@@ -23,6 +23,7 @@ const slice = createSlice({
         const this_user = e.members.find(
           (member) => member._id.toString() !== user_id
         );
+        const pinned = e.pinnedBy.includes(user_id);
         return {
           id: e._id,
           user_id: this_user._id,
@@ -31,7 +32,7 @@ const slice = createSlice({
           msg: faker.music.songName(),
           time: "9:36",
           unread: 0,
-          pinned: false,
+          pinned: pinned,
           online: this_user.status === "Online",
         };
       });
@@ -39,28 +40,19 @@ const slice = createSlice({
       state.direct_chat.conversations = list;
     },
     updateDirectConversation(state, action) {
-      const this_conversation = action.payload.conversation;
+      const updatedConversation = action.payload.conversation._id;
+
       state.direct_chat.conversations = state.direct_chat.conversations.map(
-        (e) => {
-          if (e.id !== this_conversation._id) {
-            return e;
-          } else {
-            const user = this_conversation.members.find(
-              (e) => e._id.toString() !== user_id
-            );
-            return {
-              id: this_conversation._id,
-              user_id: user._id,
-              img: faker.image.avatar(),
-              name: `${user.firstName} ${user.lastName}`,
-              msg: faker.music.songName(),
-              time: "9:36",
-              unread: 0,
-              pinned: false,
-              online: user.status === "Online",
-            };
-          }
+        (con) => {
+          return con.id === updatedConversation
+            ? { ...con, pinned: !con.pinned }
+            : con;
         }
+      );
+    },
+    deleteDirectConversation(state, action) {
+      state.direct_chat.conversations = state.direct_chat.conversations.filter(
+        (con) => con.id !== action.payload.room_id
       );
     },
     addDirectConversation(state, action) {
@@ -86,6 +78,34 @@ const slice = createSlice({
       }
     },
     setCurrentConversation(state, action) {
+      if (
+        state.direct_chat.current_conversation.room_id &&
+        state.direct_chat.current_conversation.room_id ===
+          action.payload.room_id
+      ) {
+        state.direct_chat.current_conversation = {
+          user_id: null,
+          room_id: null,
+          userInfo: {
+            name: null,
+            online: null,
+          },
+        };
+        state.direct_chat.current_meessages = null;
+      } else {
+        state.isLoadingMsg = true;
+        state.direct_chat.current_meessages = null;
+        state.direct_chat.current_conversation = action.payload;
+      }
+      // SetConversation({
+      //   user_id,
+      //   room_id: id,
+      //   userInfo: {
+      //     name,
+      //     online: online,
+      //   },
+      // })
+
       state.isLoadingMsg = true;
       state.direct_chat.current_meessages = null;
       state.direct_chat.current_conversation = action.payload;
@@ -114,10 +134,24 @@ const slice = createSlice({
       }
     },
     clearConversation(state) {
-      state.direct_chat.conversations = [];
-      state.direct_chat.current_conversation = null;
-      state.direct_chat.current_meessages = [];
-      state.isLoading = false;
+      const exists = state.direct_chat.conversations.some(
+        (member) =>
+          member.id === state.direct_chat?.current_conversation?.room_id
+      );
+
+      if (!exists) {
+        state.direct_chat.current_conversation = {
+          user_id: null,
+          room_id: null,
+          userInfo: {
+            name: null,
+            online: null,
+          },
+        };
+        state.direct_chat.current_meessages = [];
+        state.isLoading = false;
+      }
+      // state.direct_chat.conversations = [];
     },
     isLoading(state, action) {
       state.isLoading = action.payload;
@@ -135,9 +169,19 @@ export function GetDirectConversations({ conversations }) {
   };
 }
 
-export function UpdateDirectConversation({ conversations }) {
+export function UpdateDirectConversation({ conversation }) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.updateDirectConversation({ conversations }));
+    dispatch(
+      slice.actions.updateDirectConversation({
+        conversation,
+        conversations: getState(),
+      })
+    );
+  };
+}
+export function DeleteDirectConversation({ room_id }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.deleteDirectConversation({ room_id }));
   };
 }
 export function AddDirectConversation(conversations) {

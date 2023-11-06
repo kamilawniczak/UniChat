@@ -103,15 +103,7 @@ const UserElement = ({ img, firstName, lastName, online, _id }) => {
   );
 };
 
-const FriendElement = ({
-  img,
-  firstName,
-  lastName,
-  incoming,
-  missed,
-  online,
-  _id,
-}) => {
+const FriendElement = ({ img, firstName, lastName, online, _id }) => {
   const theme = useTheme();
 
   const name = `${firstName} ${lastName}`;

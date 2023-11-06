@@ -37,6 +37,12 @@ const messageSchema = new mongoose.Schema({
       },
     },
   ],
+  pinnedBy: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+  ],
 });
 
 const Message = new mongoose.model("Message", messageSchema);

@@ -53,7 +53,6 @@ const DashboardLayout = () => {
         if (!existing_conversation) {
           dispatch(AddDirectConversation(data));
         }
-        dispatch(SetConversation({ room_id: data._id }));
       });
       socket.on("new_message", (data) => {
         const message = data.message;
