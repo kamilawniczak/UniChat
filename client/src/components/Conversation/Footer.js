@@ -179,7 +179,9 @@ const Footer = () => {
 
   const handleClickEnter = (event) => {
     if (event.key === "Enter") {
-      dataToSend();
+      if (value.trim().length > 0) {
+        dataToSend();
+      }
     }
   };
 
@@ -276,7 +278,7 @@ const Footer = () => {
             >
               <IconButton
                 onClick={() => {
-                  if (value.length) {
+                  if (value.trim().length > 0) {
                     dataToSend();
                   }
                 }}

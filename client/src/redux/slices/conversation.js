@@ -129,7 +129,7 @@ const slice = createSlice({
       const array = state?.direct_chat?.current_meessages;
       if (array === null) return;
 
-      if (array[array.length - 1].id !== action.payload.id) {
+      if (array[array.length - 1]?.id !== action.payload?.id) {
         state.direct_chat.current_meessages.push(action.payload);
       }
     },
@@ -185,7 +185,7 @@ export function DeleteDirectConversation({ room_id }) {
   };
 }
 export function AddDirectConversation(conversations) {
-  return async (dispatch, getState) => {
+  return (dispatch, getState) => {
     dispatch(slice.actions.addDirectConversation(conversations));
   };
 }

@@ -54,11 +54,10 @@ const DashboardLayout = () => {
           dispatch(AddDirectConversation(data));
         }
       });
-      socket.on("new_message", (data) => {
-        const message = data.message;
+      socket.on("new_message", async (data) => {
+        const message = await data.message;
 
-        // check if msg we got is from currently selected conversation
-        if (current_conversation?.room_id === data.conversation_id) {
+        if (current_conversation?.room_id === data?.conversation_id) {
           dispatch(
             AddDirectMessage({
               id: message?._id,
@@ -69,14 +68,14 @@ const DashboardLayout = () => {
               outgoing: message.from === user_id,
             })
           );
-          if (data.user_info) {
-            dispatch(
-              OpenSnackBar({
-                severity: "success",
-                message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
-              })
-            );
-          }
+        }
+        if (data.user_info) {
+          dispatch(
+            OpenSnackBar({
+              severity: "success",
+              message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
+            })
+          );
         }
       });
     }

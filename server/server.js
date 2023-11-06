@@ -11,6 +11,7 @@ const { Server } = require("socket.io");
 const User = require("./models/user");
 const FriendRequest = require("./models/FriendRequest");
 const Message = require("./models/message");
+const { lstat } = require("fs");
 
 process.on("uncaughtException", (err) => {
   console.log(err);

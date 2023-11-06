@@ -4,10 +4,11 @@ import ThemeProvider from "./theme";
 
 import ThemeSettings from "./components/settings";
 import { Slide, Snackbar } from "@mui/material";
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 import MuiAlert from "@mui/material/Alert";
 import { useDispatch, useSelector } from "react-redux";
 import { CloseSnackBar, getSnackBarApp } from "./redux/slices/app";
+import { socket } from "./socket";
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -16,6 +17,19 @@ const Alert = forwardRef(function Alert(props, ref) {
 function App() {
   const { severity, message, open } = useSelector(getSnackBarApp());
   const dispatch = useDispatch();
+  const user_id = window.localStorage.getItem("user_id");
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem("user_id");
+      socket.emit("logout", { user_id: user_id });
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   return (
     <>

@@ -10,10 +10,7 @@ import SharedMsg from "../../components/SharedMsg";
 import StarredMsg from "../../components/StarredMsg";
 
 import SVG_No_Chat from "../../assets/Illustration/NoChat";
-import {
-  getDirectConversations,
-  getRoomId,
-} from "../../redux/slices/conversation";
+import { getRoomId } from "../../redux/slices/conversation";
 import { useEffect } from "react";
 
 const handleSidebarType = (type) => {
@@ -34,13 +31,13 @@ const GeneralApp = () => {
   const { sideBar, chat_type } = useSelector((state) => state.app);
   const room_id = useSelector(getRoomId());
 
-  useEffect(() => {
-    console.log("witam");
+  // useEffect(() => {
+  //   console.log("witam");
 
-    return () => {
-      console.log("żegname");
-    };
-  }, []);
+  //   return () => {
+  //     console.log("żegname");
+  //   };
+  // }, []);
 
   return (
     <Stack

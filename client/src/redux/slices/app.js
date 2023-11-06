@@ -76,7 +76,7 @@ export function UpdateSidebarType(type) {
   };
 }
 export function OpenSnackBar({ severity, message }) {
-  return async (dispatch, getState) => {
+  return (dispatch, getState) => {
     dispatch(slice.actions.openSnackBar({ severity, message }));
 
     setTimeout(() => {
