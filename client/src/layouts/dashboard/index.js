@@ -12,6 +12,7 @@ import {
   AddDirectMessage,
   SetConversation,
   UpdateDirectConversation,
+  UpdateOnline,
   getDirectConversations,
 } from "../../redux/slices/conversation";
 
@@ -54,9 +55,9 @@ const DashboardLayout = () => {
           dispatch(AddDirectConversation(data));
         }
       });
-      socket.on("new_message", async (data) => {
-        const message = await data.message;
-
+      socket.on("new_message", (data) => {
+        // console.log(data);
+        const message = data.message;
         if (current_conversation?.room_id === data?.conversation_id) {
           dispatch(
             AddDirectMessage({
@@ -78,6 +79,11 @@ const DashboardLayout = () => {
           );
         }
       });
+      socket.on("statusChanged", ({ to, from, online }) => {
+        if (to === user_id) {
+          dispatch(UpdateOnline({ online, from }));
+        }
+      });
     }
 
     return () => {
@@ -86,7 +92,7 @@ const DashboardLayout = () => {
       socket?.off("request_sent");
       socket?.off("start_chat?");
     };
-  }, [isLoggedIn, socket]);
+  }, [isLoggedIn, socket, current_conversation]);
 
   if (!isLoggedIn) {
     return <Navigate to="/auth/login" />;

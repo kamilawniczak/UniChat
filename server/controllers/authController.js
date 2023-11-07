@@ -137,6 +137,8 @@ exports.login = async (req, res, next) => {
       message: "Email or password is incorrect",
     });
   }
+  user.status = "Online";
+  user.save();
 
   const token = signToken(user._id);
   const userInfo = {

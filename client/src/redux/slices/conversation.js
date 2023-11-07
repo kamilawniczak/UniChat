@@ -1,13 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { faker } from "@faker-js/faker";
-
-const user_id = window.localStorage.getItem("user_id");
+import { socket } from "../../socket";
 
 const initialState = {
   direct_chat: {
     conversations: [],
     current_conversation: null,
     current_meessages: [],
+    unread_messages: [],
   },
   group_chat: {},
   isLoading: false,
@@ -19,11 +19,15 @@ const slice = createSlice({
   initialState,
   reducers: {
     getDirectConversations(state, action) {
+      const user_id = window.localStorage.getItem("user_id");
+
       const list = action.payload.conversations.map((e) => {
         const this_user = e.members.find(
-          (member) => member._id.toString() !== user_id
+          (member) => member._id.toString() !== action.payload.userId
         );
+
         const pinned = e.pinnedBy.includes(user_id);
+
         return {
           id: e._id,
           user_id: this_user._id,
@@ -34,10 +38,35 @@ const slice = createSlice({
           unread: 0,
           pinned: pinned,
           online: this_user.status === "Online",
+          lastMessage: e.messages.length ? e.messages.at(-1)?.text : "",
         };
       });
 
       state.direct_chat.conversations = list;
+
+      //send notification to other users
+
+      const chats = list.map((conversation) => {
+        return conversation.user_id;
+      });
+      const friends = chats.flat();
+
+      socket.emit("setStatus", {
+        user_id: action.payload.userId,
+        friends,
+        online: true,
+      });
+    },
+    updateOnline(state, action) {
+      const updatedConversation = action.payload.from;
+
+      state.direct_chat.conversations = state.direct_chat.conversations.map(
+        (con) => {
+          return con.user_id === updatedConversation
+            ? { ...con, online: action.payload.online }
+            : con;
+        }
+      );
     },
     updateDirectConversation(state, action) {
       const updatedConversation = action.payload.conversation._id;
@@ -56,6 +85,7 @@ const slice = createSlice({
       );
     },
     addDirectConversation(state, action) {
+      const user_id = window.localStorage.getItem("user_id");
       const this_conversation = action.payload;
       const user = this_conversation.members.find(
         (e) => e._id.toString() !== user_id
@@ -74,6 +104,7 @@ const slice = createSlice({
           unread: 0,
           pinned: false,
           online: user.status === "Online",
+          lastMessage: "",
         });
       }
     },
@@ -111,6 +142,7 @@ const slice = createSlice({
       state.direct_chat.current_conversation = action.payload;
     },
     getCurrentMessages(state, action) {
+      const user_id = window.localStorage.getItem("user_id");
       const formatted_messages = action.payload.messages.map((el) => {
         return {
           id: el._id,
@@ -127,11 +159,25 @@ const slice = createSlice({
     },
     addDirectMessage(state, action) {
       const array = state?.direct_chat?.current_meessages;
-      if (array === null) return;
+      if (array.length === null) return;
 
       if (array[array.length - 1]?.id !== action.payload?.id) {
         state.direct_chat.current_meessages.push(action.payload);
       }
+    },
+    addUnreadMessage(state, action) {
+      // const array = state?.direct_chat?.current_meessages;
+      // if (array.length === null) return;
+      // if (array[array.length - 1]?.id !== action.payload?.id) {
+      //   state.direct_chat.current_meessages.push(action.payload);
+      // }
+    },
+    deleteUnreadMessage(state, action) {
+      // const array = state?.direct_chat?.current_meessages;
+      // if (array.length === null) return;
+      // if (array[array.length - 1]?.id !== action.payload?.id) {
+      //   state.direct_chat.current_meessages.push(action.payload);
+      // }
     },
     clearConversation(state) {
       const exists = state.direct_chat.conversations.some(
@@ -165,7 +211,10 @@ export default slice.reducer;
 
 export function GetDirectConversations({ conversations }) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.getDirectConversations({ conversations }));
+    const userId = await getState().auth.user_id;
+    await dispatch(
+      slice.actions.getDirectConversations({ conversations, userId })
+    );
   };
 }
 
@@ -199,9 +248,25 @@ export function GetCurrentMessages({ messages }) {
     dispatch(slice.actions.getCurrentMessages({ messages }));
   };
 }
+export function UpdateOnline({ online, from }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.updateOnline({ from, online }));
+  };
+}
+
 export function AddDirectMessage(message) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.addDirectMessage(message));
+  };
+}
+export function AddUnreadMessage({ room_id, message }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.addUnreadMessage({ room_id, message }));
+  };
+}
+export function DeleteUnreadMessage({ room_id }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.deleteUnreadMessage({ room_id }));
   };
 }
 export function ClearConversation() {

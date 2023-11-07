@@ -37,10 +37,25 @@ const Conversation_Menu = [
 
 const checkMessage = (message) => {
   if (message.length < 20) return message;
-  return message.split("").slice(0, 20).join("") + "...";
+  return (
+    message
+      .split("")
+      .slice(0, 20)
+      .join("") + "..."
+  );
 };
 
-const ChatElement = ({ id, name, img, msg, time, unread, online, user_id }) => {
+const ChatElement = ({
+  id,
+  name,
+  img,
+  msg,
+  time,
+  unread,
+  online,
+  user_id,
+  lastMessage = "",
+}) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -127,7 +142,9 @@ const ChatElement = ({ id, name, img, msg, time, unread, online, user_id }) => {
 
           <Stack spacing={0.3}>
             <Typography variant="subtitle2">{name}</Typography>{" "}
-            <Typography variant="caption">{checkMessage(msg)}</Typography>
+            <Typography variant="caption">
+              {checkMessage(lastMessage)}
+            </Typography>
           </Stack>
         </Stack>
         <Stack spacing={2} alignItems="center">

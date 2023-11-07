@@ -12,6 +12,7 @@ const User = require("./models/user");
 const FriendRequest = require("./models/FriendRequest");
 const Message = require("./models/message");
 const { lstat } = require("fs");
+const { emit } = require("process");
 
 process.on("uncaughtException", (err) => {
   console.log(err);
@@ -52,24 +53,18 @@ io.on("connection", async (socket) => {
 
   if (user_id != null && Boolean(user_id)) {
     try {
-      await User.findByIdAndUpdate(
-        { _id: user_id },
-        {
-          socket_id: socket.id,
-          status: "Online",
-        }
-      );
+      await User.findByIdAndUpdate(user_id, {
+        socket_id: socket.id,
+        status: "Online",
+      });
     } catch (e) {
       console.log(e);
     }
   }
   socket.on("logout", async ({ user_id }) => {
-    await User.findByIdAndUpdate(
-      { _id: user_id },
-      {
-        status: "Offline",
-      }
-    );
+    await User.findByIdAndUpdate(user_id, {
+      status: "Offline",
+    });
   });
 
   // We can write our socket event listeners in here...
@@ -256,6 +251,15 @@ io.on("connection", async (socket) => {
   socket.on("deleteConversation", async ({ room_id }, callback) => {
     await Message.findByIdAndDelete(room_id);
     callback({ message: "conversation deleted successfully", room_id });
+  });
+  socket.on("setStatus", async ({ user_id, friends, online }) => {
+    const this_user_id = socket.handshake.query["user_id"];
+    for (const friend of friends) {
+      const user = await User.findById(friend).select("socket_id");
+      socket
+        .to(user.socket_id)
+        .emit("statusChanged", { to: user._id, online, from: this_user_id });
+    }
   });
 });
 

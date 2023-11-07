@@ -32,7 +32,14 @@ const slice = createSlice({
       state.user_id = action.payload.user_id;
     },
     logOut(state, action) {
+      const friends = action.payload.friends;
+
       socket.emit("logout", { user_id: state.user_id });
+      socket.emit("setStatus", {
+        user_id: state.user_id,
+        friends,
+        online: false,
+      });
       state.isLoggedIn = false;
       state.token = "";
       state.user_id = null;
@@ -50,7 +57,7 @@ const slice = createSlice({
 export default slice.reducer;
 
 export function LoginUser(formValues) {
-  return async (dispatch, getState) => {
+  return async (dispatch, getValues) => {
     try {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
@@ -64,6 +71,7 @@ export function LoginUser(formValues) {
           },
         }
       );
+      window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         slice.actions.logIn({
           isLoggedIn: true,
@@ -71,8 +79,9 @@ export function LoginUser(formValues) {
           user_id: response.data.user_id,
         })
       );
+
       dispatch(slice.actions.userInfo(response.data.userInfo));
-      window.localStorage.setItem("user_id", response.data.user_id);
+
       dispatch(
         OpenSnackBar({ message: response.data.message, severity: "success" })
       );
@@ -90,11 +99,22 @@ export function LoginUser(formValues) {
 }
 
 export function LogoutUser() {
-  return (dispatch, getValues) => {
+  return async (dispatch, getValues) => {
+    const conversations = getValues()?.coversations?.direct_chat?.conversations.map(
+      (conversation) => {
+        return conversation.user_id;
+      }
+    );
+    const friends = conversations.flat();
+
     window.localStorage.removeItem("user_id");
-    dispatch(slice.actions.logOut());
-    dispatch(
-      OpenSnackBar({ message: "logged out seccessfully", severity: "success" })
+    await dispatch(slice.actions.logOut({ friends }));
+
+    await dispatch(
+      OpenSnackBar({
+        message: "logged out seccessfully",
+        severity: "success",
+      })
     );
   };
 }
@@ -205,14 +225,13 @@ export function VerifyEmail(formValues) {
           },
         }
       );
-
+      window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         slice.actions.logIn({
           isLoggedIn: true,
           token: response.data.token,
         })
       );
-      window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
