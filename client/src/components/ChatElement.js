@@ -9,12 +9,13 @@ import {
   useTheme,
 } from "@mui/material";
 import StyledBadge from "./StyledBadge";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { OpenSnackBar, SelectRoom } from "../redux/slices/app";
 import {
   DeleteDirectConversation,
   SetConversation,
   UpdateDirectConversation,
+  getDirectConversations,
 } from "../redux/slices/conversation";
 import {
   DotsThreeOutlineVertical,
@@ -61,6 +62,16 @@ const ChatElement = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const this_user_id = window.localStorage.getItem("user_id");
+
+  const { unread_messages, current_conversation } = useSelector(
+    getDirectConversations()
+  );
+  const unread_msg = unread_messages.filter((msg) => msg.room_id === id);
+  const { room_id } = current_conversation;
+
+  let textToShow = unread_msg?.length
+    ? unread_msg[unread_msg?.length - 1].message.message
+    : lastMessage;
 
   const handleClose = (e) => {
     setAnchorEl(null);
@@ -142,16 +153,18 @@ const ChatElement = ({
 
           <Stack spacing={0.3}>
             <Typography variant="subtitle2">{name}</Typography>{" "}
-            <Typography variant="caption">
-              {checkMessage(lastMessage)}
-            </Typography>
+            {room_id === id || (
+              <Typography variant="caption">
+                {checkMessage(textToShow)}
+              </Typography>
+            )}
           </Stack>
         </Stack>
         <Stack spacing={2} alignItems="center">
           <Typography sx={{ fontWeight: 600 }} variant="caption">
             {time}
           </Typography>
-          <Badge color="primary" badgeContent={unread} />
+          <Badge color="primary" badgeContent={unread_msg.length} />
         </Stack>
         <Stack>
           <DotsThreeOutlineVertical

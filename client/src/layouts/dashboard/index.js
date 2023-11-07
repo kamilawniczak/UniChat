@@ -10,6 +10,7 @@ import { OpenSnackBar } from "../../redux/slices/app";
 import {
   AddDirectConversation,
   AddDirectMessage,
+  AddUnreadMessage,
   SetConversation,
   UpdateDirectConversation,
   UpdateOnline,
@@ -58,23 +59,32 @@ const DashboardLayout = () => {
       socket.on("new_message", (data) => {
         // console.log(data);
         const message = data.message;
+
+        const fittedMessage = {
+          id: message?._id,
+          type: "msg",
+          subtype: message?.subtype,
+          message: message.text,
+          incoming: message.to === user_id,
+          outgoing: message.from === user_id,
+        };
+
         if (current_conversation?.room_id === data?.conversation_id) {
-          dispatch(
-            AddDirectMessage({
-              id: message?._id,
-              type: "msg",
-              subtype: message?.subtype,
-              message: message.text,
-              incoming: message.to === user_id,
-              outgoing: message.from === user_id,
-            })
-          );
+          dispatch(AddDirectMessage(fittedMessage));
+        }
+        if (current_conversation?.room_id !== data?.conversation_id) {
         }
         if (data.user_info) {
           dispatch(
             OpenSnackBar({
               severity: "success",
               message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
+            })
+          );
+          dispatch(
+            AddUnreadMessage({
+              room_id: data?.conversation_id,
+              message: fittedMessage,
             })
           );
         }

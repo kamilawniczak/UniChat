@@ -5,8 +5,10 @@ import Message from "./Message";
 import { useDispatch, useSelector } from "react-redux";
 import {
   GetCurrentMessages,
+  ReceiveMessages,
   getConversations,
   getDirectConversations,
+  getRoomId,
 } from "../../redux/slices/conversation";
 import { socket } from "../../socket";
 
@@ -16,12 +18,17 @@ const Chat = () => {
   );
   const { isLoadingMsg } = useSelector(getConversations());
   const dispatch = useDispatch();
+  const room_id = useSelector(getRoomId());
 
   useEffect(() => {
     socket.emit("get_messages", current_conversation, async (data) => {
       dispatch(GetCurrentMessages({ messages: data }));
     });
   }, [current_conversation.room_id]);
+
+  useEffect(() => {
+    dispatch(ReceiveMessages({ room_id }));
+  }, [room_id, dispatch]);
 
   return (
     <Box p={3}>

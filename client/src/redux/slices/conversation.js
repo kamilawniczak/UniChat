@@ -138,8 +138,6 @@ const slice = createSlice({
       // })
 
       state.isLoadingMsg = true;
-      state.direct_chat.current_meessages = null;
-      state.direct_chat.current_conversation = action.payload;
     },
     getCurrentMessages(state, action) {
       const user_id = window.localStorage.getItem("user_id");
@@ -159,25 +157,50 @@ const slice = createSlice({
     },
     addDirectMessage(state, action) {
       const array = state?.direct_chat?.current_meessages;
-      if (array.length === null) return;
 
-      if (array[array.length - 1]?.id !== action.payload?.id) {
-        state.direct_chat.current_meessages.push(action.payload);
+      if (array) {
+        const lastMessage = array[array.length - 1];
+        if (!lastMessage || lastMessage.id !== action.payload?.id) {
+          state.direct_chat.current_meessages.push(action.payload);
+        }
+      } else {
+        state.direct_chat.current_meessages = [action.payload];
       }
     },
     addUnreadMessage(state, action) {
-      // const array = state?.direct_chat?.current_meessages;
-      // if (array.length === null) return;
-      // if (array[array.length - 1]?.id !== action.payload?.id) {
-      //   state.direct_chat.current_meessages.push(action.payload);
-      // }
+      const { room_id, message } = action.payload;
+      const array = state.direct_chat.unread_messages;
+
+      if (array[array.length - 1]?.message?.id !== message?.id) {
+        array.push(action.payload);
+      }
     },
-    deleteUnreadMessage(state, action) {
-      // const array = state?.direct_chat?.current_meessages;
-      // if (array.length === null) return;
-      // if (array[array.length - 1]?.id !== action.payload?.id) {
-      //   state.direct_chat.current_meessages.push(action.payload);
+
+    receiveMessages(state, action) {
+      const { room_id } = action.payload;
+
+      // const unreadedMsg = state.direct_chat.unread_messages.filter(
+      //   (mess) => mess.room_id === room_id
+      // );
+
+      // if (unreadedMsg.length > 0) {
+      //   const lastUnreadMsg = unreadedMsg[unreadedMsg.length - 1];
+
+      //   state.direct_chat.conversations = state.direct_chat.conversations.map(
+      //     (con) =>
+      //       con.id === room_id ? { ...con, lastMessage: lastUnreadMsg } : con
+      //   );
       // }
+
+      // state.direct_chat.conversations.map((con) => {
+      //   con;
+      // });
+      //delete from unread messages
+      state.direct_chat.unread_messages = state.direct_chat.unread_messages.filter(
+        (mess) => mess.room_id !== room_id
+      );
+
+      //TODO some emit to chang data in data base read to unread
     },
     clearConversation(state) {
       const exists = state.direct_chat.conversations.some(
@@ -264,11 +287,12 @@ export function AddUnreadMessage({ room_id, message }) {
     dispatch(slice.actions.addUnreadMessage({ room_id, message }));
   };
 }
-export function DeleteUnreadMessage({ room_id }) {
+export function ReceiveMessages({ room_id }) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.deleteUnreadMessage({ room_id }));
+    dispatch(slice.actions.receiveMessages({ room_id }));
   };
 }
+
 export function ClearConversation() {
   return async (dispatch, getState) => {
     dispatch(slice.actions.clearConversation());
