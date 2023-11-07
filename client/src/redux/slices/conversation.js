@@ -166,36 +166,39 @@ const slice = createSlice({
       } else {
         state.direct_chat.current_meessages = [action.payload];
       }
+
+      const updatedConversations = state.direct_chat.conversations.map(
+        (con) => {
+          return con.id === state.direct_chat?.current_conversation?.room_id
+            ? { ...con, lastMessage: action.payload.message }
+            : con;
+        }
+      );
+      state.direct_chat.conversations = [...updatedConversations];
     },
+
     addUnreadMessage(state, action) {
       const { room_id, message } = action.payload;
       const array = state.direct_chat.unread_messages;
 
-      if (array[array.length - 1]?.message?.id !== message?.id) {
-        array.push(action.payload);
+      if (state.direct_chat.current_conversation.room_id !== room_id) {
+        if (array[array.length - 1]?.message?.id !== message?.id) {
+          array.push(action.payload);
+        }
+
+        const updatedConversations = state.direct_chat.conversations.map(
+          (con) => {
+            return con.id === room_id
+              ? { ...con, lastMessage: message.message }
+              : con;
+          }
+        );
+        state.direct_chat.conversations = [...updatedConversations];
       }
     },
 
     receiveMessages(state, action) {
       const { room_id } = action.payload;
-
-      // const unreadedMsg = state.direct_chat.unread_messages.filter(
-      //   (mess) => mess.room_id === room_id
-      // );
-
-      // if (unreadedMsg.length > 0) {
-      //   const lastUnreadMsg = unreadedMsg[unreadedMsg.length - 1];
-
-      //   state.direct_chat.conversations = state.direct_chat.conversations.map(
-      //     (con) =>
-      //       con.id === room_id ? { ...con, lastMessage: lastUnreadMsg } : con
-      //   );
-      // }
-
-      // state.direct_chat.conversations.map((con) => {
-      //   con;
-      // });
-      //delete from unread messages
       state.direct_chat.unread_messages = state.direct_chat.unread_messages.filter(
         (mess) => mess.room_id !== room_id
       );

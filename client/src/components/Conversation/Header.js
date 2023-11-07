@@ -18,13 +18,11 @@ import React from "react";
 import StyledBadge from "../../components/StyledBadge";
 import { ToggleSidebar } from "../../redux/slices/app";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserInfo } from "../../redux/slices/auth";
 import { getDirectConversations } from "../../redux/slices/conversation";
 
 const Header = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  // const { firstName, lastName, avatar } = useSelector(getUserInfo());
   const { current_conversation } = useSelector(getDirectConversations());
   const { userInfo } = current_conversation;
   const { name, online } = userInfo;
@@ -75,12 +73,6 @@ const Header = () => {
           </Stack>
         </Stack>
         <Stack direction="row" alignItems="center" spacing={3}>
-          <IconButton>
-            <VideoCamera />
-          </IconButton>
-          <IconButton>
-            <PhoneIncoming />
-          </IconButton>
           <IconButton>
             <MagnifyingGlass />
           </IconButton>

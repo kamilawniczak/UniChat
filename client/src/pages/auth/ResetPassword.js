@@ -3,8 +3,11 @@ import { Link as RouterLink } from "react-router-dom";
 import React from "react";
 import { CaretLeft } from "@phosphor-icons/react";
 import ResetPasswordForm from "../../sections/auth/resetPasswordForm";
+import { useSelector } from "react-redux";
+import { getIsLoadingAuth } from "../../redux/slices/auth";
 
 const ResetPassword = () => {
+  const isLoading = useSelector(getIsLoadingAuth());
   return (
     <>
       <Stack spacing={2} sx={{ mb: 5, position: "relative" }}>
@@ -24,6 +27,7 @@ const ResetPassword = () => {
           sx={{
             alignItems: "center",
             display: "inline-flex",
+            pointerEvents: isLoading ? "none" : "auto",
           }}
         >
           <CaretLeft />

@@ -80,9 +80,6 @@ const handlePath = (index) => {
       return "/group";
 
     case 2:
-      return "/call";
-
-    case 3:
       return "/settings";
 
     default:
@@ -196,7 +193,7 @@ const SideBar = () => {
               }}
             />
 
-            {handlePath(3) === location.pathname ? (
+            {handlePath(2) === location.pathname ? (
               <Box
                 sx={{
                   backgroundColor: theme.palette.primary.main,
@@ -210,7 +207,7 @@ const SideBar = () => {
             ) : (
               <IconButton
                 onClick={() => {
-                  navigate(handlePath(3));
+                  navigate(handlePath(2));
                 }}
                 sx={{
                   width: "max-content",

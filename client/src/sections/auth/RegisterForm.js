@@ -11,14 +11,17 @@ import React from "react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { RegisterNewUser } from "../../redux/slices/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { RegisterNewUser, getIsLoadingAuth } from "../../redux/slices/auth";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, formState, getValues, handleSubmit, reset } = useForm();
   const { errors } = formState;
   const dispatch = useDispatch();
+  const isLoading = useSelector(getIsLoadingAuth());
+
   const onSubmit = (formData) => {
     dispatch(RegisterNewUser(formData));
   };
@@ -30,6 +33,7 @@ const RegisterForm = () => {
       <Stack>
         <Stack spacing={2} direction="row" sx={{ mb: 3 }}>
           <TextField
+            disabled={isLoading}
             id="firstName"
             fullWidth
             helperText={
@@ -46,6 +50,7 @@ const RegisterForm = () => {
             })}
           />
           <TextField
+            disabled={isLoading}
             id="lastName"
             fullWidth
             helperText={errors?.lastName?.message && errors?.lastName?.message}
@@ -62,6 +67,7 @@ const RegisterForm = () => {
         </Stack>
         <Stack spacing={3}>
           <TextField
+            disabled={isLoading}
             id="email"
             fullWidth
             helperText={errors?.email?.message && errors?.email?.message}
@@ -76,6 +82,7 @@ const RegisterForm = () => {
             })}
           />
           <TextField
+            disabled={isLoading}
             id="password"
             fullWidth
             helperText={errors?.password?.message && errors?.password?.message}
@@ -97,13 +104,14 @@ const RegisterForm = () => {
                     onClick={handleClickShowPassword}
                     edge="end"
                   >
-                    {showPassword ? <EyeSlash /> : <Eye />}
+                    {showPassword && !isLoading ? <Eye /> : <EyeSlash />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
           />
           <TextField
+            disabled={isLoading}
             id="passwordConfirmed"
             fullWidth
             helperText={
@@ -129,7 +137,7 @@ const RegisterForm = () => {
                     onClick={handleClickShowPassword}
                     edge="end"
                   >
-                    {showPassword ? <EyeSlash /> : <Eye />}
+                    {showPassword && !isLoading ? <Eye /> : <EyeSlash />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -143,31 +151,58 @@ const RegisterForm = () => {
           direction="row"
           alignItems="center"
           justifyContent="space-between"
+          sx={{
+            pointerEvents: isLoading ? "none" : "auto",
+          }}
         >
           <Link to="/auth/login" component={RouterLink} variant={"subtitle2"}>
             I already have an account
           </Link>
         </Stack>
 
-        <Button
-          fullWidth
-          color="inherit"
-          size="large"
-          type="submit"
-          variant="contained"
-          sx={{
-            backgroundColor: "text.primary",
-            color: (theme) =>
-              theme.palette.mode === "light" ? "common.white" : "grey.800",
-            "&hover": {
-              bgcolor: "text.primary",
+        {!isLoading ? (
+          <Button
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
               color: (theme) =>
                 theme.palette.mode === "light" ? "common.white" : "grey.800",
-            },
-          }}
-        >
-          Sign up
-        </Button>
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Sign Up
+          </Button>
+        ) : (
+          <LoadingButton
+            disabled={isLoading}
+            loading
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "common.white" : "grey.800",
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Submit
+          </LoadingButton>
+        )}
       </Stack>
     </form>
   );

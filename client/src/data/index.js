@@ -33,10 +33,6 @@ const Nav_Buttons = [
     index: 1,
     icon: <Users />,
   },
-  {
-    index: 2,
-    icon: <Phone />,
-  },
 ];
 
 const Nav_Setting = [
@@ -291,15 +287,6 @@ const Message_options = [
   },
   {
     title: "React to message",
-  },
-  {
-    title: "Forward message",
-  },
-  {
-    title: "Star message",
-  },
-  {
-    title: "Report",
   },
   {
     title: "Delete Message",

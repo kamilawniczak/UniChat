@@ -3,8 +3,11 @@ import { CaretLeft } from "@phosphor-icons/react";
 import { Link as RouterLink } from "react-router-dom";
 import React from "react";
 import NewPasswordForm from "../../sections/auth/NewPasswordForm";
+import { getIsLoadingAuth } from "../../redux/slices/auth";
+import { useSelector } from "react-redux";
 
 const NewPassword = () => {
+  const isLoading = useSelector(getIsLoadingAuth());
   return (
     <>
       <Stack spacing={2} sx={{ mb: 5, position: "relative" }}>
@@ -25,6 +28,7 @@ const NewPassword = () => {
         sx={{
           alignItems: "center",
           display: "inline-flex",
+          pointerEvents: isLoading ? "none" : "auto",
         }}
       >
         <CaretLeft />

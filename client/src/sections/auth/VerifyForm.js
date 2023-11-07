@@ -1,9 +1,10 @@
 import React, { createRef } from "react";
 import { Button, Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { LENGTH_OF_OTP } from "../../config";
-import { VerifyEmail } from "../../redux/slices/auth";
+import { VerifyEmail, getIsLoadingAuth } from "../../redux/slices/auth";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 const VerifyForm = () => {
   const { register, formState, handleSubmit, setValue, reset } = useForm();
@@ -13,8 +14,12 @@ const VerifyForm = () => {
     .fill(null)
     .map(() => createRef());
 
+  const isLoading = useSelector(getIsLoadingAuth());
+
   const onSubmit = (formData) => {
-    const otp = Object.values(formData).join().replaceAll(",", "");
+    const otp = Object.values(formData)
+      .join()
+      .replaceAll(",", "");
     try {
       dispatch(VerifyEmail({ otp }));
     } catch (error) {
@@ -59,6 +64,7 @@ const VerifyForm = () => {
       <Stack direction="row" justifyContent="space-evenly" alignItems="center">
         {inputRefs.map((e, i) => (
           <TextField
+            disabled={isLoading}
             key={i}
             type="text"
             placeholder="-"
@@ -92,25 +98,49 @@ const VerifyForm = () => {
       </Stack>
 
       <Stack sx={{ my: 2 }} spacing={1}>
-        <Button
-          fullWidth
-          color="inherit"
-          size="large"
-          type="submit"
-          variant="contained"
-          sx={{
-            backgroundColor: "text.primary",
-            color: (theme) =>
-              theme.palette.mode === "light" ? "common.white" : "grey.800",
-            "&hover": {
-              bgcolor: "text.primary",
+        {!isLoading ? (
+          <Button
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
               color: (theme) =>
                 theme.palette.mode === "light" ? "common.white" : "grey.800",
-            },
-          }}
-        >
-          Sign up
-        </Button>
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Sign up
+          </Button>
+        ) : (
+          <LoadingButton
+            disabled={isLoading}
+            loading
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "common.white" : "grey.800",
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Submit
+          </LoadingButton>
+        )}
       </Stack>
     </form>
   );

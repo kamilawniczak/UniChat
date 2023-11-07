@@ -57,7 +57,6 @@ const DashboardLayout = () => {
         }
       });
       socket.on("new_message", (data) => {
-        // console.log(data);
         const message = data.message;
 
         const fittedMessage = {
@@ -72,8 +71,7 @@ const DashboardLayout = () => {
         if (current_conversation?.room_id === data?.conversation_id) {
           dispatch(AddDirectMessage(fittedMessage));
         }
-        if (current_conversation?.room_id !== data?.conversation_id) {
-        }
+
         if (data.user_info) {
           dispatch(
             OpenSnackBar({
@@ -101,8 +99,16 @@ const DashboardLayout = () => {
       socket?.off("request_accepted");
       socket?.off("request_sent");
       socket?.off("start_chat?");
+      socket?.off("new_message");
     };
-  }, [isLoggedIn, socket, current_conversation]);
+  }, [
+    isLoggedIn,
+    socket,
+    current_conversation,
+    current_conversation?.room_id,
+    user_id,
+    dispatch,
+  ]);
 
   if (!isLoggedIn) {
     return <Navigate to="/auth/login" />;

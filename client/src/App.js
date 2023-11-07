@@ -8,7 +8,6 @@ import { forwardRef, useEffect } from "react";
 import MuiAlert from "@mui/material/Alert";
 import { useDispatch, useSelector } from "react-redux";
 import { CloseSnackBar, getSnackBarApp } from "./redux/slices/app";
-import { socket } from "./socket";
 import { LogoutUser } from "./redux/slices/auth";
 
 const Alert = forwardRef(function Alert(props, ref) {

@@ -1,8 +1,7 @@
 import { Link, Stack, Typography } from "@mui/material";
 
 import React from "react";
-import LoginForm from "../../sections/auth/LoginForm";
-import AuthSocial from "../../sections/auth/AuthSocial";
+
 import RegisterForm from "../../sections/auth/RegisterForm";
 
 const Register = () => {
@@ -30,7 +29,6 @@ const Register = () => {
         </Link>{" "}
         thus venturing into the digital tempest with a merry heart
       </Typography>
-      <AuthSocial />
     </Stack>
   );
 };

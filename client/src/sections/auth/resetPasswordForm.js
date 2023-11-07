@@ -1,13 +1,17 @@
 import { Button, Link, Stack, TextField } from "@mui/material";
-import { useDispatch } from "react-redux";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { useDispatch, useSelector } from "react-redux";
 
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { ForgotPassword } from "../../redux/slices/auth";
 
+import { getIsLoadingAuth } from "../../redux/slices/auth";
+
 const ResetPasswordForm = () => {
   const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
+  const isLoading = useSelector(getIsLoadingAuth());
 
   const dispatch = useDispatch();
   const onSubmit = (formData) => {
@@ -19,6 +23,7 @@ const ResetPasswordForm = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={3}>
           <TextField
+            disabled={isLoading}
             id="email"
             fullWidth
             helperText={!!errors?.email?.message && errors?.email?.message}
@@ -39,6 +44,9 @@ const ResetPasswordForm = () => {
             direction="row"
             alignItems="center"
             justifyContent="space-between"
+            sx={{
+              pointerEvents: isLoading ? "none" : "auto",
+            }}
           >
             <Link
               to="/auth/register"
@@ -49,25 +57,53 @@ const ResetPasswordForm = () => {
             </Link>
           </Stack>
 
-          <Button
-            fullWidth
-            color="inherit"
-            size="large"
-            type="submit"
-            variant="contained"
-            sx={{
-              backgroundColor: "text.primary",
-              color: (theme) =>
-                theme.palette.mode === "light" ? "common.white" : "grey.800",
-              "&hover": {
-                bgcolor: "text.primary",
+          {!isLoading ? (
+            <Button
+              fullWidth
+              color="inherit"
+              size="large"
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "text.primary",
                 color: (theme) =>
                   theme.palette.mode === "light" ? "common.white" : "grey.800",
-              },
-            }}
-          >
-            Confirm
-          </Button>
+                "&hover": {
+                  bgcolor: "text.primary",
+                  color: (theme) =>
+                    theme.palette.mode === "light"
+                      ? "common.white"
+                      : "grey.800",
+                },
+              }}
+            >
+              Confirm
+            </Button>
+          ) : (
+            <LoadingButton
+              disabled={isLoading}
+              loading
+              fullWidth
+              color="inherit"
+              size="large"
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+                "&hover": {
+                  bgcolor: "text.primary",
+                  color: (theme) =>
+                    theme.palette.mode === "light"
+                      ? "common.white"
+                      : "grey.800",
+                },
+              }}
+            >
+              Submit
+            </LoadingButton>
+          )}
         </Stack>
       </form>
     </>

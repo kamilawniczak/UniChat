@@ -202,8 +202,9 @@ export function RegisterNewUser(formValues) {
         slice.actions.updateIsLoading({ isLoading: false, error: true })
       );
     } finally {
+      const encodedEmail = encodeURIComponent(formValues.email);
       if (!getState().auth.error) {
-        window.location.href = "/auth/verify";
+        window.location.href = `/auth/verify?email=${encodedEmail}`;
       }
     }
   };
@@ -211,7 +212,13 @@ export function RegisterNewUser(formValues) {
 
 export function VerifyEmail(formValues) {
   return async (dispatch, getState) => {
-    const { email } = getState().auth;
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const encodedEmail = urlParams.get("email");
+    const decodedEmail = decodeURIComponent(encodedEmail);
+    const email = decodedEmail;
+
+    console.log(email, formValues);
     try {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })

@@ -9,9 +9,10 @@ import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useSearchParams } from "react-router-dom";
 import React from "react";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
-import { NewPassword } from "../../redux/slices/auth";
+import { NewPassword, getIsLoadingAuth } from "../../redux/slices/auth";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 const NewPasswordForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +20,8 @@ const NewPasswordForm = () => {
   const { errors } = formState;
   const disaptch = useDispatch();
   const [params] = useSearchParams();
+
+  const isLoading = useSelector(getIsLoadingAuth());
 
   const onSubmit = (formData) => {
     try {
@@ -34,6 +37,7 @@ const NewPasswordForm = () => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={3}>
         <TextField
+          disabled={isLoading}
           id="password"
           fullWidth
           helperText={errors?.password?.message && errors?.password?.message}
@@ -55,13 +59,14 @@ const NewPasswordForm = () => {
                   onClick={handleClickShowPassword}
                   edge="end"
                 >
-                  {showPassword ? <EyeSlash /> : <Eye />}
+                  {showPassword && !isLoading ? <Eye /> : <EyeSlash />}
                 </IconButton>
               </InputAdornment>
             ),
           }}
         />
         <TextField
+          disabled={isLoading}
           id="passwordConfirmed"
           fullWidth
           helperText={
@@ -87,7 +92,7 @@ const NewPasswordForm = () => {
                   onClick={handleClickShowPassword}
                   edge="end"
                 >
-                  {showPassword ? <EyeSlash /> : <Eye />}
+                  {showPassword && !isLoading ? <Eye /> : <EyeSlash />}
                 </IconButton>
               </InputAdornment>
             ),
@@ -96,25 +101,49 @@ const NewPasswordForm = () => {
       </Stack>
 
       <Stack sx={{ my: 2 }} spacing={1}>
-        <Button
-          fullWidth
-          color="inherit"
-          size="large"
-          type="submit"
-          variant="contained"
-          sx={{
-            backgroundColor: "text.primary",
-            color: (theme) =>
-              theme.palette.mode === "light" ? "common.white" : "grey.800",
-            "&hover": {
-              bgcolor: "text.primary",
+        {!isLoading ? (
+          <Button
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
               color: (theme) =>
                 theme.palette.mode === "light" ? "common.white" : "grey.800",
-            },
-          }}
-        >
-          Sign up
-        </Button>
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Sign up
+          </Button>
+        ) : (
+          <LoadingButton
+            disabled={isLoading}
+            loading
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "text.primary",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "common.white" : "grey.800",
+              "&hover": {
+                bgcolor: "text.primary",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "common.white" : "grey.800",
+              },
+            }}
+          >
+            Submit
+          </LoadingButton>
+        )}
       </Stack>
     </form>
   );

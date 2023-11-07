@@ -4,7 +4,7 @@ import Header from "./Header";
 import Chat from "./Chat";
 import Footer from "./Footer";
 import { Box, Stack } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { getDirectConversations } from "../../redux/slices/conversation";
 
 const Conversation = () => {
