@@ -13,6 +13,7 @@ const FriendRequest = require("./models/FriendRequest");
 const Message = require("./models/message");
 const { lstat } = require("fs");
 const { emit } = require("process");
+const GroupMessage = require("./models/group_messages");
 
 process.on("uncaughtException", (err) => {
   console.log(err);
@@ -121,7 +122,7 @@ io.on("connection", async (socket) => {
     await callback(existing_conversations);
   });
 
-  socket.on("start_conversation", async (data) => {
+  socket.on("start_conversation", async (data, callback) => {
     const { to, from } = data;
 
     try {
@@ -136,10 +137,12 @@ io.on("connection", async (socket) => {
 
         const chat = await Message.findById(new_chat._id.toString()).populate(
           "members",
-          "firstName lastName _id email status"
+          "firstName lastName _id email status socket_id"
         );
 
-        socket.emit("start_chat", chat);
+        chat.members.forEach((mem) => {
+          io.to(mem.socket_id).emit("start_chat", chat);
+        });
       }
     } catch (error) {
       console.error("Error in start_conversation:", error);
@@ -252,15 +255,124 @@ io.on("connection", async (socket) => {
     await Message.findByIdAndDelete(room_id);
     callback({ message: "conversation deleted successfully", room_id });
   });
+
+  //------------------------group------------------------------------------
+
+  socket.on("start_group_conversation", async ({ title, members, user_id }) => {
+    try {
+      const new_chat = await GroupMessage.create({
+        members,
+        title,
+      });
+
+      const chat = await GroupMessage.findById(new_chat._id.toString())
+        .populate({
+          path: "members",
+          select: "firstName lastName _id email status socket_id",
+        })
+        .select("title");
+
+      chat.members.forEach((mem) => {
+        io.to(mem.socket_id).emit("start_group_chat", chat);
+      });
+    } catch (error) {
+      console.error("Error in start_conversation:", error);
+    }
+  });
+
+  socket.on("get_group_conversations", async ({ user_id }, callback) => {
+    const existing_conversations = await GroupMessage.find({
+      members: { $all: [user_id] },
+    }).populate(
+      "members",
+      "firstName lastName avatar _id email status sockte_id"
+    );
+
+    await callback(existing_conversations);
+  });
+  socket.on("get_group_messages", async (data, callback) => {
+    try {
+      const { messages } = await GroupMessage.findById(data.room_id).select(
+        "messages"
+      );
+      callback(messages);
+    } catch (error) {
+      console.log(error);
+    }
+  });
+  socket.on("text_group_message", async (data) => {
+    //TODO-------------------------------
+    // const { message, conversation_id, from, to, type, subtype } = data;
+    // const to_user = await User.findById(to);
+    // const from_user = await User.findById(from);
+    // const new_message = {
+    //   to: to,
+    //   from: from,
+    //   type: type,
+    //   subtype: subtype || "Text",
+    //   created_at: Date.now(),
+    //   text: message,
+    // };
+    // const chat = await Message.findById(conversation_id);
+    // chat.messages.push(new_message);
+    // const msg = await chat.save({
+    //   new: true,
+    //   validateModifiedOnly: true,
+    // });
+    // const lastMessage = msg.messages.at(-1);
+    // io.to(to_user?.socket_id).emit("new_group_message", {
+    //   user_info: {
+    //     id: from_user._id,
+    //     firstName: from_user.firstName,
+    //     lastName: from_user.lastName,
+    //   },
+    //   conversation_id,
+    //   message: lastMessage,
+    // });
+    // io.to(from_user?.socket_id).emit("new_group_message", {
+    //   conversation_id,
+    //   message: lastMessage,
+    // });
+  });
+
   socket.on("setStatus", async ({ user_id, friends, online }) => {
     const this_user_id = socket.handshake.query["user_id"];
     for (const friend of friends) {
       const user = await User.findById(friend).select("socket_id");
-      socket
-        .to(user.socket_id)
-        .emit("statusChanged", { to: user._id, online, from: this_user_id });
+      io.to(user.socket_id).emit("statusChanged", {
+        to: user._id,
+        online,
+        from: this_user_id,
+      });
     }
   });
+  socket.on(
+    "pinnedGroupConversation",
+    async ({ user_id, room_id }, callback) => {
+      //TODO -----------------------------
+      // const exists = await Message.findById(room_id);
+      // if (exists) {
+      //   const { pinnedBy } = exists;
+      //   const isPinned = pinnedBy.includes(user_id);
+      //   if (!isPinned) {
+      //     exists.pinnedBy.push(user_id);
+      //     await exists.save({
+      //       new: true,
+      //       validateModifiedOnly: true,
+      //     });
+      //   } else {
+      //     exists.pinnedBy = pinnedBy.filter(
+      //       (userId) => userId.toString() !== user_id
+      //     );
+      //     await exists.save({
+      //       new: true,
+      //       validateModifiedOnly: true,
+      //     });
+      //   }
+      //   await callback(exists);
+      // }
+    }
+  );
 });
 
 process.on("unhandledRejection", (err) => {

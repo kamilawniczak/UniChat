@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Divider,
@@ -15,18 +15,46 @@ import {
   StyledInputBase,
 } from "../../components/Search/index";
 import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
-import { ChatList } from "../../data";
 import ChatElement from "../../components/ChatElement";
 import CreateGroup from "../../sections/main/CreateGroup";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  GetGroupConversations,
+  IsLoading,
+  getConversations,
+  getGroupConversations,
+} from "../../redux/slices/conversation";
+import { socket } from "../../socket";
+import { getUserId } from "../../redux/slices/auth";
 
 const Group = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const theme = useTheme();
+  const { conversations } = useSelector(getGroupConversations());
+  const dispatch = useDispatch();
+  const { isLoading } = useSelector(getConversations());
+  const user_id = useSelector(getUserId());
+
+  useEffect(() => {
+    dispatch(IsLoading(true));
+    socket.emit("get_group_conversations", { user_id }, async (data) => {
+      console.log(data);
+      dispatch(GetGroupConversations({ conversations: data }));
+      dispatch(IsLoading(false));
+    });
+
+    // return () => {
+    //   dispatch(ClearConversation());
+    // };
+  }, [user_id, dispatch]);
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
+
+  const notPinnedConversations = conversations.filter((e) => !e.pinned);
+  const pinnedConversations = conversations.filter((e) => e.pinned);
 
   return (
     <>
@@ -82,7 +110,7 @@ const Group = () => {
                 <Typography variant="subtitle2" sx={{ color: "#676767" }}>
                   Pinned
                 </Typography>
-                {ChatList.filter((e) => e.pinned).map((e) => (
+                {pinnedConversations.map((e) => (
                   <ChatElement {...e} key={e.id} />
                 ))}
               </Stack>
@@ -90,7 +118,7 @@ const Group = () => {
                 <Typography variant="subtitle2" sx={{ color: "#676767" }}>
                   All Groups
                 </Typography>
-                {ChatList.filter((e) => !e.pinned).map((e) => (
+                {notPinnedConversations.map((e) => (
                   <ChatElement {...e} key={e.id} />
                 ))}
               </Stack>

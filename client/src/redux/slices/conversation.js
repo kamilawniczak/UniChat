@@ -9,7 +9,12 @@ const initialState = {
     current_meessages: [],
     unread_messages: [],
   },
-  group_chat: {},
+  group_chat: {
+    conversations: [],
+    current_conversation: null,
+    current_meessages: [],
+    unread_messages: [],
+  },
   isLoading: false,
   isLoadingMsg: false,
 };
@@ -199,9 +204,10 @@ const slice = createSlice({
 
     receiveMessages(state, action) {
       const { room_id } = action.payload;
-      state.direct_chat.unread_messages = state.direct_chat.unread_messages.filter(
-        (mess) => mess.room_id !== room_id
-      );
+      state.direct_chat.unread_messages =
+        state.direct_chat.unread_messages.filter(
+          (mess) => mess.room_id !== room_id
+        );
 
       //TODO some emit to chang data in data base read to unread
     },
@@ -225,6 +231,71 @@ const slice = createSlice({
       }
       // state.direct_chat.conversations = [];
     },
+    //-----------------------Group Msg-------------------------------------------------
+    getGroupConversations(state, action) {
+      const user_id = window.localStorage.getItem("user_id");
+
+      const list = action.payload.conversations.map((e) => {
+        const this_user = e.members.find(
+          (member) => member._id.toString() !== user_id
+        );
+
+        const pinned = e.pinnedBy.includes(user_id);
+
+        return {
+          id: e._id,
+          user_id: null,
+          img: faker.image.avatar(),
+          name: e.title,
+          msg: "",
+          time: "9:36",
+          unread: 0,
+          pinned: pinned,
+          online: false,
+          lastMessage: e.messages.length ? e.messages.at(-1)?.text : "",
+        };
+      });
+
+      state.group_chat.conversations = list;
+
+      //send notification to other users
+
+      // const chats = list.map((conversation) => {
+      //   return conversation.user_id;
+      // });
+      // const friends = chats.flat();
+
+      // socket.emit("setStatus", {
+      //   user_id: action.payload.userId,
+      //   friends,
+      //   online: true,
+      // });
+    },
+
+    addGroupConversation(state, action) {
+      // const user_id = window.localStorage.getItem("user_id");
+      const this_conversation = action.payload;
+
+      if (
+        !state.group_chat.conversations.some(
+          (e) => e.id === this_conversation._id
+        )
+      ) {
+        state.group_chat.conversations.push({
+          id: this_conversation._id,
+          user_id: null,
+          img: faker.image.avatar(),
+          name: this_conversation.title,
+          msg: "",
+          time: "9:36",
+          unread: 0,
+          pinned: false,
+          online: false,
+          lastMessage: "",
+        });
+      }
+    },
+
     isLoading(state, action) {
       state.isLoading = action.payload;
     },
@@ -301,6 +372,18 @@ export function ClearConversation() {
     dispatch(slice.actions.clearConversation());
   };
 }
+
+export function GetGroupConversations({ conversations }) {
+  return async (dispatch, getState) => {
+    await dispatch(slice.actions.getGroupConversations({ conversations }));
+  };
+}
+export function AddGroupConversation(conversations) {
+  return (dispatch, getState) => {
+    dispatch(slice.actions.addGroupConversation(conversations));
+  };
+}
+
 export function IsLoading(isLoading) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.isLoading(isLoading));
@@ -309,6 +392,9 @@ export function IsLoading(isLoading) {
 
 export function getDirectConversations() {
   return (state) => state.coversations.direct_chat;
+}
+export function getGroupConversations() {
+  return (state) => state.coversations.group_chat;
 }
 export function getConversations() {
   return (state) => state.coversations;

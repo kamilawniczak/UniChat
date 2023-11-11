@@ -147,9 +147,9 @@ const Chats = () => {
                     </Typography>
                   ))}
                 {isLoading ||
-                  pinnedConversations
-                    .filter((e) => e.pinned)
-                    .map((e) => <ChatElement {...e} key={e.id} />)}
+                  pinnedConversations.map((e) => (
+                    <ChatElement {...e} key={e.id} />
+                  ))}
                 {isLoading && (
                   <Stack justifyContent="center" alignItems="center">
                     <CircularProgress color="success" />
@@ -166,11 +166,9 @@ const Chats = () => {
                     <Typography>No chats</Typography>
                   ))}
                 {isLoading ||
-                  notPinnedConversations
-                    .filter((e) => !e.pinned)
-                    .map((e) => {
-                      return <ChatElement {...e} key={e.id} />;
-                    })}
+                  notPinnedConversations.map((e) => {
+                    return <ChatElement {...e} key={e.id} />;
+                  })}
                 {isLoading && (
                   <Stack justifyContent="center" alignItems="center">
                     <CircularProgress color="success" />

@@ -10,11 +10,13 @@ import { OpenSnackBar } from "../../redux/slices/app";
 import {
   AddDirectConversation,
   AddDirectMessage,
+  AddGroupConversation,
   AddUnreadMessage,
   SetConversation,
   UpdateDirectConversation,
   UpdateOnline,
   getDirectConversations,
+  getGroupConversations,
 } from "../../redux/slices/conversation";
 
 const DashboardLayout = () => {
@@ -22,6 +24,9 @@ const DashboardLayout = () => {
   const user_id = window.localStorage.getItem("user_id");
   const { conversations, current_conversation } = useSelector(
     getDirectConversations()
+  );
+  const { conversations: group_conversation } = useSelector(
+    getGroupConversations()
   );
   const dispatch = useDispatch();
 
@@ -52,10 +57,34 @@ const DashboardLayout = () => {
           (el) => el?.id === data._id
         );
 
+        const [from] = data.members.filter((mem) => mem._id !== user_id);
+        console.log(from);
         if (!existing_conversation) {
+          dispatch(
+            OpenSnackBar({
+              severity: "success",
+              message: `New conversation with ${from.firstName} ${from.lastName}`,
+            })
+          );
           dispatch(AddDirectConversation(data));
         }
       });
+      socket.on("start_group_chat", (data) => {
+        const existing_group_conversation = group_conversation.find(
+          (el) => el?.id === data._id
+        );
+        dispatch(
+          OpenSnackBar({
+            severity: "success",
+            message: `New group created: ${data.title}`,
+          })
+        );
+
+        if (!existing_group_conversation) {
+          dispatch(AddGroupConversation(data));
+        }
+      });
+
       socket.on("new_message", (data) => {
         const message = data.message;
 
@@ -87,6 +116,35 @@ const DashboardLayout = () => {
           );
         }
       });
+      socket.on("new_group_message", (data) => {
+        //TODO-------------------------------
+        // const message = data.message;
+        // const fittedMessage = {
+        //   id: message?._id,
+        //   type: "msg",
+        //   subtype: message?.subtype,
+        //   message: message.text,
+        //   incoming: message.to === user_id,
+        //   outgoing: message.from === user_id,
+        // };
+        // if (current_conversation?.room_id === data?.conversation_id) {
+        //   dispatch(AddDirectMessage(fittedMessage));
+        // }
+        // if (data.user_info) {
+        //   dispatch(
+        //     OpenSnackBar({
+        //       severity: "success",
+        //       message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
+        //     })
+        //   );
+        //   dispatch(
+        //     AddUnreadMessage({
+        //       room_id: data?.conversation_id,
+        //       message: fittedMessage,
+        //     })
+        //   );
+        // }
+      });
       socket.on("statusChanged", ({ to, from, online }) => {
         if (to === user_id) {
           dispatch(UpdateOnline({ online, from }));
@@ -99,7 +157,10 @@ const DashboardLayout = () => {
       socket?.off("request_accepted");
       socket?.off("request_sent");
       socket?.off("start_chat?");
+      socket?.off("start_group_chat");
       socket?.off("new_message");
+      socket?.off("new_group_message");
+      socket?.off("statusChanged");
     };
   }, [
     isLoggedIn,

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema({
+const groupMessageSchema = new mongoose.Schema({
   members: [
     {
       type: mongoose.Schema.ObjectId,
@@ -43,12 +43,15 @@ const messageSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  title: {
+    type: String,
+  },
   created_at: {
     type: Date,
     default: Date.now(),
   },
 });
 
-const Message = new mongoose.model("Message", messageSchema);
+const GroupMessage = new mongoose.model("GroupMessage", groupMessageSchema);
 
-module.exports = Message;
+module.exports = GroupMessage;

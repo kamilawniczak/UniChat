@@ -1,19 +1,53 @@
-import { Autocomplete, Button, Stack, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  Avatar,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-
-const MEMBERS = ["name1", "name2", "name3", "name4"];
+import { useDispatch, useSelector } from "react-redux";
+import { GetFriends, OpenSnackBar, getFriends } from "../../redux/slices/app";
+import { useEffect } from "react";
+import { socket } from "../../socket";
+import { getUserId, getUserInfo } from "../../redux/slices/auth";
 
 const CreateGroupForm = ({ handleClose }) => {
   const { register, formState, handleSubmit, reset, getValues, control } =
     useForm();
   const { errors } = formState;
+  const dispatch = useDispatch();
+  const friends = useSelector(getFriends());
+  const userId = useSelector(getUserId());
+  const userInfo = useSelector(getUserInfo());
+
+  useEffect(() => {
+    dispatch(GetFriends());
+  }, [dispatch]);
+
   const onSubmit = async (data) => {
     try {
-      console.log(data);
+      const { title } = data;
+      const chosenFriends = data.members.map((fri) => fri._id);
+      reset();
+      socket.emit("start_group_conversation", {
+        title,
+        members: chosenFriends,
+        user_id: userId,
+      });
     } catch (error) {
       console.log("errro", error);
     }
   };
+
+  const me = {
+    _id: userId,
+    firstName: userInfo.firstName,
+    lastName: userInfo.lastName,
+  };
+
+  const options = [me, ...friends];
 
   return (
     <>
@@ -33,13 +67,22 @@ const CreateGroupForm = ({ handleClose }) => {
           <Controller
             name="members"
             control={control}
-            defaultValue={[MEMBERS[0]]}
+            defaultValue={[options.at(0)]}
             render={({ field: { onChange, value } }) => (
               <Autocomplete
                 multiple
-                options={MEMBERS}
-                getOptionLabel={(option) => option}
-                onChange={(e, newValue) => onChange(newValue)}
+                options={options}
+                getOptionLabel={(option) =>
+                  `${option.firstName} ${option.lastName}`
+                }
+                limitTags={3}
+                getOptionDisabled={(option) => option._id === userId}
+                onChange={(e, newValue) =>
+                  onChange([
+                    options.at(0),
+                    ...newValue.filter((option) => option._id !== userId),
+                  ])
+                }
                 value={value}
                 renderInput={(params) => (
                   <TextField
