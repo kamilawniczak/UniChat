@@ -13,9 +13,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { OpenSnackBar, SelectRoom } from "../redux/slices/app";
 import {
   DeleteDirectConversation,
+  DeleteGroupConversation,
   SetConversation,
+  SetGroupConversation,
   UpdateDirectConversation,
+  UpdateGroupConversation,
   getDirectConversations,
+  getGroupConversations,
 } from "../redux/slices/conversation";
 import {
   DotsThreeOutlineVertical,
@@ -38,12 +42,7 @@ const Conversation_Menu = [
 
 const checkMessage = (message) => {
   if (message.length < 20) return message;
-  return (
-    message
-      .split("")
-      .slice(0, 20)
-      .join("") + "..."
-  );
+  return message.split("").slice(0, 20).join("") + "...";
 };
 
 const ChatElement = ({
@@ -56,6 +55,7 @@ const ChatElement = ({
   online,
   user_id,
   lastMessage = "",
+  isGroupChat = false,
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -63,39 +63,89 @@ const ChatElement = ({
   const open = Boolean(anchorEl);
   const this_user_id = window.localStorage.getItem("user_id");
 
-  const { unread_messages, current_conversation } = useSelector(
-    getDirectConversations()
-  );
+  let unread_messages;
+  let current_conversation;
+  const {
+    unread_messages: unread_direct_messages,
+    current_conversation: current_direct_conversation,
+  } = useSelector(getDirectConversations());
+  const {
+    unread_messages: unread_group_messages,
+    current_conversation: current_group_conversation,
+  } = useSelector(getGroupConversations());
+
+  unread_messages = isGroupChat
+    ? unread_group_messages
+    : unread_direct_messages;
+  current_conversation = isGroupChat
+    ? current_direct_conversation
+    : current_group_conversation;
+
   const unread_msg = unread_messages.filter((msg) => msg.room_id === id);
-  const { room_id } = current_conversation;
+  const room_id = current_conversation?.room_id;
 
   let textToShow = unread_msg?.length
     ? unread_msg[unread_msg?.length - 1].message.message
     : lastMessage;
 
   const handleClose = (e) => {
+    if (e && e.stopPropagation && typeof e.stopPropagation === "function") {
+      e.stopPropagation();
+    }
+
     setAnchorEl(null);
 
     switch (e) {
       case "Delete":
-        socket.emit("deleteConversation", { room_id: id }, async (data) => {
-          dispatch(
-            OpenSnackBar({
-              severity: "success",
-              message: data.message,
-            })
+        if (!isGroupChat) {
+          socket.emit("deleteConversation", { room_id: id }, async (data) => {
+            if (!isGroupChat) {
+              dispatch(
+                OpenSnackBar({
+                  severity: "success",
+                  message: data.message,
+                })
+              );
+              dispatch(DeleteDirectConversation({ room_id: data.room_id }));
+            }
+          });
+        } else {
+          socket.emit(
+            "deleteGroupConversation",
+            { room_id: id },
+            async (data) => {
+              if (isGroupChat) {
+                dispatch(
+                  OpenSnackBar({
+                    severity: "success",
+                    message: data.message,
+                  })
+                );
+                dispatch(DeleteGroupConversation({ room_id: data.room_id }));
+              }
+            }
           );
-          dispatch(DeleteDirectConversation({ room_id: data.room_id }));
-        });
+        }
+
         break;
       case "Pinn":
-        socket.emit(
-          "pinnedConversation",
-          { user_id: this_user_id, room_id: id },
-          async (data) => {
-            dispatch(UpdateDirectConversation({ conversation: data }));
-          }
-        );
+        if (!isGroupChat) {
+          socket.emit(
+            "pinnedConversation",
+            { user_id: this_user_id, room_id: id },
+            async (data) => {
+              dispatch(UpdateDirectConversation({ conversation: data }));
+            }
+          );
+        } else {
+          socket.emit(
+            "pinnedGroupConversation",
+            { user_id: this_user_id, room_id: id },
+            async (data) => {
+              dispatch(UpdateGroupConversation({ conversation: data }));
+            }
+          );
+        }
         break;
 
       default:
@@ -104,6 +154,7 @@ const ChatElement = ({
   };
 
   const handleClick = (event) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
@@ -119,17 +170,27 @@ const ChatElement = ({
       }}
       p={1.4}
       onClick={() => {
-        dispatch(SelectRoom({ room_id: id }));
-        dispatch(
-          SetConversation({
-            user_id,
-            room_id: id,
-            userInfo: {
-              name,
-              online: online,
-            },
-          })
-        );
+        if (isGroupChat) {
+          dispatch(SelectRoom({ room_id: id, isGroupChat: true }));
+          dispatch(
+            SetGroupConversation({
+              user_id,
+              room_id: id,
+            })
+          );
+        } else {
+          dispatch(SelectRoom({ room_id: id }));
+          dispatch(
+            SetConversation({
+              user_id,
+              room_id: id,
+              userInfo: {
+                name,
+                online: online,
+              },
+            })
+          );
+        }
       }}
     >
       <Stack
@@ -219,7 +280,8 @@ const ChatElement = ({
         <Stack spacing={1} px={1}>
           {Conversation_Menu.map((e, i) => (
             <MenuItem
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 handleClose(e.title);
               }}
               key={i}

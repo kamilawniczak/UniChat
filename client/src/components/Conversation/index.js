@@ -5,17 +5,25 @@ import Chat from "./Chat";
 import Footer from "./Footer";
 import { Box, Stack } from "@mui/material";
 import { useSelector } from "react-redux";
-import { getDirectConversations } from "../../redux/slices/conversation";
+import {
+  getDirectConversations,
+  getGroupConversations,
+} from "../../redux/slices/conversation";
 
 const Conversation = () => {
   const scrollRef = useRef(null);
-  const { current_meessages } = useSelector(getDirectConversations());
+  const { current_meessages: direct_msgs } = useSelector(
+    getDirectConversations()
+  );
+  const { current_meessages: group_msgs } = useSelector(
+    getGroupConversations()
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [current_meessages]);
+  }, [direct_msgs, group_msgs]);
 
   return (
     <Stack sx={{ height: "100%", maxHeight: "100vh", width: "auto" }}>

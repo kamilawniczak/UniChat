@@ -57,8 +57,16 @@ const slice = createSlice({
         return;
       }
 
-      state.chat_type = "OneToOne";
+      if (action.payload.isGroupChat) {
+        state.chat_type = "OneToMany";
+      } else {
+        state.chat_type = "OneToOne";
+      }
       state.room_id = action.payload.room_id;
+    },
+    resetRoom(state) {
+      state.chat_type = null;
+      state.room_id = null;
     },
   },
 });
@@ -144,9 +152,14 @@ export function GetFriendRequests() {
     }
   };
 }
-export function SelectRoom({ room_id }) {
-  return async (dispatch, getState) => {
-    dispatch(slice.actions.selectRoom({ room_id }));
+export function SelectRoom({ room_id, isGroupChat }) {
+  return (dispatch, getState) => {
+    dispatch(slice.actions.selectRoom({ room_id, isGroupChat }));
+  };
+}
+export function ResetRoom() {
+  return (dispatch, getState) => {
+    dispatch(slice.actions.resetRoom());
   };
 }
 

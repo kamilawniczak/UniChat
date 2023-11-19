@@ -26,6 +26,7 @@ import { useSelector } from "react-redux";
 import {
   getConversations,
   getDirectConversations,
+  getGroupConversations,
 } from "../../redux/slices/conversation";
 
 const StyledInput = styled(TextField)(({ theme }) => ({
@@ -140,17 +141,27 @@ function containsUrl(text) {
 const Footer = () => {
   const theme = useTheme();
 
-  const { current_conversation } = useSelector(getDirectConversations());
+  const { current_conversation: direct_current_conversation } = useSelector(
+    getDirectConversations()
+  );
+  const { current_conversation: group_current_conversation } = useSelector(
+    getGroupConversations()
+  );
 
   const user_id = window.localStorage.getItem("user_id");
 
-  const { sideBar, room_id } = useSelector((state) => state.app);
+  const { sideBar, room_id, chat_type } = useSelector((state) => state.app);
 
   const [openPicker, setOpenPicker] = React.useState(false);
 
   const [value, setValue] = useState("");
   const [type, setType] = useState("text");
   const inputRef = useRef(null);
+
+  let current_conversation =
+    chat_type === "OneToOne"
+      ? direct_current_conversation
+      : group_current_conversation;
 
   function handleEmojiClick(emoji) {
     const input = inputRef.current;
@@ -186,19 +197,36 @@ const Footer = () => {
   };
 
   const dataToSend = () => {
-    socket.emit("text_message", {
-      message: value,
-      conversation_id: room_id,
-      from: user_id,
-      to: current_conversation.user_id,
-      type: "msg",
-      subtype:
-        type === "text"
-          ? value.startsWith("https://")
-            ? "link"
-            : "text"
-          : type,
-    });
+    if (chat_type === "OneToOne") {
+      socket.emit("text_message", {
+        message: value,
+        conversation_id: room_id,
+        from: user_id,
+        to: current_conversation.user_id,
+        type: "msg",
+        subtype:
+          type === "text"
+            ? value.startsWith("https://")
+              ? "link"
+              : "text"
+            : type,
+      });
+    }
+    if (chat_type === "OneToMany") {
+      socket.emit("text_group_message", {
+        message: value,
+        conversation_id: room_id,
+        from: user_id,
+        to: current_conversation.user_id,
+        type: "msg",
+        subtype:
+          type === "text"
+            ? value.startsWith("https://")
+              ? "link"
+              : "text"
+            : type,
+      });
+    }
 
     setType("text");
     setValue("");

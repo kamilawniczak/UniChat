@@ -11,9 +11,9 @@ import {
   AddDirectConversation,
   AddDirectMessage,
   AddGroupConversation,
+  AddGroupMessage,
+  AddUnreadGroupMessage,
   AddUnreadMessage,
-  SetConversation,
-  UpdateDirectConversation,
   UpdateOnline,
   getDirectConversations,
   getGroupConversations,
@@ -25,9 +25,10 @@ const DashboardLayout = () => {
   const { conversations, current_conversation } = useSelector(
     getDirectConversations()
   );
-  const { conversations: group_conversation } = useSelector(
-    getGroupConversations()
-  );
+  const {
+    conversations: group_conversation,
+    current_conversation: current_group_conversation,
+  } = useSelector(getGroupConversations());
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -117,33 +118,34 @@ const DashboardLayout = () => {
         }
       });
       socket.on("new_group_message", (data) => {
-        //TODO-------------------------------
-        // const message = data.message;
-        // const fittedMessage = {
-        //   id: message?._id,
-        //   type: "msg",
-        //   subtype: message?.subtype,
-        //   message: message.text,
-        //   incoming: message.to === user_id,
-        //   outgoing: message.from === user_id,
-        // };
-        // if (current_conversation?.room_id === data?.conversation_id) {
-        //   dispatch(AddDirectMessage(fittedMessage));
-        // }
-        // if (data.user_info) {
-        //   dispatch(
-        //     OpenSnackBar({
-        //       severity: "success",
-        //       message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
-        //     })
-        //   );
-        //   dispatch(
-        //     AddUnreadMessage({
-        //       room_id: data?.conversation_id,
-        //       message: fittedMessage,
-        //     })
-        //   );
-        // }
+        console.log(data);
+
+        const message = data.message;
+        const fittedMessage = {
+          id: message?._id,
+          type: "msg",
+          subtype: message?.subtype,
+          message: message.text,
+          incoming: message.to === user_id,
+          outgoing: message.from === user_id,
+        };
+        if (current_group_conversation?.room_id === data?.conversation_id) {
+          dispatch(AddGroupMessage(fittedMessage));
+        }
+        if (data.user_info) {
+          dispatch(
+            OpenSnackBar({
+              severity: "success",
+              message: `new message from ${data.user_info.firstName} ${data.user_info.lastName}`,
+            })
+          );
+          dispatch(
+            AddUnreadGroupMessage({
+              room_id: data?.conversation_id,
+              message: fittedMessage,
+            })
+          );
+        }
       });
       socket.on("statusChanged", ({ to, from, online }) => {
         if (to === user_id) {
@@ -167,6 +169,8 @@ const DashboardLayout = () => {
     socket,
     current_conversation,
     current_conversation?.room_id,
+    current_group_conversation,
+    current_group_conversation?.room_id,
     user_id,
     dispatch,
   ]);

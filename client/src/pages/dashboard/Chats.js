@@ -1,18 +1,12 @@
 import {
   Box,
-  Button,
   CircularProgress,
   Divider,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
-import {
-  ArchiveBox,
-  CircleDashed,
-  MagnifyingGlass,
-  Users,
-} from "@phosphor-icons/react";
+import { CircleDashed, MagnifyingGlass, Users } from "@phosphor-icons/react";
 import React, { useEffect, useState } from "react";
 
 import { useTheme } from "@emotion/react";
@@ -33,6 +27,7 @@ import {
   getConversations,
   getDirectConversations,
 } from "../../redux/slices/conversation";
+import { ResetRoom } from "../../redux/slices/app";
 
 const Chats = () => {
   const theme = useTheme();
@@ -45,6 +40,10 @@ const Chats = () => {
 
   useEffect(() => {
     dispatch(ClearConversation());
+    return () => {
+      dispatch(ClearConversation());
+      dispatch(ResetRoom());
+    };
   }, [conversations.length]);
 
   useEffect(() => {
@@ -53,10 +52,6 @@ const Chats = () => {
       dispatch(GetDirectConversations({ conversations: data }));
       dispatch(IsLoading(false));
     });
-
-    // return () => {
-    //   dispatch(ClearConversation());
-    // };
   }, [user_id, dispatch]);
 
   const handleOpenDialog = () => {

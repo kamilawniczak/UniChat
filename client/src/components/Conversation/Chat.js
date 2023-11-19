@@ -4,30 +4,59 @@ import React, { useEffect } from "react";
 import Message from "./Message";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  GetCurrentGroupMessages,
   GetCurrentMessages,
+  ReceiveGroupMessages,
   ReceiveMessages,
   getConversations,
   getDirectConversations,
+  getGroupConversations,
   getRoomId,
 } from "../../redux/slices/conversation";
 import { socket } from "../../socket";
 
 const Chat = () => {
-  const { current_meessages, current_conversation } = useSelector(
-    getDirectConversations()
-  );
+  const {
+    current_meessages: directMessages,
+    current_conversation: directConversation,
+  } = useSelector(getDirectConversations());
+
+  const {
+    current_meessages: groupMessages,
+    current_conversation: groupConversation,
+  } = useSelector(getGroupConversations());
+
   const { isLoadingMsg } = useSelector(getConversations());
   const dispatch = useDispatch();
-  const room_id = useSelector(getRoomId());
+
+  const { chat_type } = useSelector((state) => state.app);
+
+  let current_meessages =
+    chat_type === "OneToOne" ? directMessages : groupMessages;
+  let current_conversation =
+    chat_type === "OneToOne" ? directConversation : groupConversation;
+
+  const room_id = current_conversation.room_id;
+  useEffect(() => {
+    if (chat_type === "OneToOne") {
+      socket.emit("get_messages", current_conversation, async (data) => {
+        dispatch(GetCurrentMessages({ messages: data }));
+      });
+    }
+    if (chat_type === "OneToMany") {
+      socket.emit("get_group_messages", current_conversation, async (data) => {
+        dispatch(GetCurrentGroupMessages({ messages: data }));
+      });
+    }
+  }, [room_id]);
 
   useEffect(() => {
-    socket.emit("get_messages", current_conversation, async (data) => {
-      dispatch(GetCurrentMessages({ messages: data }));
-    });
-  }, [current_conversation.room_id]);
-
-  useEffect(() => {
-    dispatch(ReceiveMessages({ room_id }));
+    if (chat_type === "OneToOne") {
+      dispatch(ReceiveMessages({ room_id }));
+    }
+    if (chat_type === "OneToMany") {
+      dispatch(ReceiveGroupMessages({ room_id }));
+    }
   }, [room_id, dispatch]);
 
   return (
@@ -38,13 +67,7 @@ const Chat = () => {
             <Message key={mess.id} data={mess} menu={true} />
           ))
         ) : (
-          <Stack
-            alignItems="center"
-            justifyContent="center"
-            // sx={{
-            //   height: "100vh",
-            // }}
-          >
+          <Stack alignItems="center" justifyContent="center">
             <CircularProgress
               color="success"
               sx={{ width: "100px", height: "100px" }}

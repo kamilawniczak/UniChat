@@ -301,38 +301,48 @@ io.on("connection", async (socket) => {
     }
   });
   socket.on("text_group_message", async (data) => {
-    //TODO-------------------------------
-    // const { message, conversation_id, from, to, type, subtype } = data;
-    // const to_user = await User.findById(to);
-    // const from_user = await User.findById(from);
-    // const new_message = {
-    //   to: to,
-    //   from: from,
-    //   type: type,
-    //   subtype: subtype || "Text",
-    //   created_at: Date.now(),
-    //   text: message,
-    // };
-    // const chat = await Message.findById(conversation_id);
-    // chat.messages.push(new_message);
-    // const msg = await chat.save({
-    //   new: true,
-    //   validateModifiedOnly: true,
-    // });
-    // const lastMessage = msg.messages.at(-1);
-    // io.to(to_user?.socket_id).emit("new_group_message", {
-    //   user_info: {
-    //     id: from_user._id,
-    //     firstName: from_user.firstName,
-    //     lastName: from_user.lastName,
-    //   },
-    //   conversation_id,
-    //   message: lastMessage,
-    // });
-    // io.to(from_user?.socket_id).emit("new_group_message", {
-    //   conversation_id,
-    //   message: lastMessage,
-    // });
+    const { message, conversation_id, from, to, type, subtype } = data;
+
+    const from_user = await User.findById(from);
+
+    const new_message = {
+      to: to,
+      from: from,
+      type: type,
+      subtype: subtype || "Text",
+      created_at: Date.now(),
+      text: message,
+    };
+    const chat = await GroupMessage.findById(conversation_id);
+    chat.messages.push(new_message);
+    const msg = await chat.save({
+      new: true,
+      validateModifiedOnly: true,
+    });
+
+    const lastMessage = msg.messages.at(-1);
+
+    for (const friend of to) {
+      const to_user = await User.findById(friend).select("socket_id");
+
+      io.to(to_user?.socket_id).emit("new_group_message", {
+        user_info: {
+          id: from_user._id,
+          firstName: from_user.firstName,
+          lastName: from_user.lastName,
+        },
+        conversation_id,
+        message: lastMessage,
+      });
+    }
+    io.to(from_user?.socket_id).emit("new_group_message", {
+      conversation_id,
+      message: lastMessage,
+    });
+  });
+  socket.on("deleteGroupConversation", async ({ room_id }, callback) => {
+    await GroupMessage.findByIdAndDelete(room_id);
+    callback({ message: "conversation deleted successfully", room_id });
   });
 
   socket.on("setStatus", async ({ user_id, friends, online }) => {
@@ -349,28 +359,27 @@ io.on("connection", async (socket) => {
   socket.on(
     "pinnedGroupConversation",
     async ({ user_id, room_id }, callback) => {
-      //TODO -----------------------------
-      // const exists = await Message.findById(room_id);
-      // if (exists) {
-      //   const { pinnedBy } = exists;
-      //   const isPinned = pinnedBy.includes(user_id);
-      //   if (!isPinned) {
-      //     exists.pinnedBy.push(user_id);
-      //     await exists.save({
-      //       new: true,
-      //       validateModifiedOnly: true,
-      //     });
-      //   } else {
-      //     exists.pinnedBy = pinnedBy.filter(
-      //       (userId) => userId.toString() !== user_id
-      //     );
-      //     await exists.save({
-      //       new: true,
-      //       validateModifiedOnly: true,
-      //     });
-      //   }
-      //   await callback(exists);
-      // }
+      const exists = await GroupMessage.findById(room_id);
+      if (exists) {
+        const { pinnedBy } = exists;
+        const isPinned = pinnedBy.includes(user_id);
+        if (!isPinned) {
+          exists.pinnedBy.push(user_id);
+          await exists.save({
+            new: true,
+            validateModifiedOnly: true,
+          });
+        } else {
+          exists.pinnedBy = pinnedBy.filter(
+            (userId) => userId.toString() !== user_id
+          );
+          await exists.save({
+            new: true,
+            validateModifiedOnly: true,
+          });
+        }
+        await callback(exists);
+      }
     }
   );
 });

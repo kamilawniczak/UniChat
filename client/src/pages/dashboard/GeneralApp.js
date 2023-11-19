@@ -11,7 +11,6 @@ import StarredMsg from "../../components/StarredMsg";
 
 import SVG_No_Chat from "../../assets/Illustration/NoChat";
 import { getRoomId } from "../../redux/slices/conversation";
-import { useEffect } from "react";
 
 const handleSidebarType = (type) => {
   switch (type) {
@@ -30,14 +29,6 @@ const GeneralApp = () => {
   const theme = useTheme();
   const { sideBar, chat_type } = useSelector((state) => state.app);
   const room_id = useSelector(getRoomId());
-
-  // useEffect(() => {
-  //   console.log("witam");
-
-  //   return () => {
-  //     console.log("żegname");
-  //   };
-  // }, []);
 
   return (
     <Stack
