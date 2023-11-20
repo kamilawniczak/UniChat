@@ -16,6 +16,10 @@ export const defaultSettings = {
 export const BASE_URL = "http://localhost:8000";
 export const LENGTH_OF_OTP = 6;
 
+export const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5d3RsdXl2b25lY3picWN0ZGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDA1MDM3MzMsImV4cCI6MjAxNjA3OTczM30.UYbNshne4AubBhtTecAMbYyEQ9VW5uYHCh-f7ML_EQE";
+export const SUPABASE_URL = "https://aywtluyvoneczbqctdfk.supabase.co";
+
 export const NAVBAR = {
   BASE_WIDTH: 260,
   DASHBOARD_WIDTH: 280,

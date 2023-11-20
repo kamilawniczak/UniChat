@@ -5,6 +5,8 @@ const http = require("http");
 const mongoose = require("mongoose");
 const path = require("path");
 
+const fs = require("fs");
+
 dotenv.config({ path: "./config.env" });
 
 const { Server } = require("socket.io");
@@ -27,6 +29,7 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  // maxHttpBufferSize: 1e8,
 });
 
 const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DB_PASSWORD);
@@ -160,9 +163,8 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // Handle incoming text/link messages
-  socket.on("text_message", async (data) => {
-    const { message, conversation_id, from, to, type, subtype } = data;
+  socket.on("text_message", async (data, callback) => {
+    const { message, file, conversation_id, from, to, type, subtype } = data;
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
@@ -174,6 +176,7 @@ io.on("connection", async (socket) => {
       subtype: subtype || "Text",
       created_at: Date.now(),
       text: message,
+      file,
     };
 
     const chat = await Message.findById(conversation_id);
@@ -183,7 +186,9 @@ io.on("connection", async (socket) => {
       new: true,
       validateModifiedOnly: true,
     });
+
     const lastMessage = msg.messages.at(-1);
+    callback(lastMessage._id);
 
     io.to(to_user?.socket_id).emit("new_message", {
       user_info: {
@@ -201,29 +206,6 @@ io.on("connection", async (socket) => {
     });
   });
 
-  socket.on("file_message", (data) => {
-    console.log("Received message:", data);
-
-    // data: {to, from, text, file}
-
-    // Get the file extension
-    const fileExtension = path.extname(data.file.name);
-
-    // Generate a unique filename
-    const filename = `${Date.now()}_${Math.floor(
-      Math.random() * 10000
-    )}${fileExtension}`;
-
-    // upload file to AWS s3
-
-    // create a new conversation if its dosent exists yet or add a new message to existing conversation
-
-    // save to db
-
-    // emit incoming_message -> to user
-
-    // emit outgoing_message -> from user
-  });
   socket.on("pinnedConversation", async ({ user_id, room_id }, callback) => {
     const exists = await Message.findById(room_id);
 
@@ -301,7 +283,7 @@ io.on("connection", async (socket) => {
     }
   });
   socket.on("text_group_message", async (data) => {
-    const { message, conversation_id, from, to, type, subtype } = data;
+    const { message, file, conversation_id, from, to, type, subtype } = data;
 
     const from_user = await User.findById(from);
 
@@ -312,6 +294,7 @@ io.on("connection", async (socket) => {
       subtype: subtype || "Text",
       created_at: Date.now(),
       text: message,
+      file,
     };
     const chat = await GroupMessage.findById(conversation_id);
     chat.messages.push(new_message);
@@ -382,6 +365,67 @@ io.on("connection", async (socket) => {
       }
     }
   );
+  //------------------------------------------------------------------
+  socket.on("upload-file", async ({ room_id, msgId, files, chat_type }) => {
+    let complitedMsg = {};
+    let chat = [];
+
+    if (chat_type === "OneToOne") {
+      const conversation = await Message.findById(room_id);
+
+      const selected_message = conversation.messages.find(
+        (message) => message._id.toString() === msgId
+      );
+
+      if (!selected_message) {
+        return;
+      }
+
+      selected_message.file = files;
+
+      complitedMsg = await conversation.save({
+        new: true,
+        validateModifiedOnly: true,
+      });
+
+      chat = await Message.findById(room_id)
+        .populate("members", "socket_id")
+        .select("members");
+    }
+    if (chat_type === "OneToMany") {
+      const conversation = await GroupMessage.findById(room_id);
+
+      const selected_message = conversation.messages.find(
+        (message) => message._id.toString() === msgId
+      );
+
+      if (!selected_message) {
+        return;
+      }
+
+      selected_message.file = files;
+
+      complitedMsg = await conversation.save({
+        new: true,
+        validateModifiedOnly: true,
+      });
+
+      chat = await GroupMessage.findById(room_id)
+        .populate("members", "socket_id")
+        .select("members");
+    }
+
+    complitedMsg = complitedMsg.messages.filter(
+      (msg) => msg._id.toString() === msgId
+    );
+    if (chat && chat.members) {
+      chat.members.forEach((mem) => {
+        io.to(mem.socket_id).emit("receiveFiles", ...complitedMsg);
+      });
+    } else {
+      console.warn("chat.members is undefined. No action taken.");
+    }
+  });
 });
 
 process.on("unhandledRejection", (err) => {

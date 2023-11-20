@@ -1,4 +1,6 @@
 const FriendRequest = require("../models/FriendRequest");
+const GroupMessage = require("../models/group_messages");
+const Message = require("../models/message");
 const User = require("../models/user");
 const filterObject = require("../utils/filterObject");
 
@@ -73,4 +75,54 @@ exports.getRequest = async (req, res, next) => {
     data: requests,
     message: "Friend found successfully",
   });
+};
+exports.uploadFile = async (req, res) => {
+  const { room_id, msgId, files, chat_type } = req.body;
+  let complitedMsg = {};
+
+  if (chat_type === "OneToOne") {
+    const conversation = await Message.findById(room_id);
+
+    const selected_message = conversation.messages.find(
+      (message) => message._id.toString() === msgId
+    );
+
+    if (!selected_message) {
+      return res.status(500).json({ message: "Selected message not found" });
+    }
+
+    selected_message.file = files;
+
+    complitedMsg = await conversation.save({
+      new: true,
+      validateModifiedOnly: true,
+    });
+  }
+  if (chat_type === "OneToMany") {
+    const conversation = await GroupMessage.findById(room_id);
+
+    const selected_message = conversation.messages.find(
+      (message) => message._id.toString() === msgId
+    );
+
+    if (!selected_message) {
+      return res.status(500).json({ message: "Selected message not found" });
+    }
+
+    selected_message.file = files;
+
+    complitedMsg = await conversation.save({
+      new: true,
+      validateModifiedOnly: true,
+    });
+  }
+
+  //TODO eimt signa to user
+
+  try {
+    return res.status(200).json({ message: "file uploaded successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 };

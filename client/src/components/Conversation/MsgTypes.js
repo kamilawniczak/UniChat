@@ -1,5 +1,6 @@
 import {
   Box,
+  CircularProgress,
   Divider,
   IconButton,
   Link,
@@ -20,6 +21,8 @@ import { Message_options } from "../../data";
 
 export const MediaMsg = ({ data, menu }) => {
   const theme = useTheme();
+
+  const isLoading = data.file?.length > 0 && data.file[0] === "true";
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
       <Box
@@ -32,20 +35,31 @@ export const MediaMsg = ({ data, menu }) => {
         }}
       >
         <Stack spacing={2}>
-          <img
-            src={data.img}
-            alt={data.message}
-            style={{
-              maxHeight: "210px",
-              borderRadius: "10px",
-            }}
-          />
-          <Typography
-            variant="body2"
-            color={data.incoming ? theme.palette.text : "#fff"}
-          >
-            {data.message}
-          </Typography>
+          {isLoading ? (
+            <CircularProgress size={104} color="inherit" />
+          ) : (
+            <>
+              {data.file.map((element, index) => (
+                <img
+                  src={element}
+                  alt={element}
+                  style={{
+                    maxHeight: "210px",
+                    borderRadius: "10px",
+                  }}
+                  key={index}
+                />
+              ))}
+            </>
+          )}
+          {data.message && (
+            <Typography
+              variant="body2"
+              color={data.incoming ? theme.palette.text : "#fff"}
+            >
+              {data.message}
+            </Typography>
+          )}
         </Stack>
       </Box>
       {menu && <MessageOptions />}

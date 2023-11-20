@@ -145,6 +145,7 @@ const slice = createSlice({
           message: el.text,
           incoming: el.to === user_id,
           outgoing: el.from === user_id,
+          file: el.file,
         };
       });
 
@@ -171,6 +172,21 @@ const slice = createSlice({
         }
       );
       state.direct_chat.conversations = [...updatedConversations];
+    },
+    updateDirectMessage(state, action) {
+      const array = state?.direct_chat?.current_meessages;
+
+      if (array?.length) {
+        const updatedMessages = array.map((msg) =>
+          msg.id === action.payload._id
+            ? { ...msg, file: action.payload.file }
+            : msg
+        );
+
+        state.direct_chat.current_meessages = updatedMessages;
+      }
+
+      // state.direct_chat.conversations = [...updatedConversations];
     },
 
     addUnreadMessage(state, action) {
@@ -312,6 +328,7 @@ const slice = createSlice({
           message: el.text,
           incoming: el.to === user_id,
           outgoing: el.from === user_id,
+          file: el.file,
         };
       });
 
@@ -457,9 +474,15 @@ export function GetCurrentMessages({ messages }) {
     dispatch(slice.actions.getCurrentMessages({ messages }));
   };
 }
+
 export function AddDirectMessage(message) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.addDirectMessage(message));
+  };
+}
+export function UpdateDirectMessage(message) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.updateDirectMessage(message));
   };
 }
 export function AddUnreadMessage({ room_id, message }) {

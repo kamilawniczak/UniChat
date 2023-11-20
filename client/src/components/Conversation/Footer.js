@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Fab,
   IconButton,
@@ -16,18 +17,27 @@ import {
   Smiley,
   File,
   Image,
+  XCircle,
 } from "@phosphor-icons/react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import React, { useRef } from "react";
 import { useState } from "react";
 import { socket } from "../../socket";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   getConversations,
   getDirectConversations,
   getGroupConversations,
 } from "../../redux/slices/conversation";
+import { OpenSnackBar } from "../../redux/slices/app";
+
+import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_KEY, SUPABASE_URL } from "../../config";
+
+const supabaseUrl = SUPABASE_URL;
+const supabaseKey = SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const StyledInput = styled(TextField)(({ theme }) => ({
   "& .MuiInputBase-input": {
@@ -139,6 +149,8 @@ function containsUrl(text) {
 }
 
 const Footer = () => {
+  const [fileInput, setFilesInput] = useState([]);
+
   const theme = useTheme();
 
   const { current_conversation: direct_current_conversation } = useSelector(
@@ -157,6 +169,9 @@ const Footer = () => {
   const [value, setValue] = useState("");
   const [type, setType] = useState("text");
   const inputRef = useRef(null);
+
+  const fileInputRef = useRef(null);
+  const dispatch = useDispatch();
 
   let current_conversation =
     chat_type === "OneToOne"
@@ -196,51 +211,112 @@ const Footer = () => {
     }
   };
 
-  const dataToSend = () => {
+  const sendFile = async (dataToSend) => {
+    try {
+      dataToSend.files = await Promise.all(
+        dataToSend.files.map(async (file) => {
+          const token = user_id + "/" + Date.now() + crypto.randomUUID();
+          await supabase.storage.from("files").upload(token, file);
+
+          return `https://aywtluyvoneczbqctdfk.supabase.co/storage/v1/object/public/files/${token}`;
+        })
+      );
+
+      await socket.emit("upload-file", dataToSend);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const dataToSend = async () => {
+    const filesToSend = fileInput;
+
+    const messageData = {
+      message: value,
+      conversation_id: room_id,
+      from: user_id,
+      to: current_conversation.user_id,
+      type: "msg",
+      subtype:
+        type === "text"
+          ? value.startsWith("https://")
+            ? "link"
+            : "text"
+          : filesToSend.length === 0
+          ? "text"
+          : type,
+      file: filesToSend.length > 0 && true,
+    };
+
     if (chat_type === "OneToOne") {
-      socket.emit("text_message", {
-        message: value,
-        conversation_id: room_id,
-        from: user_id,
-        to: current_conversation.user_id,
-        type: "msg",
-        subtype:
-          type === "text"
-            ? value.startsWith("https://")
-              ? "link"
-              : "text"
-            : type,
+      socket.emit("text_message", messageData, (msgId) => {
+        if (filesToSend.length !== 0) {
+          const data = {
+            room_id,
+            msgId,
+            files: filesToSend,
+            chat_type,
+          };
+
+          sendFile(data);
+        }
       });
     }
     if (chat_type === "OneToMany") {
-      socket.emit("text_group_message", {
-        message: value,
-        conversation_id: room_id,
-        from: user_id,
-        to: current_conversation.user_id,
-        type: "msg",
-        subtype:
-          type === "text"
-            ? value.startsWith("https://")
-              ? "link"
-              : "text"
-            : type,
+      socket.emit("text_group_message", messageData, (msgId) => {
+        if (filesToSend.length !== 0) {
+          const data = {
+            room_id,
+            msgId,
+            files: filesToSend,
+            chat_type,
+          };
+
+          sendFile(data);
+        }
       });
     }
 
     setType("text");
     setValue("");
+    setFilesInput([]); // Reset fileInput after sending
   };
 
   const handleMsgType = (subtype) => {
     switch (subtype) {
       case "Photo/Video":
+        fileInputRef.current.click();
         return setType("img");
       case "Document":
+        fileInputRef.current.click();
         return setType("doc");
       default:
         setType("text");
     }
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFiles = Array.from(event.target.files);
+
+    if (selectedFiles.length > 10) {
+      dispatch(
+        OpenSnackBar({
+          severity: "warning",
+          message: "Too many files :( max 20",
+        })
+      );
+      return;
+    }
+
+    setFilesInput(selectedFiles);
+  };
+
+  const removeFile = (index) => {
+    setFilesInput((prevFiles) => {
+      const updatedFiles = [...prevFiles];
+      updatedFiles.splice(index, 1);
+      return updatedFiles;
+    });
   };
 
   return (
@@ -265,7 +341,7 @@ const Footer = () => {
           <Stack sx={{ width: "100%" }}>
             <Box
               style={{
-                zIndex: 10,
+                zIndex: 20,
                 position: "fixed",
                 display: openPicker ? "inline" : "none",
                 bottom: 81,
@@ -280,7 +356,55 @@ const Footer = () => {
                 }}
               />
             </Box>
-
+            <Box
+              sx={{ display: "flex", gap: 1 }}
+              style={{
+                zIndex: 10,
+                position: "fixed",
+                bottom: 71,
+                left: 430,
+              }}
+            >
+              {fileInput?.length > 0 &&
+                fileInput.map((file, index) => (
+                  <Stack key={index} direction="row">
+                    <Tooltip
+                      placement="top"
+                      title={file.name}
+                      sx={{
+                        position: "relative",
+                        display: "inline-block",
+                      }}
+                    >
+                      <Avatar
+                        alt="Selected Photo"
+                        src={URL.createObjectURL(file)}
+                        sx={{ width: 52, height: 52, borderRadius: "8px" }}
+                      />
+                    </Tooltip>
+                    <Stack position="relative">
+                      <IconButton
+                        sx={{
+                          zIndex: 10,
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          margin: 0,
+                          padding: 0.1,
+                          transform: "translate(40%, -40%)",
+                          backgroundColor:
+                            theme.palette.mode === "light"
+                              ? "#F8FAFF"
+                              : theme.palette.background.paper,
+                        }}
+                        onClick={() => removeFile(index)}
+                      >
+                        <XCircle size={20} color="#c42121" weight="light" />
+                      </IconButton>
+                    </Stack>
+                  </Stack>
+                ))}
+            </Box>
             <ChatInput
               inputRef={inputRef}
               value={value}
@@ -289,6 +413,14 @@ const Footer = () => {
               setOpenPicker={setOpenPicker}
               handleMsgType={handleMsgType}
               handleClickEnter={handleClickEnter}
+            />
+
+            <input
+              type="file"
+              style={{ display: "none" }}
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              multiple
             />
           </Stack>
           <Box
@@ -306,7 +438,7 @@ const Footer = () => {
             >
               <IconButton
                 onClick={() => {
-                  if (value.trim().length > 0) {
+                  if (value.trim().length > 0 || fileInput.length > 0) {
                     dataToSend();
                   }
                 }}

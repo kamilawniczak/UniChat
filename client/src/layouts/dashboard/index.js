@@ -14,6 +14,7 @@ import {
   AddGroupMessage,
   AddUnreadGroupMessage,
   AddUnreadMessage,
+  UpdateDirectMessage,
   UpdateOnline,
   getDirectConversations,
   getGroupConversations,
@@ -96,6 +97,7 @@ const DashboardLayout = () => {
           message: message.text,
           incoming: message.to === user_id,
           outgoing: message.from === user_id,
+          file: message.file,
         };
 
         if (current_conversation?.room_id === data?.conversation_id) {
@@ -128,6 +130,7 @@ const DashboardLayout = () => {
           message: message.text,
           incoming: message.to === user_id,
           outgoing: message.from === user_id,
+          file: message.file,
         };
         if (current_group_conversation?.room_id === data?.conversation_id) {
           dispatch(AddGroupMessage(fittedMessage));
@@ -152,6 +155,9 @@ const DashboardLayout = () => {
           dispatch(UpdateOnline({ online, from }));
         }
       });
+      socket.on("receiveFiles", (data) => {
+        dispatch(UpdateDirectMessage(data));
+      });
     }
 
     return () => {
@@ -163,6 +169,7 @@ const DashboardLayout = () => {
       socket?.off("new_message");
       socket?.off("new_group_message");
       socket?.off("statusChanged");
+      socket?.off("receiveFiles");
     };
   }, [
     isLoggedIn,
