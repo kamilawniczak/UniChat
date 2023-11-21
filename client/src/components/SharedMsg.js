@@ -15,7 +15,7 @@ import { useDispatch } from "react-redux";
 import { UpdateSidebarType } from "../redux/slices/app";
 import { faker } from "@faker-js/faker";
 import { SHARED_DOCS, SHERED_LINKS } from "../data";
-import { DocMsg, LinkMsg } from "./Conversation/MsgTypes";
+import { DocMsg } from "./Conversation/MsgTypes";
 
 const SharedMsg = () => {
   const [value, setValue] = useState(0);
@@ -38,8 +38,7 @@ const SharedMsg = () => {
             ))}
           </Grid>
         );
-      case 1:
-        return SHERED_LINKS.map((e, i) => <LinkMsg data={e} key={i} />);
+
       case 2:
         return SHARED_DOCS.map((e, i) => <DocMsg data={e} key={i} />);
     }

@@ -15,6 +15,7 @@ const FriendRequest = require("./models/FriendRequest");
 const Message = require("./models/message");
 const { lstat } = require("fs");
 const { emit } = require("process");
+
 const GroupMessage = require("./models/group_messages");
 
 process.on("uncaughtException", (err) => {
@@ -29,7 +30,6 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST"],
   },
-  // maxHttpBufferSize: 1e8,
 });
 
 const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DB_PASSWORD);
@@ -282,7 +282,7 @@ io.on("connection", async (socket) => {
       console.log(error);
     }
   });
-  socket.on("text_group_message", async (data) => {
+  socket.on("text_group_message", async (data, callback) => {
     const { message, file, conversation_id, from, to, type, subtype } = data;
 
     const from_user = await User.findById(from);
@@ -304,6 +304,7 @@ io.on("connection", async (socket) => {
     });
 
     const lastMessage = msg.messages.at(-1);
+    callback(lastMessage._id);
 
     for (const friend of to) {
       const to_user = await User.findById(friend).select("socket_id");
@@ -367,7 +368,7 @@ io.on("connection", async (socket) => {
   );
   //------------------------------------------------------------------
   socket.on("upload-file", async ({ room_id, msgId, files, chat_type }) => {
-    let complitedMsg = {};
+    let completedMsg = {};
     let chat = [];
 
     if (chat_type === "OneToOne") {
@@ -383,7 +384,7 @@ io.on("connection", async (socket) => {
 
       selected_message.file = files;
 
-      complitedMsg = await conversation.save({
+      completedMsg = await conversation.save({
         new: true,
         validateModifiedOnly: true,
       });
@@ -405,7 +406,7 @@ io.on("connection", async (socket) => {
 
       selected_message.file = files;
 
-      complitedMsg = await conversation.save({
+      completedMsg = await conversation.save({
         new: true,
         validateModifiedOnly: true,
       });
@@ -415,12 +416,13 @@ io.on("connection", async (socket) => {
         .select("members");
     }
 
-    complitedMsg = complitedMsg.messages.filter(
+    completedMsg = completedMsg.messages.filter(
       (msg) => msg._id.toString() === msgId
     );
+
     if (chat && chat.members) {
       chat.members.forEach((mem) => {
-        io.to(mem.socket_id).emit("receiveFiles", ...complitedMsg);
+        io.to(mem.socket_id).emit("receiveFiles", ...completedMsg);
       });
     } else {
       console.warn("chat.members is undefined. No action taken.");

@@ -143,13 +143,9 @@ const ChatInput = ({
   );
 };
 
-function containsUrl(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return urlRegex.test(text);
-}
-
 const Footer = () => {
   const [fileInput, setFilesInput] = useState([]);
+  const [openPicker, setOpenPicker] = React.useState(false);
 
   const theme = useTheme();
 
@@ -163,8 +159,6 @@ const Footer = () => {
   const user_id = window.localStorage.getItem("user_id");
 
   const { sideBar, room_id, chat_type } = useSelector((state) => state.app);
-
-  const [openPicker, setOpenPicker] = React.useState(false);
 
   const [value, setValue] = useState("");
   const [type, setType] = useState("text");
@@ -191,17 +185,9 @@ const Footer = () => {
           value.substring(selectionEnd)
       );
 
-      // Move the cursor to the end of the inserted emoji
       input.selectionStart = input.selectionEnd = selectionStart + 1;
     }
   }
-  // function linkify(text) {
-  //   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  //   return text.replace(
-  //     urlRegex,
-  //     (url) => `<a href="${url}" target="_blank">${url}</a>`
-  //   );
-  // }
 
   const handleClickEnter = (event) => {
     if (event.key === "Enter") {
@@ -238,13 +224,7 @@ const Footer = () => {
       to: current_conversation.user_id,
       type: "msg",
       subtype:
-        type === "text"
-          ? value.startsWith("https://")
-            ? "link"
-            : "text"
-          : filesToSend.length === 0
-          ? "text"
-          : type,
+        type === "text" ? "text" : filesToSend.length === 0 ? "text" : type,
       file: filesToSend.length > 0 && true,
     };
 
@@ -271,7 +251,6 @@ const Footer = () => {
             files: filesToSend,
             chat_type,
           };
-
           sendFile(data);
         }
       });
@@ -279,7 +258,8 @@ const Footer = () => {
 
     setType("text");
     setValue("");
-    setFilesInput([]); // Reset fileInput after sending
+    setFilesInput([]);
+    setOpenPicker(false);
   };
 
   const handleMsgType = (subtype) => {
@@ -302,7 +282,7 @@ const Footer = () => {
       dispatch(
         OpenSnackBar({
           severity: "warning",
-          message: "Too many files :( max 20",
+          message: "Too many files :( max 10",
         })
       );
       return;

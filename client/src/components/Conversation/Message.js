@@ -1,13 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import React from "react";
-import {
-  DocMsg,
-  LinkMsg,
-  MediaMsg,
-  ReplayMsg,
-  TextMsg,
-  Timeline,
-} from "./MsgTypes";
+import { DocMsg, MediaMsg, ReplayMsg, TextMsg, Timeline } from "./MsgTypes";
 
 const showMessage = (message, menu = false) => {
   switch (message.type) {
@@ -17,8 +10,6 @@ const showMessage = (message, menu = false) => {
           return <MediaMsg data={message} menu={menu} />;
         case "doc":
           return <DocMsg data={message} menu={menu} />;
-        case "link":
-          return <LinkMsg data={message} menu={menu} />;
         case "reply":
           return <ReplayMsg data={message} menu={menu} />;
         default:

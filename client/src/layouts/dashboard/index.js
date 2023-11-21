@@ -15,6 +15,7 @@ import {
   AddUnreadGroupMessage,
   AddUnreadMessage,
   UpdateDirectMessage,
+  UpdateGroupMessage,
   UpdateOnline,
   getDirectConversations,
   getGroupConversations,
@@ -120,8 +121,6 @@ const DashboardLayout = () => {
         }
       });
       socket.on("new_group_message", (data) => {
-        console.log(data);
-
         const message = data.message;
         const fittedMessage = {
           id: message?._id,
@@ -157,6 +156,8 @@ const DashboardLayout = () => {
       });
       socket.on("receiveFiles", (data) => {
         dispatch(UpdateDirectMessage(data));
+
+        dispatch(UpdateGroupMessage(data));
       });
     }
 

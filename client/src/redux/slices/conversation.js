@@ -370,6 +370,21 @@ const slice = createSlice({
       });
       state.group_chat.conversations = [...updatedConversations];
     },
+    updateGroupMessage(state, action) {
+      const array = state?.group_chat?.current_meessages;
+
+      if (array?.length) {
+        const updatedMessages = array.map((msg) =>
+          msg.id === action.payload._id
+            ? { ...msg, file: action.payload.file }
+            : msg
+        );
+
+        state.group_chat.current_meessages = updatedMessages;
+      }
+
+      // state.direct_chat.conversations = [...updatedConversations];
+    },
     addUnreadGroupMessage(state, action) {
       const { room_id, message } = action.payload;
       const array = state.group_chat.unread_messages;
@@ -541,6 +556,11 @@ export function GetCurrentGroupMessages({ messages }) {
 export function AddGroupMessage(message) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.addGroupMessage(message));
+  };
+}
+export function UpdateGroupMessage(message) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.updateGroupMessage(message));
   };
 }
 export function AddUnreadGroupMessage({ room_id, message }) {
