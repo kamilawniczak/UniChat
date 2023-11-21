@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import {
   DotsThreeVertical,
+  Download,
   DownloadSimple,
   Image,
 } from "@phosphor-icons/react";
@@ -19,14 +20,39 @@ import { useState } from "react";
 import { Message_options } from "../../data";
 import ImgModal from "./ImgModal";
 
+function getFileNameFromUrl(url) {
+  const pathname = new URL(url).pathname;
+  const match = pathname.match(/\$\$\$(.+)$/);
+  return match ? match[1] : null;
+}
+function handleDownload(fileUrl) {
+  const newWindow = window.open(fileUrl, "_blank");
+  if (newWindow) {
+    newWindow.opener = null;
+  }
+}
+
 export const MediaMsg = ({ data, menu }) => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   const theme = useTheme();
 
   const handleImageClick = (img) => {
     setSelectedImage(img);
   };
+  const handleDownloadClick = (event, img) => {
+    event.stopPropagation();
+    handleDownload(img);
+  };
+  const handleMouseEnter = (index) => {
+    setHoveredIndex(index);
+  };
 
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
+  console.log(data);
   const isLoading = data.file?.length > 0 && data.file[0] === "true";
   return (
     <>
@@ -46,16 +72,36 @@ export const MediaMsg = ({ data, menu }) => {
             ) : (
               <>
                 {data.file.map((element, index) => (
-                  <img
-                    src={element}
-                    alt={element}
-                    style={{
-                      maxHeight: "210px",
-                      borderRadius: "10px",
-                    }}
-                    onClick={() => handleImageClick(element)}
+                  <div
                     key={index}
-                  />
+                    style={{ position: "relative", display: "inline-block" }}
+                    onMouseEnter={() => handleMouseEnter(index)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <img
+                      src={element}
+                      alt={getFileNameFromUrl(element) || element}
+                      style={{
+                        maxHeight: "210px",
+                        borderRadius: "10px",
+                      }}
+                      onClick={() => handleImageClick(element)}
+                    />
+                    {hoveredIndex === index && (
+                      <IconButton
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        }}
+                        onClick={(event) => handleDownloadClick(event, element)}
+                      >
+                        <Download />
+                      </IconButton>
+                    )}
+                  </div>
                 ))}
               </>
             )}
@@ -78,6 +124,8 @@ export const MediaMsg = ({ data, menu }) => {
 };
 export const DocMsg = ({ data, menu }) => {
   const theme = useTheme();
+  const isLoading = data.file?.length > 0 && data.file[0] === "true";
+
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
       <Box
@@ -90,27 +138,36 @@ export const DocMsg = ({ data, menu }) => {
         }}
       >
         <Stack spacing={2}>
-          <Stack
-            p={2}
-            direction="row"
-            spacing={3}
-            alignItems="center"
-            sx={{
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: 1,
-            }}
-          >
-            <Image size={48} />
-            <Typography
-              variant="caption"
-              sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
-            >
-              Abstract.png
-            </Typography>
-            <IconButton>
-              <DownloadSimple />
-            </IconButton>
-          </Stack>
+          {isLoading ? (
+            <CircularProgress size={104} color="inherit" />
+          ) : (
+            <>
+              {data.file.map((element, index) => (
+                <Stack
+                  p={2}
+                  direction="row"
+                  spacing={3}
+                  alignItems="center"
+                  sx={{
+                    backgroundColor: theme.palette.background.paper,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Image size={48} />
+                  <Typography
+                    variant="caption"
+                    sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
+                  >
+                    {getFileNameFromUrl(element)}
+                  </Typography>
+                  <IconButton onClick={() => handleDownload(element)}>
+                    <DownloadSimple />
+                  </IconButton>
+                </Stack>
+              ))}
+            </>
+          )}
+
           <Typography
             variant="body2"
             sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
@@ -170,7 +227,6 @@ const splitMessage = (message) => {
   const match = urlRegex.exec(message);
 
   if (match) {
-    console.log(match);
     const link = match[0];
     const index = match.index;
     const textBeforeLink = message.slice(0, index).trim();

@@ -201,7 +201,13 @@ const Footer = () => {
     try {
       dataToSend.files = await Promise.all(
         dataToSend.files.map(async (file) => {
-          const token = user_id + "/" + Date.now() + crypto.randomUUID();
+          const token =
+            user_id +
+            "/" +
+            Date.now() +
+            crypto.randomUUID() +
+            "$$$" +
+            file.name;
           await supabase.storage.from("files").upload(token, file);
 
           return `https://aywtluyvoneczbqctdfk.supabase.co/storage/v1/object/public/files/${token}`;
