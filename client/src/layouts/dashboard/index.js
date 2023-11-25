@@ -14,11 +14,15 @@ import {
   AddGroupMessage,
   AddUnreadGroupMessage,
   AddUnreadMessage,
+  DeleteDirectMessage,
+  DeleteGroupMessage,
   UpdateDirectMessage,
   UpdateGroupMessage,
   UpdateOnline,
   getDirectConversations,
   getGroupConversations,
+  getGroupRoomId,
+  getRoomId,
 } from "../../redux/slices/conversation";
 
 const DashboardLayout = () => {
@@ -32,6 +36,9 @@ const DashboardLayout = () => {
     current_conversation: current_group_conversation,
   } = useSelector(getGroupConversations());
   const dispatch = useDispatch();
+
+  const directRoomId = useSelector(getRoomId());
+  const groupRoomId = useSelector(getGroupRoomId());
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -61,7 +68,6 @@ const DashboardLayout = () => {
         );
 
         const [from] = data.members.filter((mem) => mem._id !== user_id);
-        console.log(from);
         if (!existing_conversation) {
           dispatch(
             OpenSnackBar({
@@ -89,11 +95,13 @@ const DashboardLayout = () => {
       });
 
       socket.on("new_message", (data) => {
+        console.log(data);
         const message = data.message;
 
         const fittedMessage = {
           id: message?._id,
           type: "msg",
+          from: message.from,
           subtype: message?.subtype,
           message: message.text,
           incoming: message.to === user_id,
@@ -125,6 +133,7 @@ const DashboardLayout = () => {
         const fittedMessage = {
           id: message?._id,
           type: "msg",
+          from: message.from,
           subtype: message?.subtype,
           message: message.text,
           incoming: message.to === user_id,
@@ -159,6 +168,17 @@ const DashboardLayout = () => {
 
         dispatch(UpdateGroupMessage(data));
       });
+      socket.on("deletedMessage", ({ room_id, msgId, chat_type }) => {
+        console.log(room_id, msgId, chat_type);
+        if (chat_type === "OneToOne") {
+          if (directRoomId !== room_id) return;
+          dispatch(DeleteDirectMessage({ id: msgId }));
+        }
+        if (chat_type === "OneToMany") {
+          if (groupRoomId !== room_id) return;
+          dispatch(DeleteGroupMessage({ id: msgId }));
+        }
+      });
     }
 
     return () => {
@@ -171,6 +191,7 @@ const DashboardLayout = () => {
       socket?.off("new_group_message");
       socket?.off("statusChanged");
       socket?.off("receiveFiles");
+      socket?.off("deletedMessage");
     };
   }, [
     isLoggedIn,

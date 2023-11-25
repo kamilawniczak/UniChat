@@ -238,6 +238,55 @@ io.on("connection", async (socket) => {
     callback({ message: "conversation deleted successfully", room_id });
   });
 
+  socket.on(
+    "deleteMsg",
+    async ({ msgId, chat_type, room_id, user_id }, callback) => {
+      console.log(msgId, chat_type, room_id, user_id);
+      let members = [];
+      if (chat_type === "OneToOne") {
+        const conversation = await Message.findById(room_id);
+
+        conversation.messages = conversation.messages.filter(
+          (msg) => msg._id.toString() !== msgId
+        );
+
+        conversation.save();
+
+        members = conversation.members.filter(
+          (mem) => mem.toString() !== user_id
+        );
+      }
+      if (chat_type === "OneToMany") {
+        console.log(msgId, chat_type, room_id, user_id);
+        const conversation = await GroupMessage.findById(room_id);
+
+        conversation.messages = conversation.messages.filter(
+          (msg) => msg._id.toString() !== msgId
+        );
+
+        conversation.save();
+
+        members = await conversation.members.filter(
+          (mem) => mem.toString() !== user_id
+        );
+      }
+
+      callback();
+
+      await Promise.all(
+        members.map(async (mem) => {
+          const id = mem.toString();
+          const { socket_id } = await User.findById(id).select("socket_id");
+          io.to(socket_id).emit("deletedMessage", {
+            msgId,
+            room_id,
+            chat_type,
+          });
+        })
+      );
+    }
+  );
+
   //------------------------group------------------------------------------
 
   socket.on("start_group_conversation", async ({ title, members, user_id }) => {

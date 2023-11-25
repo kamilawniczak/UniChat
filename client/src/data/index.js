@@ -283,12 +283,15 @@ const Chat_History = [
 
 const Message_options = [
   {
+    id: "replay",
     title: "Reply",
   },
   {
+    id: "reactToMsg",
     title: "React to message",
   },
   {
+    id: "deleteMsg",
     title: "Delete Message",
   },
 ];

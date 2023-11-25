@@ -1,24 +1,22 @@
 import {
+  Avatar,
   Box,
   CircularProgress,
   Divider,
   IconButton,
-  Menu,
-  MenuItem,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
-import {
-  DotsThreeVertical,
-  Download,
-  DownloadSimple,
-  Image,
-} from "@phosphor-icons/react";
+import { Download, DownloadSimple, Image, Smiley } from "@phosphor-icons/react";
 import React from "react";
 import { useState } from "react";
-import { Message_options } from "../../data";
 import ImgModal from "./ImgModal";
+import MessageOptions from "./MessageOptions";
+import { useSelector } from "react-redux";
+import { getUserInfo } from "../../redux/slices/auth";
+import MsgReaction from "./MsgReaction";
+import EmojiPickerModal from "./EmojiPickerModal";
 
 function getFileNameFromUrl(url) {
   const pathname = new URL(url).pathname;
@@ -31,11 +29,47 @@ function handleDownload(fileUrl) {
     newWindow.opener = null;
   }
 }
+function handleMsgReaction(emiji) {
+  console.log(emiji);
 
-export const MediaMsg = ({ data, menu }) => {
+  // socket.emit(
+  //   "reactToMsg",
+  //   { msgId, chat_type, room_id: current_conversation.room_id, user_id },
+  //   (data) => {}
+  // );
+}
+const splitMessage = (message) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const match = urlRegex.exec(message);
+
+  if (match) {
+    const link = match[0];
+    const index = match.index;
+    const textBeforeLink = message.slice(0, index).trim();
+    const textAfterLink = message.slice(index + link.length).trim();
+
+    return {
+      textBeforeLink,
+      textAfterLink,
+      link,
+    };
+  }
+
+  return {
+    textBeforeLink: message,
+    textAfterLink: "",
+    link: null,
+  };
+};
+
+export const MediaMsg = ({ data, menu, members }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const theme = useTheme();
+  const { avatar } = useSelector(getUserInfo());
+  const isLoading = data.file?.length > 0 && data.file[0] === "true";
+  const member = members.find((mem) => mem.id === data.from);
+  const otherAvatar = member?.avatar;
 
   const handleImageClick = (img) => {
     setSelectedImage(img);
@@ -52,11 +86,18 @@ export const MediaMsg = ({ data, menu }) => {
     setHoveredIndex(null);
   };
 
-  console.log(data);
-  const isLoading = data.file?.length > 0 && data.file[0] === "true";
   return (
     <>
       <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+        {data.incoming && (
+          <Stack alignItems="center" justifyContent="top" mr={1}>
+            <Avatar
+              alt="Avatar"
+              src={otherAvatar}
+              sx={{ width: 32, height: 32, marginLeft: 1 }}
+            />
+          </Stack>
+        )}
         <Box
           p={1.5}
           sx={{
@@ -115,19 +156,37 @@ export const MediaMsg = ({ data, menu }) => {
             )}
           </Stack>
         </Box>
-        {menu && <MessageOptions />}
+        {menu && <MessageOptions msgId={data.id} incoming={data.incoming} />}
+        {!data.incoming && (
+          <Stack alignItems="center" justifyContent="top">
+            <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+          </Stack>
+        )}
       </Stack>
 
       <ImgModal img={selectedImage} onClose={() => setSelectedImage(null)} />
     </>
   );
 };
-export const DocMsg = ({ data, menu }) => {
+export const DocMsg = ({ data, menu, members }) => {
   const theme = useTheme();
+  const { avatar } = useSelector(getUserInfo());
   const isLoading = data.file?.length > 0 && data.file[0] === "true";
+
+  const member = members.find((mem) => mem.id === data.from);
+  const otherAvatar = member?.avatar;
 
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      {data.incoming && (
+        <Stack alignItems="center" justifyContent="top" mr={1}>
+          <Avatar
+            alt="Avatar"
+            src={otherAvatar}
+            sx={{ width: 32, height: 32, marginLeft: 1 }}
+          />
+        </Stack>
+      )}
       <Box
         p={1.5}
         sx={{
@@ -152,6 +211,7 @@ export const DocMsg = ({ data, menu }) => {
                     backgroundColor: theme.palette.background.paper,
                     borderRadius: 1,
                   }}
+                  key={index}
                 >
                   <Image size={48} />
                   <Typography
@@ -176,15 +236,32 @@ export const DocMsg = ({ data, menu }) => {
           </Typography>
         </Stack>
       </Box>
-      {menu && <MessageOptions />}
+      {menu && <MessageOptions msgId={data.id} incoming={data.incoming} />}
+      {!data.incoming && (
+        <Stack alignItems="center" justifyContent="top">
+          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+        </Stack>
+      )}
     </Stack>
   );
 };
 
-export const ReplayMsg = ({ data, menu }) => {
+export const ReplayMsg = ({ data, menu, members }) => {
   const theme = useTheme();
+  const { avatar } = useSelector(getUserInfo());
+  const member = members.find((mem) => mem.id === data.from);
+  const otherAvatar = member?.avatar;
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+      {data.incoming && (
+        <Stack alignItems="center" justifyContent="top" mr={1}>
+          <Avatar
+            alt="Avatar"
+            src={otherAvatar}
+            sx={{ width: 32, height: 32, marginLeft: 1 }}
+          />
+        </Stack>
+      )}
       <Box
         p={1.5}
         sx={{
@@ -217,74 +294,103 @@ export const ReplayMsg = ({ data, menu }) => {
           </Typography>
         </Stack>
       </Box>
-      {menu && <MessageOptions />}
+      {menu && <MessageOptions msgId={data.id} incoming={data.incoming} />}
+      {!data.incoming && (
+        <Stack alignItems="center" justifyContent="top">
+          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+        </Stack>
+      )}
     </Stack>
   );
 };
 
-const splitMessage = (message) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const match = urlRegex.exec(message);
-
-  if (match) {
-    const link = match[0];
-    const index = match.index;
-    const textBeforeLink = message.slice(0, index).trim();
-    const textAfterLink = message.slice(index + link.length).trim();
-
-    return {
-      textBeforeLink,
-      textAfterLink,
-      link,
-    };
-  }
-
-  return {
-    textBeforeLink: message,
-    textAfterLink: "",
-    link: null,
-  };
-};
-
-export const TextMsg = ({ data, menu }) => {
+export const TextMsg = ({ data, menu, members }) => {
+  // const [openPicker, setOpenPicker] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const theme = useTheme();
+  const { avatar } = useSelector(getUserInfo());
   const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
+
+  const member = members.find((mem) => mem.id === data.from);
+  const otherAvatar = member?.avatar;
+
+  const handleOpenPicker = () => {
+    setOpenModal(true);
+  };
+
+  const handleClosePicker = () => {
+    setOpenModal(false);
+  };
+
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      <Box
-        p={1.5}
-        sx={{
-          backgroundColor: data.incoming
-            ? theme.palette.background.default
-            : theme.palette.primary.main,
-          borderRadius: 1.5,
-        }}
-      >
-        <Typography
-          variant="body2"
-          color={data.incoming ? theme.palette.text : "#fff"}
+      {data.incoming && (
+        <Stack alignItems="center" justifyContent="top" mr={1}>
+          <Avatar
+            alt="Avatar"
+            src={otherAvatar}
+            sx={{ width: 32, height: 32, marginLeft: 1 }}
+          />
+        </Stack>
+      )}
+      <Stack>
+        <Box
+          p={1.5}
+          sx={{
+            backgroundColor: data.incoming
+              ? theme.palette.background.default
+              : theme.palette.primary.main,
+            borderRadius: 1.5,
+          }}
         >
-          {link ? (
-            <>
-              {textBeforeLink}{" "}
-              <a
-                href={link}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: data.incoming ? theme.palette.text : "#fff",
-                }}
-              >
-                {link}
-              </a>{" "}
-              {textAfterLink}
-            </>
-          ) : (
-            data.message
-          )}
-        </Typography>
-      </Box>
-      {menu && <MessageOptions />}
+          <Typography
+            variant="body2"
+            color={data.incoming ? theme.palette.text : "#fff"}
+          >
+            {link ? (
+              <>
+                {textBeforeLink}{" "}
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    color: data.incoming ? theme.palette.text : "#fff",
+                  }}
+                >
+                  {link}
+                </a>{" "}
+                {textAfterLink}
+              </>
+            ) : (
+              data.message
+            )}
+          </Typography>
+        </Box>
+        <MsgReaction />
+      </Stack>
+
+      <EmojiPickerModal
+        open={openModal}
+        onClose={handleClosePicker}
+        onEmojiSelect={(emoji) => {
+          handleMsgReaction(emoji.native);
+          handleClosePicker();
+        }}
+      />
+
+      {menu && (
+        <MessageOptions
+          msgId={data.id}
+          incoming={data.incoming}
+          openPicker={handleOpenPicker}
+        />
+      )}
+      {!data.incoming && (
+        <Stack alignItems="center" justifyContent="top">
+          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+        </Stack>
+      )}
     </Stack>
   );
 };
@@ -301,48 +407,3 @@ export const Timeline = ({ data, menu }) => {
     </Stack>
   );
 };
-
-function MessageOptions() {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  return (
-    <>
-      <DotsThreeVertical
-        size={20}
-        id="menu-button"
-        aria-controls={open ? "demo-positioned-menu" : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        onClick={handleClick}
-      />
-      <Menu
-        id="menu-button"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-      >
-        <Stack spacing={1} px={1}>
-          {Message_options.map((e, i) => (
-            <MenuItem onClick={handleClose} key={i}>
-              {e.title}
-            </MenuItem>
-          ))}
-        </Stack>
-      </Menu>
-    </>
-  );
-}

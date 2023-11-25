@@ -14,7 +14,7 @@ const initialState = {
   userInfo: {
     firstName: "",
     lastName: "",
-    avatar: null,
+    avatar: "",
   },
 };
 
@@ -100,11 +100,12 @@ export function LoginUser(formValues) {
 
 export function LogoutUser() {
   return async (dispatch, getValues) => {
-    const conversations = getValues()?.coversations?.direct_chat?.conversations.map(
-      (conversation) => {
-        return conversation.user_id;
-      }
-    );
+    const conversations =
+      getValues()?.coversations?.direct_chat?.conversations.map(
+        (conversation) => {
+          return conversation.user_id;
+        }
+      );
     const friends = conversations.flat();
 
     window.localStorage.removeItem("user_id");

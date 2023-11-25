@@ -36,7 +36,17 @@ const slice = createSlice({
         return {
           id: e._id,
           user_id: this_user._id,
-          img: faker.image.avatar(),
+          user_info: [
+            {
+              id: this_user._id,
+              avatar: this_user.avatar,
+              firstName: this_user.firstName,
+              lastName: this_user.lastName,
+              status: this_user.status,
+              email: this_user.email,
+            },
+          ],
+          img: this_user.avatar,
           name: `${this_user.firstName} ${this_user.lastName}`,
           msg: faker.music.songName(),
           time: "9:36",
@@ -140,6 +150,7 @@ const slice = createSlice({
       const formatted_messages = action.payload.messages.map((el) => {
         return {
           id: el._id,
+          from: el.from,
           type: "msg",
           subtype: el.subtype,
           message: el.text,
@@ -172,6 +183,12 @@ const slice = createSlice({
         }
       );
       state.direct_chat.conversations = [...updatedConversations];
+    },
+    deleteDirectMessage(state, action) {
+      state.direct_chat.current_meessages =
+        state.direct_chat.current_meessages.filter(
+          (msg) => msg.id !== action.payload.id
+        );
     },
     updateDirectMessage(state, action) {
       const array = state?.direct_chat?.current_meessages;
@@ -241,8 +258,10 @@ const slice = createSlice({
     //-----------------------Group Msg-------------------------------------------------
     getGroupConversations(state, action) {
       const user_id = window.localStorage.getItem("user_id");
+      console.log(action.payload);
 
       const list = action.payload.conversations.map((e) => {
+        const restOfUsersInfo = e.members;
         const restOfUsers = e.members
           .filter((member) => member._id.toString() !== user_id)
           .map((member) => member._id);
@@ -252,6 +271,16 @@ const slice = createSlice({
         return {
           id: e._id,
           user_id: restOfUsers,
+          user_info: restOfUsersInfo.map((user) => {
+            return {
+              id: user._id,
+              avatar: user.avatar,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              status: user.status,
+              email: user.email,
+            };
+          }),
           img: faker.image.avatar(),
           name: e.title,
           msg: "",
@@ -323,6 +352,8 @@ const slice = createSlice({
       const formatted_messages = action.payload.messages.map((el) => {
         return {
           id: el._id,
+
+          from: el.from,
           type: "msg",
           subtype: el.subtype,
           message: el.text,
@@ -384,6 +415,12 @@ const slice = createSlice({
       }
 
       // state.direct_chat.conversations = [...updatedConversations];
+    },
+    deleteGroupMessage(state, action) {
+      state.group_chat.current_meessages =
+        state.group_chat.current_meessages.filter(
+          (msg) => msg.id !== action.payload.id
+        );
     },
     addUnreadGroupMessage(state, action) {
       const { room_id, message } = action.payload;
@@ -495,6 +532,11 @@ export function AddDirectMessage(message) {
     dispatch(slice.actions.addDirectMessage(message));
   };
 }
+export function DeleteDirectMessage({ id }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.deleteDirectMessage({ id }));
+  };
+}
 export function UpdateDirectMessage(message) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.updateDirectMessage(message));
@@ -561,6 +603,11 @@ export function AddGroupMessage(message) {
 export function UpdateGroupMessage(message) {
   return async (dispatch, getState) => {
     dispatch(slice.actions.updateGroupMessage(message));
+  };
+}
+export function DeleteGroupMessage({ id }) {
+  return async (dispatch, getState) => {
+    dispatch(slice.actions.deleteGroupMessage({ id }));
   };
 }
 export function AddUnreadGroupMessage({ room_id, message }) {
