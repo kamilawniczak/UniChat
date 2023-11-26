@@ -37,6 +37,13 @@ const groupMessageSchema = new mongoose.Schema({
           type: String,
         },
       ],
+      starredBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
+      reaction: [
+        {
+          by: { type: mongoose.Schema.ObjectId, ref: "User" },
+          reaction: String,
+        },
+      ],
     },
   ],
   pinnedBy: [
@@ -45,6 +52,12 @@ const groupMessageSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  blockedBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
+  created_at: {
+    type: Date,
+    default: Date.now(),
+  },
+  blockNotificationBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   title: {
     type: String,
   },

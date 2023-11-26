@@ -154,9 +154,10 @@ io.on("connection", async (socket) => {
 
   socket.on("get_messages", async (data, callback) => {
     try {
-      const { messages } = await Message.findById(data.room_id).select(
-        "messages"
-      );
+      const { messages } = await Message.findById(data.room_id)
+        .populate("messages.reaction.by", "firstName lastName")
+        .select("messages");
+
       callback(messages);
     } catch (error) {
       console.log(error);
@@ -323,9 +324,9 @@ io.on("connection", async (socket) => {
   });
   socket.on("get_group_messages", async (data, callback) => {
     try {
-      const { messages } = await GroupMessage.findById(data.room_id).select(
-        "messages"
-      );
+      const { messages } = await GroupMessage.findById(data.room_id)
+        .populate("messages.reaction.by", "firstName lastName")
+        .select("messages");
       callback(messages);
     } catch (error) {
       console.log(error);
@@ -477,6 +478,52 @@ io.on("connection", async (socket) => {
       console.warn("chat.members is undefined. No action taken.");
     }
   });
+  socket.on(
+    "reactToMsg",
+    async ({ emoji, msgId, room_id, chat_type, user_id }, callback) => {
+      console.log(emoji);
+      const newReaction = {
+        by: user_id,
+        reaction: emoji,
+      };
+      let conversation;
+
+      try {
+        if (chat_type === "OneToOne") {
+          conversation = await Message.findById(room_id);
+        }
+        if (chat_type === "OneToMany") {
+          conversation = await GroupMessage.findById(room_id);
+        }
+
+        const msg = conversation.messages.find(
+          (mess) => mess._id.toString() === msgId
+        );
+        const reaction = msg.reaction.filter(
+          (reaction) => reaction.by.toString() === user_id
+        );
+        if (reaction.length === 0) {
+          msg.reaction.push(newReaction);
+        } else {
+          if (reaction.at(0).reaction === emoji) {
+            msg.reaction = msg.reaction.filter(
+              (reaction) => reaction.by.toString() !== user_id
+            );
+          }
+          if (reaction.at(0).reaction !== emoji) {
+            console.log("yes");
+            msg.reaction = msg.reaction.map((reaction) =>
+              reaction.by.toString() === user_id ? newReaction : reaction
+            );
+          }
+          callback("works!!!");
+        }
+        conversation.save();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  );
 });
 
 process.on("unhandledRejection", (err) => {

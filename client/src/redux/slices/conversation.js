@@ -157,6 +157,7 @@ const slice = createSlice({
           incoming: el.to === user_id,
           outgoing: el.from === user_id,
           file: el.file,
+          reaction: el.reaction,
         };
       });
 
@@ -258,7 +259,6 @@ const slice = createSlice({
     //-----------------------Group Msg-------------------------------------------------
     getGroupConversations(state, action) {
       const user_id = window.localStorage.getItem("user_id");
-      console.log(action.payload);
 
       const list = action.payload.conversations.map((e) => {
         const restOfUsersInfo = e.members;
@@ -360,6 +360,7 @@ const slice = createSlice({
           incoming: el.to === user_id,
           outgoing: el.from === user_id,
           file: el.file,
+          reaction: el.reaction,
         };
       });
 

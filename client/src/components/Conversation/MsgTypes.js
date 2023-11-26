@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import { getUserInfo } from "../../redux/slices/auth";
 import MsgReaction from "./MsgReaction";
 import EmojiPickerModal from "./EmojiPickerModal";
+import { socket } from "../../socket";
 
 function getFileNameFromUrl(url) {
   const pathname = new URL(url).pathname;
@@ -29,14 +30,22 @@ function handleDownload(fileUrl) {
     newWindow.opener = null;
   }
 }
-function handleMsgReaction(emiji) {
-  console.log(emiji);
+function handleMsgReaction({ emoji, id, room_id, chatType }) {
+  const user_id = window.localStorage.getItem("user_id");
 
-  // socket.emit(
-  //   "reactToMsg",
-  //   { msgId, chat_type, room_id: current_conversation.room_id, user_id },
-  //   (data) => {}
-  // );
+  socket.emit(
+    "reactToMsg",
+    {
+      emoji,
+      msgId: id,
+      chat_type: chatType,
+      room_id,
+      user_id,
+    },
+    (data) => {
+      console.log(data);
+    }
+  );
 }
 const splitMessage = (message) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -62,7 +71,13 @@ const splitMessage = (message) => {
   };
 };
 
-export const MediaMsg = ({ data, menu, members }) => {
+export const MediaMsg = ({
+  data,
+  menu,
+  members,
+  room_id,
+  conversationType,
+}) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const theme = useTheme();
@@ -168,7 +183,7 @@ export const MediaMsg = ({ data, menu, members }) => {
     </>
   );
 };
-export const DocMsg = ({ data, menu, members }) => {
+export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
   const theme = useTheme();
   const { avatar } = useSelector(getUserInfo());
   const isLoading = data.file?.length > 0 && data.file[0] === "true";
@@ -246,7 +261,13 @@ export const DocMsg = ({ data, menu, members }) => {
   );
 };
 
-export const ReplayMsg = ({ data, menu, members }) => {
+export const ReplayMsg = ({
+  data,
+  menu,
+  members,
+  room_id,
+  conversationType,
+}) => {
   const theme = useTheme();
   const { avatar } = useSelector(getUserInfo());
   const member = members.find((mem) => mem.id === data.from);
@@ -304,7 +325,7 @@ export const ReplayMsg = ({ data, menu, members }) => {
   );
 };
 
-export const TextMsg = ({ data, menu, members }) => {
+export const TextMsg = ({ data, menu, members, room_id, conversationType }) => {
   // const [openPicker, setOpenPicker] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const theme = useTheme();
@@ -367,14 +388,19 @@ export const TextMsg = ({ data, menu, members }) => {
             )}
           </Typography>
         </Box>
-        <MsgReaction />
+        <MsgReaction reactions={data.reaction} />
       </Stack>
 
       <EmojiPickerModal
         open={openModal}
         onClose={handleClosePicker}
         onEmojiSelect={(emoji) => {
-          handleMsgReaction(emoji.native);
+          handleMsgReaction({
+            emoji: emoji.native,
+            id: data.id,
+            room_id,
+            chatType: conversationType,
+          });
           handleClosePicker();
         }}
       />
