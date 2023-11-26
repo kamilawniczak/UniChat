@@ -9,6 +9,7 @@ import {
   getDirectConversations,
   getGroupConversations,
 } from "../../redux/slices/conversation";
+import { StateProvider } from "../../contexts/ReplyMsgContext";
 
 const Conversation = () => {
   const scrollRef = useRef(null);
@@ -27,19 +28,21 @@ const Conversation = () => {
 
   return (
     <Stack sx={{ height: "100%", maxHeight: "100vh", width: "auto" }}>
-      <Header />
-      <Box
-        sx={{
-          width: "100%",
-          flexGrow: 1,
-          overflowY: "auto",
-          scrollbarGutter: "stable",
-        }}
-        ref={scrollRef}
-      >
-        <Chat />
-      </Box>
-      <Footer />
+      <Header />{" "}
+      <StateProvider>
+        <Box
+          sx={{
+            width: "100%",
+            flexGrow: 1,
+            overflowY: "auto",
+            scrollbarGutter: "stable",
+          }}
+          ref={scrollRef}
+        >
+          <Chat />
+        </Box>
+        <Footer />
+      </StateProvider>
     </Stack>
   );
 };

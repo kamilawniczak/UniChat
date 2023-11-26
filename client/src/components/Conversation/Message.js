@@ -1,6 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import React from "react";
-import { DocMsg, MediaMsg, ReplayMsg, TextMsg, Timeline } from "./MsgTypes";
+import { DocMsg, MediaMsg, TextMsg, Timeline } from "./MsgTypes";
 import { useSelector } from "react-redux";
 import { getChatType, getRoomId } from "../../redux/slices/app";
 import { getGroupRoomId } from "../../redux/slices/conversation";
@@ -22,16 +22,6 @@ const showMessage = (message, menu = false, members, room_id, chat_type) => {
         case "doc":
           return (
             <DocMsg
-              data={message}
-              menu={menu}
-              members={members}
-              room_id={room_id}
-              conversationType={chat_type}
-            />
-          );
-        case "reply":
-          return (
-            <ReplayMsg
               data={message}
               menu={menu}
               members={members}

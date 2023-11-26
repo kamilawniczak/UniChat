@@ -148,17 +148,37 @@ const slice = createSlice({
     getCurrentMessages(state, action) {
       const user_id = window.localStorage.getItem("user_id");
       const formatted_messages = action.payload.messages.map((el) => {
-        return {
-          id: el._id,
-          from: el.from,
-          type: "msg",
-          subtype: el.subtype,
-          message: el.text,
-          incoming: el.to === user_id,
-          outgoing: el.from === user_id,
-          file: el.file,
-          reaction: el.reaction,
-        };
+        if (!el?.replyData) {
+          return {
+            id: el._id,
+            from: el.from,
+            type: "msg",
+            subtype: el.subtype,
+            message: el.text,
+            incoming: el.to === user_id,
+            outgoing: el.from === user_id,
+            file: el.file,
+            reaction: el.reaction,
+          };
+        } else {
+          return {
+            id: el._id,
+            from: el.from,
+            type: "msg",
+            subtype: el.subtype,
+            replyData: {
+              created_at: el.replyData.created_at,
+              file: el.replyData.file,
+              text: el.replyData.text,
+              from: el.replyData.from,
+            },
+            message: el.text,
+            incoming: el.to === user_id,
+            outgoing: el.from === user_id,
+            file: el.file,
+            reaction: el.reaction,
+          };
+        }
       });
 
       state.direct_chat.current_meessages = formatted_messages;
@@ -359,18 +379,37 @@ const slice = createSlice({
     getCurrentGroupMessages(state, action) {
       const user_id = window.localStorage.getItem("user_id");
       const formatted_messages = action.payload.messages.map((el) => {
-        return {
-          id: el._id,
-
-          from: el.from,
-          type: "msg",
-          subtype: el.subtype,
-          message: el.text,
-          incoming: el.to === user_id,
-          outgoing: el.from === user_id,
-          file: el.file,
-          reaction: el.reaction,
-        };
+        if (!el?.replyData) {
+          return {
+            id: el._id,
+            from: el.from,
+            type: "msg",
+            subtype: el.subtype,
+            message: el.text,
+            incoming: el.to === user_id,
+            outgoing: el.from === user_id,
+            file: el.file,
+            reaction: el.reaction,
+          };
+        } else {
+          return {
+            id: el._id,
+            from: el.from,
+            type: "msg",
+            subtype: el.subtype,
+            replyData: {
+              created_at: el.replyData.created_at,
+              file: el.replyData.file,
+              text: el.replyData.text,
+              from: el.replyData.from,
+            },
+            message: el.text,
+            incoming: el.to === user_id,
+            outgoing: el.from === user_id,
+            file: el.file,
+            reaction: el.reaction,
+          };
+        }
       });
 
       state.group_chat.current_meessages = formatted_messages;

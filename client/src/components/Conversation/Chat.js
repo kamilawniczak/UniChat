@@ -43,6 +43,7 @@ const Chat = () => {
   useEffect(() => {
     if (chat_type === "OneToOne") {
       socket.emit("get_messages", current_conversation, async (data) => {
+        console.log(data);
         dispatch(GetCurrentMessages({ messages: data }));
       });
     }

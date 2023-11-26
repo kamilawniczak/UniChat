@@ -37,6 +37,8 @@ const groupMessageSchema = new mongoose.Schema({
           type: String,
         },
       ],
+      reply: { type: mongoose.Schema.ObjectId },
+      replyType: { type: String, enum: ["img", "doc", "text"] },
       starredBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
       reaction: [
         {

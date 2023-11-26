@@ -32,6 +32,8 @@ const messageSchema = new mongoose.Schema({
       text: {
         type: String,
       },
+      reply: { type: mongoose.Schema.ObjectId },
+      replyType: { type: String, enum: ["img", "doc", "text"] },
       file: [
         {
           type: String,

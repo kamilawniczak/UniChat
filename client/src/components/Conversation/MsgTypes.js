@@ -8,7 +8,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { Download, DownloadSimple, Image, Smiley } from "@phosphor-icons/react";
+import { Download, DownloadSimple, Image } from "@phosphor-icons/react";
 import React from "react";
 import { useState } from "react";
 import ImgModal from "./ImgModal";
@@ -199,6 +199,7 @@ export const MediaMsg = ({
             msgId={data.id}
             incoming={data.incoming}
             openPicker={handleOpenPicker}
+            type={"img"}
           />
         )}
 
@@ -314,100 +315,7 @@ export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
           msgId={data.id}
           incoming={data.incoming}
           openPicker={handleOpenPicker}
-        />
-      )}
-      {!data.incoming && (
-        <Stack alignItems="center" justifyContent="top">
-          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
-        </Stack>
-      )}
-    </Stack>
-  );
-};
-
-export const ReplayMsg = ({
-  data,
-  menu,
-  members,
-  room_id,
-  conversationType,
-}) => {
-  const [openModal, setOpenModal] = useState(false);
-  const theme = useTheme();
-  const { avatar } = useSelector(getUserInfo());
-
-  const member = members.find((mem) => mem.id === data.from);
-  const otherAvatar = member?.avatar;
-
-  const handleOpenPicker = () => {
-    setOpenModal(true);
-  };
-
-  const handleClosePicker = () => {
-    setOpenModal(false);
-  };
-  return (
-    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      {data.incoming && (
-        <Stack alignItems="center" justifyContent="top" mr={1}>
-          <Avatar
-            alt="Avatar"
-            src={otherAvatar}
-            sx={{ width: 32, height: 32, marginLeft: 1 }}
-          />
-        </Stack>
-      )}
-      <Box
-        p={1.5}
-        sx={{
-          backgroundColor: data.incoming
-            ? theme.palette.background.default
-            : theme.palette.primary.main,
-          borderRadius: 1.5,
-        }}
-      >
-        <Stack spacing={2}>
-          <Stack
-            p={2}
-            direction="column"
-            spacing={3}
-            alignItems="center"
-            sx={{
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: 1,
-            }}
-          >
-            <Typography variant="body2" color={theme.palette.text}>
-              {data.message}
-            </Typography>
-          </Stack>
-          <Typography
-            variant="body2"
-            color={data.incoming ? theme.palette.text : "#FFF"}
-          >
-            {data.reply}
-          </Typography>
-        </Stack>
-        <MsgReaction reactions={data.reaction} />
-      </Box>
-      <EmojiPickerModal
-        open={openModal}
-        onClose={handleClosePicker}
-        onEmojiSelect={(emoji) => {
-          handleMsgReaction({
-            emoji: emoji.native,
-            id: data.id,
-            room_id,
-            chatType: conversationType,
-          });
-          handleClosePicker();
-        }}
-      />
-      {menu && (
-        <MessageOptions
-          msgId={data.id}
-          incoming={data.incoming}
-          openPicker={handleOpenPicker}
+          type={"doc"}
         />
       )}
       {!data.incoming && (

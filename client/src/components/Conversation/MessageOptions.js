@@ -12,9 +12,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { socket } from "../../socket";
 import { getChatType } from "../../redux/slices/app";
 import { getUserId } from "../../redux/slices/auth";
+import { useReplayMsgContext } from "../../contexts/ReplyMsgContext";
 
-function MessageOptions({ msgId, incoming, openPicker }) {
+function MessageOptions({ msgId, type, incoming, openPicker }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const { onSetMsgId } = useReplayMsgContext();
 
   const {
     // current_meessages,
@@ -44,6 +46,7 @@ function MessageOptions({ msgId, incoming, openPicker }) {
     handleClose();
     switch (id) {
       case "replay": {
+        onSetMsgId({ msgId, type });
         break;
       }
       case "reactToMsg": {

@@ -158,14 +158,57 @@ io.on("connection", async (socket) => {
         .populate("messages.reaction.by", "firstName lastName")
         .select("messages");
 
-      callback(messages);
+      const prepearedMessages = messages.map((msg) => {
+        if (msg.reply) {
+          const replayedMsg = messages.find(
+            (message) => message._id.toString() === msg.reply.toString()
+          );
+
+          const message = {
+            to: msg.to,
+            from: msg.from,
+            type: msg.type,
+            subtype: msg.subtype,
+            created_at: msg.created_at,
+            text: msg.text,
+            reply: msg.repy,
+            replyType: msg.replyType,
+            file: msg.file,
+            starredBy: msg.starredBy,
+            reaction: msg.reaction,
+            _id: msg._id,
+            replyData: {
+              text: replayedMsg.text,
+              file: replayedMsg.file,
+              from: replayedMsg.from,
+              created_at: replayedMsg.created_at,
+            },
+          };
+
+          return replayedMsg ? message : msg;
+        } else {
+          return msg;
+        }
+      });
+
+      callback(prepearedMessages);
     } catch (error) {
       console.log(error);
     }
   });
 
   socket.on("text_message", async (data, callback) => {
-    const { message, file, conversation_id, from, to, type, subtype } = data;
+    const {
+      message,
+      file,
+      conversation_id,
+      from,
+      to,
+      type,
+      subtype,
+      reply,
+      replyType,
+    } = data;
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
@@ -178,6 +221,8 @@ io.on("connection", async (socket) => {
       created_at: Date.now(),
       text: message,
       file,
+      reply,
+      replyType,
       reaction: [],
     };
 
@@ -279,13 +324,56 @@ io.on("connection", async (socket) => {
       const { messages } = await GroupMessage.findById(data.room_id)
         .populate("messages.reaction.by", "firstName lastName")
         .select("messages");
-      callback(messages);
+      const prepearedMessages = messages.map((msg) => {
+        if (msg.reply) {
+          const replayedMsg = messages.find(
+            (message) => message._id.toString() === msg.reply.toString()
+          );
+
+          const message = {
+            to: msg.to,
+            from: msg.from,
+            type: msg.type,
+            subtype: msg.subtype,
+            created_at: msg.created_at,
+            text: msg.text,
+            reply: msg.repy,
+            replyType: msg.replyType,
+            file: msg.file,
+            starredBy: msg.starredBy,
+            reaction: msg.reaction,
+            _id: msg._id,
+            replyData: {
+              text: replayedMsg.text,
+              file: replayedMsg.file,
+              from: replayedMsg.from,
+              created_at: replayedMsg.created_at,
+            },
+          };
+
+          return replayedMsg ? message : msg;
+        } else {
+          return msg;
+        }
+      });
+
+      callback(prepearedMessages);
     } catch (error) {
       console.log(error);
     }
   });
   socket.on("text_group_message", async (data, callback) => {
-    const { message, file, conversation_id, from, to, type, subtype } = data;
+    const {
+      message,
+      file,
+      conversation_id,
+      from,
+      to,
+      type,
+      subtype,
+      reply,
+      replyType,
+    } = data;
 
     const from_user = await User.findById(from);
 
@@ -297,6 +385,8 @@ io.on("connection", async (socket) => {
       created_at: Date.now(),
       text: message,
       file,
+      reply,
+      replyType,
       reaction: [],
     };
     const chat = await GroupMessage.findById(conversation_id);

@@ -34,6 +34,7 @@ import { OpenSnackBar } from "../../redux/slices/app";
 
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../../config";
+import { useReplayMsgContext } from "../../contexts/ReplyMsgContext";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseKey = SUPABASE_KEY;
@@ -148,6 +149,7 @@ const Footer = () => {
   const [openPicker, setOpenPicker] = React.useState(false);
 
   const theme = useTheme();
+  const { replyMsgId, replyType, onResetMsgId } = useReplayMsgContext();
 
   const { current_conversation: direct_current_conversation } = useSelector(
     getDirectConversations()
@@ -232,6 +234,8 @@ const Footer = () => {
       subtype:
         type === "text" ? "text" : filesToSend.length === 0 ? "text" : type,
       file: filesToSend.length > 0 && true,
+      reply: replyMsgId || null,
+      replyType: replyType || "text",
     };
 
     if (chat_type === "OneToOne") {
@@ -266,6 +270,7 @@ const Footer = () => {
     setValue("");
     setFilesInput([]);
     setOpenPicker(false);
+    onResetMsgId();
   };
 
   const handleMsgType = (subtype) => {
