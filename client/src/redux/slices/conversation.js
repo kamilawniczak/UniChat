@@ -193,13 +193,22 @@ const slice = createSlice({
     },
     updateDirectMessage(state, action) {
       const array = state?.direct_chat?.current_meessages;
+      // console.log(action.payload);
 
       if (array?.length) {
-        const updatedMessages = array.map((msg) =>
-          msg.id === action.payload._id
-            ? { ...msg, file: action.payload.file }
-            : msg
-        );
+        const updatedMessages = array.map((msg) => {
+          if (action.payload?.file) {
+            return msg.id === action.payload._id
+              ? { ...msg, file: action.payload.file }
+              : msg;
+          }
+
+          if (action.payload?.reaction) {
+            return msg.id === action.payload._id
+              ? { ...msg, reaction: action.payload.reaction }
+              : msg;
+          }
+        });
 
         state.direct_chat.current_meessages = updatedMessages;
       }
@@ -406,11 +415,19 @@ const slice = createSlice({
       const array = state?.group_chat?.current_meessages;
 
       if (array?.length) {
-        const updatedMessages = array.map((msg) =>
-          msg.id === action.payload._id
-            ? { ...msg, file: action.payload.file }
-            : msg
-        );
+        const updatedMessages = array.map((msg) => {
+          if (action.payload?.file) {
+            return msg.id === action.payload._id
+              ? { ...msg, file: action.payload.file }
+              : msg;
+          }
+
+          if (action.payload?.reaction) {
+            return msg.id === action.payload._id
+              ? { ...msg, reaction: action.payload.reaction }
+              : msg;
+          }
+        });
 
         state.group_chat.current_meessages = updatedMessages;
       }

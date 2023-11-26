@@ -178,6 +178,7 @@ io.on("connection", async (socket) => {
       created_at: Date.now(),
       text: message,
       file,
+      reaction: [],
     };
 
     const chat = await Message.findById(conversation_id);
@@ -239,55 +240,6 @@ io.on("connection", async (socket) => {
     callback({ message: "conversation deleted successfully", room_id });
   });
 
-  socket.on(
-    "deleteMsg",
-    async ({ msgId, chat_type, room_id, user_id }, callback) => {
-      console.log(msgId, chat_type, room_id, user_id);
-      let members = [];
-      if (chat_type === "OneToOne") {
-        const conversation = await Message.findById(room_id);
-
-        conversation.messages = conversation.messages.filter(
-          (msg) => msg._id.toString() !== msgId
-        );
-
-        conversation.save();
-
-        members = conversation.members.filter(
-          (mem) => mem.toString() !== user_id
-        );
-      }
-      if (chat_type === "OneToMany") {
-        console.log(msgId, chat_type, room_id, user_id);
-        const conversation = await GroupMessage.findById(room_id);
-
-        conversation.messages = conversation.messages.filter(
-          (msg) => msg._id.toString() !== msgId
-        );
-
-        conversation.save();
-
-        members = await conversation.members.filter(
-          (mem) => mem.toString() !== user_id
-        );
-      }
-
-      callback();
-
-      await Promise.all(
-        members.map(async (mem) => {
-          const id = mem.toString();
-          const { socket_id } = await User.findById(id).select("socket_id");
-          io.to(socket_id).emit("deletedMessage", {
-            msgId,
-            room_id,
-            chat_type,
-          });
-        })
-      );
-    }
-  );
-
   //------------------------group------------------------------------------
 
   socket.on("start_group_conversation", async ({ title, members, user_id }) => {
@@ -345,6 +297,7 @@ io.on("connection", async (socket) => {
       created_at: Date.now(),
       text: message,
       file,
+      reaction: [],
     };
     const chat = await GroupMessage.findById(conversation_id);
     chat.messages.push(new_message);
@@ -379,17 +332,6 @@ io.on("connection", async (socket) => {
     callback({ message: "conversation deleted successfully", room_id });
   });
 
-  socket.on("setStatus", async ({ user_id, friends, online }) => {
-    const this_user_id = socket.handshake.query["user_id"];
-    for (const friend of friends) {
-      const user = await User.findById(friend).select("socket_id");
-      io.to(user.socket_id).emit("statusChanged", {
-        to: user._id,
-        online,
-        from: this_user_id,
-      });
-    }
-  });
   socket.on(
     "pinnedGroupConversation",
     async ({ user_id, room_id }, callback) => {
@@ -417,6 +359,55 @@ io.on("connection", async (socket) => {
     }
   );
   //------------------------------------------------------------------
+  socket.on(
+    "deleteMsg",
+    async ({ msgId, chat_type, room_id, user_id }, callback) => {
+      console.log(msgId, chat_type, room_id, user_id);
+      let members = [];
+      if (chat_type === "OneToOne") {
+        const conversation = await Message.findById(room_id);
+
+        conversation.messages = conversation.messages.filter(
+          (msg) => msg._id.toString() !== msgId
+        );
+
+        conversation.save();
+
+        members = conversation.members.filter(
+          (mem) => mem.toString() !== user_id
+        );
+      }
+      if (chat_type === "OneToMany") {
+        console.log(msgId, chat_type, room_id, user_id);
+        const conversation = await GroupMessage.findById(room_id);
+
+        conversation.messages = conversation.messages.filter(
+          (msg) => msg._id.toString() !== msgId
+        );
+
+        conversation.save();
+
+        members = await conversation.members.filter(
+          (mem) => mem.toString() !== user_id
+        );
+      }
+
+      callback();
+
+      await Promise.all(
+        members.map(async (mem) => {
+          const id = mem.toString();
+          const { socket_id } = await User.findById(id).select("socket_id");
+          io.to(socket_id).emit("deletedMessage", {
+            msgId,
+            room_id,
+            chat_type,
+          });
+        })
+      );
+    }
+  );
+
   socket.on("upload-file", async ({ room_id, msgId, files, chat_type }) => {
     let completedMsg = {};
     let chat = [];
@@ -480,20 +471,26 @@ io.on("connection", async (socket) => {
   });
   socket.on(
     "reactToMsg",
-    async ({ emoji, msgId, room_id, chat_type, user_id }, callback) => {
-      console.log(emoji);
+    async ({ emoji, msgId, room_id, chat_type, user_id }) => {
       const newReaction = {
         by: user_id,
         reaction: emoji,
       };
       let conversation;
+      let updatedConversation;
 
       try {
         if (chat_type === "OneToOne") {
-          conversation = await Message.findById(room_id);
+          conversation = await Message.findById(room_id).populate(
+            "members",
+            "firstName lastName socket_id"
+          );
         }
         if (chat_type === "OneToMany") {
-          conversation = await GroupMessage.findById(room_id);
+          conversation = await GroupMessage.findById(room_id).populate(
+            "members",
+            "firstName lastName socket_id"
+          );
         }
 
         const msg = conversation.messages.find(
@@ -511,19 +508,53 @@ io.on("connection", async (socket) => {
             );
           }
           if (reaction.at(0).reaction !== emoji) {
-            console.log("yes");
             msg.reaction = msg.reaction.map((reaction) =>
               reaction.by.toString() === user_id ? newReaction : reaction
             );
           }
-          callback("works!!!");
         }
-        conversation.save();
+        await conversation.save();
+
+        if (chat_type === "OneToOne") {
+          updatedConversation = await Message.findById(room_id)
+            .populate("messages.reaction.by", "firstName lastName")
+            .select("messages");
+        }
+        if (chat_type === "OneToMany") {
+          updatedConversation = await GroupMessage.findById(room_id)
+            .populate("messages.reaction.by", "firstName lastName")
+            .select("messages");
+        }
+
+        const updatedMsg = updatedConversation.messages.find(
+          (mess) => mess._id.toString() === msgId
+        );
+
+        const newReactionObject = updatedMsg.reaction;
+        conversation.members.forEach((member) => {
+          io.to(member?.socket_id).emit("reactionToMsg", {
+            room_id,
+            msgId,
+            reaction: newReactionObject,
+            chat_type,
+          });
+        });
       } catch (error) {
         console.log(error);
       }
     }
   );
+  socket.on("setStatus", async ({ user_id, friends, online }) => {
+    const this_user_id = socket.handshake.query["user_id"];
+    for (const friend of friends) {
+      const user = await User.findById(friend).select("socket_id");
+      io.to(user.socket_id).emit("statusChanged", {
+        to: user._id,
+        online,
+        from: this_user_id,
+      });
+    }
+  });
 });
 
 process.on("unhandledRejection", (err) => {

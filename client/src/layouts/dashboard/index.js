@@ -95,7 +95,6 @@ const DashboardLayout = () => {
       });
 
       socket.on("new_message", (data) => {
-        console.log(data);
         const message = data.message;
 
         const fittedMessage = {
@@ -104,6 +103,7 @@ const DashboardLayout = () => {
           from: message.from,
           subtype: message?.subtype,
           message: message.text,
+          reaction: [],
           incoming: message.to === user_id,
           outgoing: message.from === user_id,
           file: message.file,
@@ -136,6 +136,7 @@ const DashboardLayout = () => {
           from: message.from,
           subtype: message?.subtype,
           message: message.text,
+          reaction: [],
           incoming: message.to === user_id,
           outgoing: message.from === user_id,
           file: message.file,
@@ -168,6 +169,22 @@ const DashboardLayout = () => {
 
         dispatch(UpdateGroupMessage(data));
       });
+      socket.on("reactionToMsg", ({ reaction, msgId, chat_type, room_id }) => {
+        if (
+          chat_type === "OneToOne" &&
+          current_conversation.room_id &&
+          current_conversation.room_id === room_id
+        ) {
+          dispatch(UpdateDirectMessage({ reaction, _id: msgId }));
+        }
+        if (
+          chat_type === "OneToMany" &&
+          current_group_conversation.room_id &&
+          current_group_conversation.room_id === room_id
+        ) {
+          dispatch(UpdateGroupMessage({ reaction, _id: msgId }));
+        }
+      });
       socket.on("deletedMessage", ({ room_id, msgId, chat_type }) => {
         console.log(room_id, msgId, chat_type);
         if (chat_type === "OneToOne") {
@@ -191,6 +208,7 @@ const DashboardLayout = () => {
       socket?.off("new_group_message");
       socket?.off("statusChanged");
       socket?.off("receiveFiles");
+      socket?.off("reactionToMsg");
       socket?.off("deletedMessage");
     };
   }, [
