@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 const initialState = {
-  msgId: { msgId: null, type: null },
+  msgId: { msgId: null, type: null, file: null, text: null },
   onSetMsgId: () => {},
   onResetMsgId: () => {},
 };
@@ -9,13 +9,13 @@ const initialState = {
 const StateContext = createContext(initialState);
 
 const StateProvider = ({ children }) => {
-  const [replyInfo, setReplyInfo] = useState({ msgId: null, type: null });
+  const [replyInfo, setReplyInfo] = useState(initialState);
 
-  const onSetMsgId = (id) => {
-    setReplyInfo(id);
+  const onSetMsgId = (data) => {
+    setReplyInfo(data);
   };
   const onResetMsgId = () => {
-    setReplyInfo({ msgId: null, type: null });
+    setReplyInfo({ msgId: null, type: null, file: null, text: null });
   };
 
   return (
@@ -23,6 +23,8 @@ const StateProvider = ({ children }) => {
       value={{
         replyMsgId: replyInfo.msgId,
         replyType: replyInfo.type,
+        replyFile: replyInfo.file,
+        replyText: replyInfo.text,
         onSetMsgId,
         onResetMsgId,
       }}

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getIsLoggedIn } from "../../redux/slices/auth";
 import { useEffect } from "react";
 import { connectSocket, socket } from "../../socket";
-import { OpenSnackBar } from "../../redux/slices/app";
+import { OpenSnackBar, ResetRoom } from "../../redux/slices/app";
 import {
   AddDirectConversation,
   AddDirectMessage,
@@ -14,6 +14,7 @@ import {
   AddGroupMessage,
   AddUnreadGroupMessage,
   AddUnreadMessage,
+  DeleteDirectConversation,
   DeleteDirectMessage,
   DeleteGroupMessage,
   UpdateDirectMessage,
@@ -97,7 +98,7 @@ const DashboardLayout = () => {
       socket.on("new_message", (data) => {
         const message = data.message;
 
-        const fittedMessage = {
+        let fittedMessage = {
           id: message?._id,
           type: "msg",
           from: message.from,
@@ -108,6 +109,15 @@ const DashboardLayout = () => {
           outgoing: message.from === user_id,
           file: message.file,
         };
+        if (message.replyData) {
+          fittedMessage.replyData = {
+            text: message.replyData?.text,
+            file: message.replyData?.file,
+            from: message.replyData?.from,
+            created_at: message.replyData?.created_at,
+            type: message.replyData?.type,
+          };
+        }
 
         if (current_conversation?.room_id === data?.conversation_id) {
           dispatch(AddDirectMessage(fittedMessage));
@@ -130,7 +140,7 @@ const DashboardLayout = () => {
       });
       socket.on("new_group_message", (data) => {
         const message = data.message;
-        const fittedMessage = {
+        let fittedMessage = {
           id: message?._id,
           type: "msg",
           from: message.from,
@@ -141,6 +151,15 @@ const DashboardLayout = () => {
           outgoing: message.from === user_id,
           file: message.file,
         };
+        if (message.replyData) {
+          fittedMessage.replyData = {
+            text: message.replyData?.text,
+            file: message.replyData?.file,
+            from: message.replyData?.from,
+            created_at: message.replyData?.created_at,
+            type: message.replyData?.type,
+          };
+        }
         if (current_group_conversation?.room_id === data?.conversation_id) {
           dispatch(AddGroupMessage(fittedMessage));
         }
@@ -196,6 +215,27 @@ const DashboardLayout = () => {
           dispatch(DeleteGroupMessage({ id: msgId }));
         }
       });
+      socket.on("deletedDirectConversationClientSide", ({ room_id }) => {
+        dispatch(DeleteDirectConversation({ room_id }));
+        dispatch(
+          OpenSnackBar({
+            message: "Conversation deleted successfully",
+            severity: "success",
+          })
+        );
+      });
+      socket.on("deletedGroupConversationClientSide", ({ room_id }) => {
+        dispatch(DeleteDirectConversation({ room_id }));
+        if (directRoomId === room_id || groupRoomId === room_id) {
+          dispatch(ResetRoom());
+          dispatch(
+            OpenSnackBar({
+              message: "Group conversation deleted successfully",
+              severity: "success",
+            })
+          );
+        }
+      });
     }
 
     return () => {
@@ -210,6 +250,8 @@ const DashboardLayout = () => {
       socket?.off("receiveFiles");
       socket?.off("reactionToMsg");
       socket?.off("deletedMessage");
+      socket?.off("deletedDirectConversationClientSide");
+      socket?.off("deletedGroupConversationClientSide");
     };
   }, [
     isLoggedIn,

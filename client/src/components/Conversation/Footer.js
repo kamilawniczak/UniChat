@@ -1,12 +1,16 @@
 import {
   Avatar,
   Box,
+  Card,
+  CardContent,
+  CardMedia,
   Fab,
   IconButton,
   InputAdornment,
   Stack,
   TextField,
   Tooltip,
+  Typography,
   styled,
   useTheme,
 } from "@mui/material";
@@ -35,6 +39,7 @@ import { OpenSnackBar } from "../../redux/slices/app";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../../config";
 import { useReplayMsgContext } from "../../contexts/ReplyMsgContext";
+import MessageAnnotation from "./MessageAnnotation";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseKey = SUPABASE_KEY;
@@ -149,7 +154,8 @@ const Footer = () => {
   const [openPicker, setOpenPicker] = React.useState(false);
 
   const theme = useTheme();
-  const { replyMsgId, replyType, onResetMsgId } = useReplayMsgContext();
+  const { replyMsgId, replyType, onResetMsgId, replyText, replyFile } =
+    useReplayMsgContext();
 
   const { current_conversation: direct_current_conversation } = useSelector(
     getDirectConversations()
@@ -356,6 +362,14 @@ const Footer = () => {
                 left: 430,
               }}
             >
+              {replyMsgId && (
+                <MessageAnnotation
+                  type={replyType}
+                  file={replyFile}
+                  text={replyText}
+                  onReset={onResetMsgId}
+                />
+              )}
               {fileInput?.length > 0 &&
                 fileInput.map((file, index) => (
                   <Stack key={index} direction="row">

@@ -178,10 +178,10 @@ io.on("connection", async (socket) => {
             reaction: msg.reaction,
             _id: msg._id,
             replyData: {
-              text: replayedMsg.text,
-              file: replayedMsg.file,
-              from: replayedMsg.from,
-              created_at: replayedMsg.created_at,
+              text: replayedMsg?.text,
+              file: replayedMsg?.file,
+              from: replayedMsg?.from,
+              created_at: replayedMsg?.created_at,
             },
           };
 
@@ -209,7 +209,17 @@ io.on("connection", async (socket) => {
       reply,
       replyType,
     } = data;
-
+    console.log(
+      message,
+      file,
+      conversation_id,
+      from,
+      to,
+      type,
+      subtype,
+      reply,
+      replyType
+    );
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
 
@@ -234,7 +244,40 @@ io.on("connection", async (socket) => {
       validateModifiedOnly: true,
     });
 
-    const lastMessage = msg.messages.at(-1);
+    let lastMessage = msg.messages.at(-1);
+
+    // console.log(lastMessage);
+
+    if (lastMessage.reply) {
+      const replayedMsg = msg.messages.find(
+        (message) => message._id?.toString() === lastMessage.reply?.toString()
+      );
+      if (replayedMsg) {
+        lastMessage = {
+          to: lastMessage.to,
+          from: lastMessage.from,
+          type: lastMessage.type,
+          subtype: lastMessage.subtype,
+          created_at: lastMessage.created_at,
+          text: lastMessage.text,
+          reply: lastMessage.repy,
+          replyType: lastMessage.replyType,
+          file: lastMessage.file,
+          starredBy: lastMessage.starredBy,
+          reaction: lastMessage.reaction,
+          _id: lastMessage._id,
+          replyData: {
+            text: replayedMsg.text,
+            file: replayedMsg.file,
+            from: replayedMsg.from,
+            created_at: replayedMsg.created_at,
+            type: replayedMsg.subtype,
+            created_at: replayedMsg.created_at,
+          },
+        };
+      }
+    }
+
     callback(lastMessage._id);
 
     io.to(to_user?.socket_id).emit("new_message", {
@@ -280,8 +323,17 @@ io.on("connection", async (socket) => {
       await callback(exists);
     }
   });
-  socket.on("deleteConversation", async ({ room_id }, callback) => {
-    await Message.findByIdAndDelete(room_id);
+  socket.on("deleteConversation", async ({ room_id, user_id }, callback) => {
+    const { members } = await Message.findByIdAndDelete(room_id)
+      .populate("members", "socket_id")
+      .select("members");
+
+    members.forEach((member) => {
+      if (member._id.toString() === user_id) return;
+      const socket_id = member.socket_id;
+      io.to(socket_id).emit("deletedDirectConversationClientSide", { room_id });
+    });
+
     callback({ message: "conversation deleted successfully", room_id });
   });
 
@@ -338,7 +390,6 @@ io.on("connection", async (socket) => {
             created_at: msg.created_at,
             text: msg.text,
             reply: msg.repy,
-            replyType: msg.replyType,
             file: msg.file,
             starredBy: msg.starredBy,
             reaction: msg.reaction,
@@ -348,9 +399,9 @@ io.on("connection", async (socket) => {
               file: replayedMsg.file,
               from: replayedMsg.from,
               created_at: replayedMsg.created_at,
+              replyType: msg.replyType,
             },
           };
-
           return replayedMsg ? message : msg;
         } else {
           return msg;
@@ -389,6 +440,7 @@ io.on("connection", async (socket) => {
       replyType,
       reaction: [],
     };
+
     const chat = await GroupMessage.findById(conversation_id);
     chat.messages.push(new_message);
     const msg = await chat.save({
@@ -396,7 +448,38 @@ io.on("connection", async (socket) => {
       validateModifiedOnly: true,
     });
 
-    const lastMessage = msg.messages.at(-1);
+    let lastMessage = msg.messages.at(-1);
+
+    if (lastMessage.reply) {
+      const replayedMsg = msg.messages.find(
+        (message) => message._id?.toString() === lastMessage.reply?.toString()
+      );
+      if (replayedMsg) {
+        lastMessage = {
+          to: lastMessage.to,
+          from: lastMessage.from,
+          type: lastMessage.type,
+          subtype: lastMessage.subtype,
+          created_at: lastMessage.created_at,
+          text: lastMessage.text,
+          reply: lastMessage.repy,
+          replyType: lastMessage.replyType,
+          file: lastMessage.file,
+          starredBy: lastMessage.starredBy,
+          reaction: lastMessage.reaction,
+          _id: lastMessage._id,
+          replyData: {
+            text: replayedMsg.text,
+            file: replayedMsg.file,
+            from: replayedMsg.from,
+            created_at: replayedMsg.created_at,
+            type: replayedMsg.subtype,
+            created_at: replayedMsg.created_at,
+          },
+        };
+      }
+    }
+
     callback(lastMessage._id);
 
     for (const friend of to) {
@@ -417,10 +500,24 @@ io.on("connection", async (socket) => {
       message: lastMessage,
     });
   });
-  socket.on("deleteGroupConversation", async ({ room_id }, callback) => {
-    await GroupMessage.findByIdAndDelete(room_id);
-    callback({ message: "conversation deleted successfully", room_id });
-  });
+  socket.on(
+    "deleteGroupConversation",
+    async ({ room_id, user_id }, callback) => {
+      const { members } = await GroupMessage.findByIdAndDelete(room_id)
+        .populate("members", "socket_id")
+        .select("members");
+
+      members.forEach((member) => {
+        if (member._id.toString() === user_id) return;
+        const socket_id = member.socket_id;
+        io.to(socket_id).emit("deletedGroupConversationClientSide", {
+          room_id,
+        });
+      });
+
+      callback({ message: "conversation deleted successfully", room_id });
+    }
+  );
 
   socket.on(
     "pinnedGroupConversation",

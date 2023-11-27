@@ -17,58 +17,58 @@ import { useSelector } from "react-redux";
 import { getUserInfo } from "../../redux/slices/auth";
 import MsgReaction from "./MsgReaction";
 import EmojiPickerModal from "./EmojiPickerModal";
-import { socket } from "../../socket";
+import { ReplyDocMsg, ReplyImgMsg, ReplyTextMsg } from "./ReplyMsgTypes";
+import {
+  getFileNameFromUrl,
+  handleDownload,
+  handleMsgReaction,
+  splitMessage,
+} from "../../utils/formatMsg";
 
-function getFileNameFromUrl(url) {
-  const pathname = new URL(url).pathname;
-  const match = pathname.match(/\$\$\$(.+)$/);
-  return match ? match[1] : null;
-}
-function handleDownload(fileUrl) {
-  const newWindow = window.open(fileUrl, "_blank");
-  if (newWindow) {
-    newWindow.opener = null;
+const replayMsg = (
+  type,
+  { created_at, replyFile, replyText, replyFrom, replyType }
+) => {
+  switch (type) {
+    case "text":
+      return (
+        <ReplyTextMsg
+          created_at={created_at}
+          file={replyFile}
+          from={replyFrom}
+          text={replyText}
+          type={replyType}
+        />
+      );
+    case "img":
+      return (
+        <ReplyImgMsg
+          created_at={created_at}
+          file={replyFile}
+          from={replyFrom}
+          text={replyText}
+          type={replyType}
+        />
+      );
+    case "doc":
+      return (
+        <ReplyDocMsg
+          created_at={created_at}
+          file={replyFile}
+          from={replyFrom}
+          text={replyText}
+          type={replyType}
+        />
+      );
+    default:
+      return null;
   }
-}
-function handleMsgReaction({ emoji, id, room_id, chatType }) {
-  const user_id = window.localStorage.getItem("user_id");
-
-  socket.emit("reactToMsg", {
-    emoji,
-    msgId: id,
-    chat_type: chatType,
-    room_id,
-    user_id,
-  });
-}
-const splitMessage = (message) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const match = urlRegex.exec(message);
-
-  if (match) {
-    const link = match[0];
-    const index = match.index;
-    const textBeforeLink = message.slice(0, index).trim();
-    const textAfterLink = message.slice(index + link.length).trim();
-
-    return {
-      textBeforeLink,
-      textAfterLink,
-      link,
-    };
-  }
-
-  return {
-    textBeforeLink: message,
-    textAfterLink: "",
-    link: null,
-  };
 };
 
 export const MediaMsg = ({
   data,
   menu,
-  members,
+  members = [],
   room_id,
   conversationType,
 }) => {
@@ -76,6 +76,14 @@ export const MediaMsg = ({
   const [selectedImage, setSelectedImage] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const theme = useTheme();
+  const {
+    created_at,
+    file: replyFile,
+    from: replyFrom,
+    text: replyText,
+    type: replyType,
+  } = data.replyData || {};
+  const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
   const { avatar } = useSelector(getUserInfo());
   const isLoading = data.file?.length > 0 && data.file[0] === "true";
   const member = members.find((mem) => mem.id === data.from);
@@ -117,67 +125,96 @@ export const MediaMsg = ({
           </Stack>
         )}
         <Stack>
-          {" "}
-          <Box
-            p={1.5}
-            sx={{
-              backgroundColor: data.incoming
-                ? theme.palette.background.default
-                : theme.palette.primary.main,
-              borderRadius: 1.5,
-            }}
-          >
-            <Stack spacing={2}>
-              {isLoading ? (
-                <CircularProgress size={104} color="inherit" />
-              ) : (
-                <>
-                  {data.file.map((element, index) => (
-                    <div
-                      key={index}
-                      style={{ position: "relative", display: "inline-block" }}
-                      onMouseEnter={() => handleMouseEnter(index)}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <img
-                        src={element}
-                        alt={getFileNameFromUrl(element) || element}
+          <Stack alignItems={data.incoming ? "start" : "end"}>
+            {data.replyData &&
+              replayMsg(data.replyData.type, {
+                created_at,
+                replyFile,
+                replyText,
+                replyFrom,
+                replyType,
+              })}
+            <Box
+              p={1.5}
+              sx={{
+                backgroundColor: data.incoming
+                  ? theme.palette.background.default
+                  : theme.palette.primary.main,
+                borderRadius: 1.5,
+              }}
+            >
+              <Stack spacing={2}>
+                {isLoading ? (
+                  <CircularProgress size={104} color="inherit" />
+                ) : (
+                  <>
+                    {data.file.map((element, index) => (
+                      <div
+                        key={index}
                         style={{
-                          maxHeight: "210px",
-                          borderRadius: "10px",
+                          position: "relative",
+                          display: "inline-block",
                         }}
-                        onClick={() => handleImageClick(element)}
-                      />
-                      {hoveredIndex === index && (
-                        <IconButton
+                        onMouseEnter={() => handleMouseEnter(index)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <img
+                          src={element}
+                          alt={getFileNameFromUrl(element) || element}
                           style={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            backgroundColor: "rgba(255, 255, 255, 0.7)",
+                            maxHeight: "210px",
+                            borderRadius: "10px",
                           }}
-                          onClick={(event) =>
-                            handleDownloadClick(event, element)
-                          }
+                          onClick={() => handleImageClick(element)}
+                        />
+                        {hoveredIndex === index && (
+                          <IconButton
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              backgroundColor: "rgba(255, 255, 255, 0.7)",
+                            }}
+                            onClick={(event) =>
+                              handleDownloadClick(event, element)
+                            }
+                          >
+                            <Download />
+                          </IconButton>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+                {data.message && (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
+                  >
+                    {link ? (
+                      <>
+                        {textBeforeLink}{" "}
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            color: "#fff",
+                          }}
                         >
-                          <Download />
-                        </IconButton>
-                      )}
-                    </div>
-                  ))}
-                </>
-              )}
-              {data.message && (
-                <Typography
-                  variant="body2"
-                  color={data.incoming ? theme.palette.text : "#fff"}
-                >
-                  {data.message}
-                </Typography>
-              )}
-            </Stack>
-          </Box>
+                          {link}
+                        </a>{" "}
+                        {textAfterLink}
+                      </>
+                    ) : (
+                      data.message
+                    )}
+                  </Typography>
+                )}
+              </Stack>
+            </Box>
+          </Stack>
           <MsgReaction reactions={data.reaction} />
         </Stack>
 
@@ -200,6 +237,7 @@ export const MediaMsg = ({
             incoming={data.incoming}
             openPicker={handleOpenPicker}
             type={"img"}
+            data={data}
           />
         )}
 
@@ -214,10 +252,25 @@ export const MediaMsg = ({
     </>
   );
 };
-export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
+export const DocMsg = ({
+  data,
+  menu,
+  members = [],
+  room_id,
+  conversationType,
+}) => {
   const [openModal, setOpenModal] = useState(false);
   const theme = useTheme();
   const { avatar } = useSelector(getUserInfo());
+
+  const {
+    created_at,
+    file: replyFile,
+    from: replyFrom,
+    text: replyText,
+    type: replyType,
+  } = data.replyData || {};
+  const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
   const isLoading = data.file?.length > 0 && data.file[0] === "true";
 
   const member = members.find((mem) => mem.id === data.from);
@@ -243,58 +296,86 @@ export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
         </Stack>
       )}
       <Stack>
-        {" "}
-        <Box
-          p={1.5}
-          sx={{
-            backgroundColor: data.incoming
-              ? theme.palette.background.default
-              : theme.palette.primary.main,
-            borderRadius: 1.5,
-          }}
-        >
-          <Stack spacing={2}>
-            {isLoading ? (
-              <CircularProgress size={104} color="inherit" />
-            ) : (
-              <>
-                {data.file.map((element, index) => (
-                  <Stack
-                    p={2}
-                    direction="row"
-                    spacing={3}
-                    alignItems="center"
-                    sx={{
-                      backgroundColor: theme.palette.background.paper,
-                      borderRadius: 1,
-                    }}
-                    key={index}
-                  >
-                    <Image size={48} />
-                    <Typography
-                      variant="caption"
+        <Stack alignItems={data.incoming ? "start" : "end"}>
+          {data.replyData &&
+            replayMsg(data.replyData.type, {
+              created_at,
+              replyFile,
+              replyText,
+              replyFrom,
+              replyType,
+            })}
+          <Box
+            p={1.5}
+            sx={{
+              backgroundColor: data.incoming
+                ? theme.palette.background.default
+                : theme.palette.primary.main,
+              borderRadius: 1.5,
+            }}
+          >
+            <Stack spacing={2}>
+              {isLoading ? (
+                <CircularProgress size={104} color="inherit" />
+              ) : (
+                <>
+                  {data.file.map((element, index) => (
+                    <Stack
+                      p={2}
+                      direction="row"
+                      spacing={3}
+                      alignItems="center"
                       sx={{
-                        color: data.incoming ? theme.palette.text : "#FFF",
+                        backgroundColor: theme.palette.background.paper,
+                        borderRadius: 1,
                       }}
+                      key={index}
                     >
-                      {getFileNameFromUrl(element)}
-                    </Typography>
-                    <IconButton onClick={() => handleDownload(element)}>
-                      <DownloadSimple />
-                    </IconButton>
-                  </Stack>
-                ))}
-              </>
-            )}
+                      <Image size={48} />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: data.incoming ? theme.palette.text : "#FFF",
+                        }}
+                      >
+                        {getFileNameFromUrl(element)}
+                      </Typography>
+                      <IconButton onClick={() => handleDownload(element)}>
+                        <DownloadSimple />
+                      </IconButton>
+                    </Stack>
+                  ))}
+                </>
+              )}
 
-            <Typography
-              variant="body2"
-              sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
-            >
-              {data.message}
-            </Typography>
-          </Stack>
-        </Box>
+              {data.message && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
+                >
+                  {link ? (
+                    <>
+                      {textBeforeLink}{" "}
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          color: "#fff",
+                        }}
+                      >
+                        {link}
+                      </a>{" "}
+                      {textAfterLink}
+                    </>
+                  ) : (
+                    data.message
+                  )}
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+        </Stack>
         <MsgReaction reactions={data.reaction} />
       </Stack>
       <EmojiPickerModal
@@ -316,6 +397,7 @@ export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
           incoming={data.incoming}
           openPicker={handleOpenPicker}
           type={"doc"}
+          data={data}
         />
       )}
       {!data.incoming && (
@@ -327,12 +409,24 @@ export const DocMsg = ({ data, menu, members, room_id, conversationType }) => {
   );
 };
 
-export const TextMsg = ({ data, menu, members, room_id, conversationType }) => {
+export const TextMsg = ({
+  data,
+  menu,
+  members = [],
+  room_id,
+  conversationType,
+}) => {
   const [openModal, setOpenModal] = useState(false);
-
   const theme = useTheme();
   const { avatar } = useSelector(getUserInfo());
   const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
+  const {
+    created_at,
+    file: replyFile,
+    from: replyFrom,
+    text: replyText,
+    type: replyType,
+  } = data.replyData || {};
 
   const member = members.find((mem) => mem.id === data.from);
   const otherAvatar = member?.avatar;
@@ -357,39 +451,53 @@ export const TextMsg = ({ data, menu, members, room_id, conversationType }) => {
         </Stack>
       )}
       <Stack>
-        <Box
-          p={1.5}
-          sx={{
-            backgroundColor: data.incoming
-              ? theme.palette.background.default
-              : theme.palette.primary.main,
-            borderRadius: 1.5,
-          }}
+        <Stack
+          alignItems={data.incoming ? "flex-start" : "flex-end"}
+          sx={{ position: "relative" }}
+          direction={"column"}
         >
-          <Typography
-            variant="body2"
-            color={data.incoming ? theme.palette.text : "#fff"}
+          {data.replyData &&
+            replayMsg(data.replyData.type, {
+              created_at,
+              replyFile,
+              replyText,
+              replyFrom,
+              replyType,
+            })}
+          <Box
+            p={1.5}
+            sx={{
+              backgroundColor: data.incoming
+                ? theme.palette.background.default
+                : theme.palette.primary.main,
+              borderRadius: 1.5,
+            }}
           >
-            {link ? (
-              <>
-                {textBeforeLink}{" "}
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    color: data.incoming ? theme.palette.text : "#fff",
-                  }}
-                >
-                  {link}
-                </a>{" "}
-                {textAfterLink}
-              </>
-            ) : (
-              data.message
-            )}
-          </Typography>
-        </Box>
+            <Typography
+              variant="body2"
+              color={data.incoming ? theme.palette.text : "#fff"}
+            >
+              {link ? (
+                <>
+                  {textBeforeLink}{" "}
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: data.incoming ? theme.palette.text : "#fff",
+                    }}
+                  >
+                    {link}
+                  </a>{" "}
+                  {textAfterLink}
+                </>
+              ) : (
+                data.message
+              )}
+            </Typography>
+          </Box>
+        </Stack>
         <MsgReaction reactions={data.reaction} />
       </Stack>
 
@@ -412,6 +520,7 @@ export const TextMsg = ({ data, menu, members, room_id, conversationType }) => {
           msgId={data.id}
           incoming={data.incoming}
           openPicker={handleOpenPicker}
+          data={data}
         />
       )}
       {!data.incoming && (

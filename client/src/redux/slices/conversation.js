@@ -144,6 +144,12 @@ const slice = createSlice({
       state.direct_chat.conversations = state.direct_chat.conversations.filter(
         (con) => con.id !== action.payload.room_id
       );
+      if (
+        state.direct_chat.current_conversation?.room_id ===
+        action.payload.room_id
+      ) {
+        state.direct_chat.current_conversation = null;
+      }
     },
     getCurrentMessages(state, action) {
       const user_id = window.localStorage.getItem("user_id");
@@ -171,6 +177,7 @@ const slice = createSlice({
               file: el.replyData.file,
               text: el.replyData.text,
               from: el.replyData.from,
+              type: el.replyType,
             },
             message: el.text,
             incoming: el.to === user_id,
@@ -228,6 +235,7 @@ const slice = createSlice({
               ? { ...msg, reaction: action.payload.reaction }
               : msg;
           }
+          return msg;
         });
 
         state.direct_chat.current_meessages = updatedMessages;
@@ -375,6 +383,12 @@ const slice = createSlice({
       state.group_chat.conversations = state.group_chat.conversations.filter(
         (con) => con.id !== action.payload.room_id
       );
+      if (
+        state.group_chat.current_conversation?.room_id ===
+        action.payload.room_id
+      ) {
+        state.group_chat.current_conversation = null;
+      }
     },
     getCurrentGroupMessages(state, action) {
       const user_id = window.localStorage.getItem("user_id");
@@ -402,6 +416,7 @@ const slice = createSlice({
               file: el.replyData.file,
               text: el.replyData.text,
               from: el.replyData.from,
+              type: el.replyType,
             },
             message: el.text,
             incoming: el.to === user_id,
@@ -466,6 +481,7 @@ const slice = createSlice({
               ? { ...msg, reaction: action.payload.reaction }
               : msg;
           }
+          return msg;
         });
 
         state.group_chat.current_meessages = updatedMessages;
@@ -565,7 +581,11 @@ export function UpdateDirectConversation({ conversation }) {
 }
 export function DeleteDirectConversation({ room_id }) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.deleteDirectConversation({ room_id }));
+    dispatch(
+      slice.actions.deleteDirectConversation({
+        room_id,
+      })
+    );
   };
 }
 export function AddDirectConversation(conversations) {

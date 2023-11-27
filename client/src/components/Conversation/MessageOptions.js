@@ -14,7 +14,13 @@ import { getChatType } from "../../redux/slices/app";
 import { getUserId } from "../../redux/slices/auth";
 import { useReplayMsgContext } from "../../contexts/ReplyMsgContext";
 
-function MessageOptions({ msgId, type, incoming, openPicker }) {
+function MessageOptions({
+  msgId,
+  type,
+  incoming,
+  openPicker,
+  data: { message, file },
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const { onSetMsgId } = useReplayMsgContext();
 
@@ -41,12 +47,11 @@ function MessageOptions({ msgId, type, incoming, openPicker }) {
   const handleClose = () => {
     setAnchorEl(null);
   };
-
   const handleMsgsOptions = (id) => {
     handleClose();
     switch (id) {
       case "replay": {
-        onSetMsgId({ msgId, type });
+        onSetMsgId({ msgId, type: type || "text", text: message, file });
         break;
       }
       case "reactToMsg": {

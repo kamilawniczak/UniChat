@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import StyledBadge from "./StyledBadge";
 import { useDispatch, useSelector } from "react-redux";
-import { OpenSnackBar, SelectRoom } from "../redux/slices/app";
+import { OpenSnackBar, ResetRoom, SelectRoom } from "../redux/slices/app";
 import {
   DeleteDirectConversation,
   DeleteGroupConversation,
@@ -98,21 +98,29 @@ const ChatElement = ({
     switch (e) {
       case "Delete":
         if (!isGroupChat) {
-          socket.emit("deleteConversation", { room_id: id }, async (data) => {
-            if (!isGroupChat) {
-              dispatch(
-                OpenSnackBar({
-                  severity: "success",
-                  message: data.message,
-                })
-              );
-              dispatch(DeleteDirectConversation({ room_id: data.room_id }));
+          socket.emit(
+            "deleteConversation",
+            { room_id: id, user_id: this_user_id },
+            async (data) => {
+              if (!isGroupChat) {
+                dispatch(
+                  OpenSnackBar({
+                    severity: "success",
+                    message: data.message,
+                  })
+                );
+
+                dispatch(DeleteDirectConversation({ room_id: data.room_id }));
+                if (room_id === id) {
+                  dispatch(ResetRoom());
+                }
+              }
             }
-          });
+          );
         } else {
           socket.emit(
             "deleteGroupConversation",
-            { room_id: id },
+            { room_id: id, user_id: this_user_id },
             async (data) => {
               if (isGroupChat) {
                 dispatch(
@@ -122,6 +130,9 @@ const ChatElement = ({
                   })
                 );
                 dispatch(DeleteGroupConversation({ room_id: data.room_id }));
+                if (room_id === id) {
+                  dispatch(ResetRoom());
+                }
               }
             }
           );
