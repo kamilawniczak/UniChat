@@ -209,17 +209,7 @@ io.on("connection", async (socket) => {
       reply,
       replyType,
     } = data;
-    console.log(
-      message,
-      file,
-      conversation_id,
-      from,
-      to,
-      type,
-      subtype,
-      reply,
-      replyType
-    );
+
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
 
@@ -245,8 +235,6 @@ io.on("connection", async (socket) => {
     });
 
     let lastMessage = msg.messages.at(-1);
-
-    // console.log(lastMessage);
 
     if (lastMessage.reply) {
       const replayedMsg = msg.messages.find(
@@ -549,7 +537,6 @@ io.on("connection", async (socket) => {
   socket.on(
     "deleteMsg",
     async ({ msgId, chat_type, room_id, user_id }, callback) => {
-      console.log(msgId, chat_type, room_id, user_id);
       let members = [];
       if (chat_type === "OneToOne") {
         const conversation = await Message.findById(room_id);
@@ -565,7 +552,6 @@ io.on("connection", async (socket) => {
         );
       }
       if (chat_type === "OneToMany") {
-        console.log(msgId, chat_type, room_id, user_id);
         const conversation = await GroupMessage.findById(room_id);
 
         conversation.messages = conversation.messages.filter(

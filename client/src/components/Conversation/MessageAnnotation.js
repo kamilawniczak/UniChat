@@ -3,10 +3,8 @@ import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
-import { useTheme } from "@emotion/react";
 
 const MessageAnnotation = ({ type, file, text, onReset }) => {
-  const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
