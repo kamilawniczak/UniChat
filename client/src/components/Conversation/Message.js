@@ -5,7 +5,15 @@ import { useSelector } from "react-redux";
 import { getChatType, getRoomId } from "../../redux/slices/app";
 import { getGroupRoomId } from "../../redux/slices/conversation";
 
-const showMessage = (message, menu = false, members, room_id, chat_type) => {
+const showMessage = (
+  message,
+  menu = false,
+  members,
+  room_id,
+  chat_type,
+  avatar,
+  small
+) => {
   switch (message.type) {
     case "msg":
       switch (message.subtype) {
@@ -14,6 +22,7 @@ const showMessage = (message, menu = false, members, room_id, chat_type) => {
             <MediaMsg
               data={message}
               menu={menu}
+              showAvatar={avatar}
               members={members}
               room_id={room_id}
               conversationType={chat_type}
@@ -24,6 +33,8 @@ const showMessage = (message, menu = false, members, room_id, chat_type) => {
             <DocMsg
               data={message}
               menu={menu}
+              showAvatar={avatar}
+              small={small}
               members={members}
               room_id={room_id}
               conversationType={chat_type}
@@ -34,6 +45,7 @@ const showMessage = (message, menu = false, members, room_id, chat_type) => {
             <TextMsg
               data={message}
               menu={menu}
+              showAvatar={avatar}
               members={members}
               room_id={room_id}
               conversationType={chat_type}
@@ -47,7 +59,7 @@ const showMessage = (message, menu = false, members, room_id, chat_type) => {
   }
 };
 
-const Message = ({ data, menu, members }) => {
+const Message = ({ data, menu, members, avatar = true, small = false }) => {
   const direct_room = useSelector(getRoomId());
   const group_room = useSelector(getGroupRoomId());
   const chat_type = useSelector(getChatType());
@@ -57,7 +69,7 @@ const Message = ({ data, menu, members }) => {
   return (
     <Box>
       <Stack spacing={3}>
-        {showMessage(data, menu, members, room_id, chat_type)}
+        {showMessage(data, menu, members, room_id, chat_type, avatar, small)}
       </Stack>
     </Box>
   );

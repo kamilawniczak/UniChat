@@ -1,7 +1,9 @@
 import {
   Box,
   Grid,
+  Grow,
   IconButton,
+  Paper,
   Stack,
   Tab,
   Tabs,
@@ -9,18 +11,17 @@ import {
   useTheme,
 } from "@mui/material";
 
-import { CaretLeft, DownloadSimple, Image } from "@phosphor-icons/react";
+import { CaretLeft, DownloadSimple } from "@phosphor-icons/react";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { UpdateSidebarType, getChatType } from "../redux/slices/app";
-import { faker } from "@faker-js/faker";
-import { SHARED_DOCS } from "../data";
-import { DocMsg } from "./Conversation/MsgTypes";
+import { UpdateSidebarType, getChatType } from "../../redux/slices/app";
+
 import {
   getDirectConversations,
   getGroupConversations,
-} from "../redux/slices/conversation";
-import { getFileNameFromUrl, handleDownload } from "../utils/formatMsg";
+} from "../../redux/slices/conversation";
+import { getFileNameFromUrl, handleDownload } from "../../utils/formatMsg";
+import { ScaledImage } from "../ScaledImage";
 
 const SharedMsg = () => {
   const [value, setValue] = useState(0);
@@ -41,8 +42,15 @@ const SharedMsg = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  const handleDownloadClick = (img) => {
+    handleDownload(img);
+  };
 
   const handleSelectedOption = (value) => {
+    if (!current_meessages || current_meessages.length === 0) {
+      return <Typography variant="caption">No messages available.</Typography>;
+    }
+
     switch (value) {
       case 0:
         const images = current_meessages
@@ -58,9 +66,22 @@ const SharedMsg = () => {
 
         return (
           <Grid container spacing={2}>
-            {images.map((e) => (
+            {images?.map((e) => (
               <Grid item xs={4} key={e}>
-                <img src={e} alt={e} />
+                <Grow in={true} style={{ transformOrigin: "0 0 0" }}>
+                  <Paper
+                    elevation={4}
+                    sx={{
+                      overflow: "hidden",
+                    }}
+                  >
+                    <ScaledImage
+                      src={e}
+                      alt={e}
+                      onClick={() => handleDownloadClick(e)}
+                    />
+                  </Paper>
+                </Grow>
               </Grid>
             ))}
           </Grid>
@@ -77,7 +98,7 @@ const SharedMsg = () => {
             return acc;
           }, []);
 
-        return documents.map((element) => (
+        return documents?.map((element) => (
           <Stack
             p={2}
             direction="row"
@@ -98,7 +119,6 @@ const SharedMsg = () => {
                 textOverflow: "ellipsis",
                 overflow: "hidden",
                 whiteSpace: "nowrap",
-                // color: data.incoming ? theme.palette.text : "#FFF",
               }}
             >
               {getFileNameFromUrl(element)}

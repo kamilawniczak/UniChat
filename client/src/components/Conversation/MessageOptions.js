@@ -21,7 +21,7 @@ function MessageOptions({
   type,
   incoming,
   openPicker,
-  data: { message, file },
+  data: { message, file, isSaved },
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const { onSetMsgId } = useReplayMsgContext();
@@ -123,11 +123,20 @@ function MessageOptions({
       >
         <Stack spacing={1} px={1}>
           {Message_options.filter((e) => !incoming || e.id !== "deleteMsg").map(
-            (e) => (
-              <MenuItem onClick={() => handleMsgsOptions(e.id)} key={e.id}>
-                {e.title}
-              </MenuItem>
-            )
+            (e) => {
+              if (isSaved && e.id === "save")
+                return (
+                  <MenuItem onClick={() => handleMsgsOptions(e.id)} key={e.id}>
+                    Unsave
+                  </MenuItem>
+                );
+
+              return (
+                <MenuItem onClick={() => handleMsgsOptions(e.id)} key={e.id}>
+                  {e.title}
+                </MenuItem>
+              );
+            }
           )}
         </Stack>
       </Menu>

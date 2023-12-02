@@ -8,24 +8,59 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import {
-  CaretDown,
-  MagnifyingGlass,
-  PhoneIncoming,
-  VideoCamera,
-} from "@phosphor-icons/react";
+import { CaretDown, MagnifyingGlass } from "@phosphor-icons/react";
 import React from "react";
 import StyledBadge from "../../components/StyledBadge";
-import { ToggleSidebar } from "../../redux/slices/app";
+import { ToggleSidebar, getChatType, getRoomId } from "../../redux/slices/app";
 import { useDispatch, useSelector } from "react-redux";
-import { getDirectConversations } from "../../redux/slices/conversation";
+import {
+  getDirectConversations,
+  getGroupConversations,
+} from "../../redux/slices/conversation";
+import { getUserId } from "../../redux/slices/auth";
 
 const Header = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { current_conversation } = useSelector(getDirectConversations());
-  const { userInfo } = current_conversation;
-  const { name, online } = userInfo;
+  const room_id = useSelector(getRoomId());
+  const chat_type = useSelector(getChatType());
+  const user_id = useSelector(getUserId());
+  const { conversations: directConveration } = useSelector(
+    getDirectConversations()
+  );
+  const { conversations: groupConveration } = useSelector(
+    getGroupConversations()
+  );
+
+  const isLoading = useSelector((state) => state.coversations.isLoadingMsg);
+  let current_conversation;
+  let name;
+  let online;
+
+  if (chat_type === "OneToOne") {
+    current_conversation = directConveration;
+  }
+  if (chat_type === "OneToMany") {
+    current_conversation = groupConveration;
+  }
+
+  const selectedConversation = current_conversation?.find(
+    (con) => con.id === room_id
+  );
+  const selectedUser = selectedConversation.user_info?.filter(
+    (user) => user.id !== user_id
+  )[0];
+
+  const { firstName, lastName, status, avatar } = selectedUser || {};
+
+  if (chat_type === "OneToOne") {
+    name = `${firstName} ${lastName}`;
+    online = status;
+  }
+  if (chat_type === "OneToMany") {
+    name = selectedConversation.name;
+  }
+
   return (
     <Box
       sx={{
@@ -47,7 +82,9 @@ const Header = () => {
         <Stack
           direction="row"
           spacing={2}
-          onClick={() => dispatch(ToggleSidebar())}
+          onClick={() => {
+            if (!isLoading) dispatch(ToggleSidebar());
+          }}
         >
           <Box>
             {online ? (
@@ -56,21 +93,34 @@ const Header = () => {
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 variant="dot"
               >
-                <Avatar
-                  alt={faker.name.fullName()}
-                  src={faker.image.avatar()}
-                />
+                <Avatar alt={avatar} src={avatar} />
               </StyledBadge>
             ) : (
-              <Avatar alt={faker.name.fullName()} src={faker.image.avatar()} />
+              <Avatar alt={avatar} src={avatar} />
             )}
           </Box>
-          <Stack spacing={0.2}>
-            <Typography variant="subtitle2">{name}</Typography>
-            <Typography variant="capiton">
-              {online ? "Online" : "Offline"}
-            </Typography>
-          </Stack>
+          {chat_type === "OneToMany" ? (
+            <Stack justifyContent="center">
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontSize: 23,
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {name}
+              </Typography>
+            </Stack>
+          ) : (
+            <Stack spacing={0.2}>
+              <Typography variant="subtitle2">{name}</Typography>
+              <Typography variant="capiton">
+                {online ? "Online" : "Offline"}
+              </Typography>
+            </Stack>
+          )}
         </Stack>
         <Stack direction="row" alignItems="center" spacing={3}>
           <IconButton>

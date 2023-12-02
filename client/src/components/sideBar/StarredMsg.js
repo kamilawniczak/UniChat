@@ -1,26 +1,30 @@
-import {
-  Box,
-  Grid,
-  IconButton,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, IconButton, Stack, Typography, useTheme } from "@mui/material";
 
 import { CaretLeft } from "@phosphor-icons/react";
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { UpdateSidebarType } from "../redux/slices/app";
-import { faker } from "@faker-js/faker";
-import { Chat_History, SHARED_DOCS, SHERED_LINKS } from "../data";
-import { DocMsg, LinkMsg } from "./Conversation/MsgTypes";
-import Message from "./Conversation/Message";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { UpdateSidebarType, getChatType } from "../../redux/slices/app";
+
+import Message from "../Conversation/Message";
+import {
+  getDirectConversations,
+  getGroupConversations,
+} from "../../redux/slices/conversation";
 
 const StarredMsg = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const chat_type = useSelector(getChatType());
+  const direct_msgs = useSelector(getDirectConversations()).current_meessages;
+  const group_msgs = useSelector(getGroupConversations()).current_meessages;
+
+  let current_meessages = [];
+  if (chat_type === "OneToOne") {
+    current_meessages = direct_msgs;
+  }
+  if (chat_type === "OneToMany") {
+    current_meessages = group_msgs;
+  }
 
   return (
     <Box sx={{ width: 320, height: "100vh" }}>
@@ -51,16 +55,20 @@ const StarredMsg = () => {
         <Stack
           sx={{
             height: "100%",
+            width: "100%",
             position: "relative",
             flexGrow: 1,
             overflowY: "scroll",
+            overflowX: "hidden",
           }}
           p={3}
           spacing={3}
         >
-          {Chat_History.map((e, i) => (
-            <Message data={e} key={i} />
-          ))}
+          {current_meessages
+            ?.filter((msg) => msg.isSaved)
+            ?.map((e, i) => (
+              <Message data={e} key={i} avatar={false} small={true} />
+            ))}
         </Stack>
       </Stack>
     </Box>

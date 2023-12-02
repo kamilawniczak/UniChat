@@ -147,7 +147,7 @@ const DashboardLayout = () => {
           subtype: message?.subtype,
           message: message.text,
           reaction: [],
-          incoming: message.to === user_id,
+          incoming: message.to?.some((user) => user.toString() === user_id),
           outgoing: message.from === user_id,
           file: message.file,
         };

@@ -233,9 +233,11 @@ const ChatElement = ({
           </Stack>
         </Stack>
         <Stack spacing={2} alignItems="center">
-          <Typography sx={{ fontWeight: 600 }} variant="caption">
-            {time}
-          </Typography>
+          {!isGroupChat && (
+            <Typography sx={{ fontWeight: 600 }} variant="caption">
+              {time}
+            </Typography>
+          )}
           <Badge color="primary" badgeContent={unread_msg.length} />
         </Stack>
         <Stack>

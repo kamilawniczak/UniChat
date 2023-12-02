@@ -71,6 +71,7 @@ export const MediaMsg = ({
   members = [],
   room_id,
   conversationType,
+  showAvatar,
 }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -115,7 +116,7 @@ export const MediaMsg = ({
   return (
     <>
       <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-        {data.incoming && (
+        {data.incoming && showAvatar && (
           <Stack alignItems="center" justifyContent="top" mr={1}>
             <Avatar
               alt="Avatar"
@@ -141,6 +142,10 @@ export const MediaMsg = ({
                   ? theme.palette.background.default
                   : theme.palette.primary.main,
                 borderRadius: 1.5,
+                border:
+                  !showAvatar &&
+                  data.incoming &&
+                  "1px solid " + theme.palette.grey[600],
               }}
             >
               <Stack spacing={2}>
@@ -241,7 +246,7 @@ export const MediaMsg = ({
           />
         )}
 
-        {!data.incoming && (
+        {!data.incoming && showAvatar && (
           <Stack alignItems="center" justifyContent="top">
             <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
           </Stack>
@@ -255,6 +260,8 @@ export const MediaMsg = ({
 export const DocMsg = ({
   data,
   menu,
+  showAvatar,
+  small,
   members = [],
   room_id,
   conversationType,
@@ -286,7 +293,7 @@ export const DocMsg = ({
 
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      {data.incoming && (
+      {data.incoming && showAvatar && (
         <Stack alignItems="center" justifyContent="top" mr={1}>
           <Avatar
             alt="Avatar"
@@ -312,6 +319,10 @@ export const DocMsg = ({
                 ? theme.palette.background.default
                 : theme.palette.primary.main,
               borderRadius: 1.5,
+              border:
+                !showAvatar &&
+                data.incoming &&
+                "1px solid " + theme.palette.grey[600],
             }}
           >
             <Stack spacing={2}>
@@ -331,11 +342,18 @@ export const DocMsg = ({
                       }}
                       key={index}
                     >
-                      <Image size={48} />
                       <Typography
                         variant="caption"
                         sx={{
                           color: theme.palette.text,
+                          ...(small
+                            ? {
+                                maxWidth: "150px",
+                                overflow: "hidden",
+                                whiteSpace: "nowrap",
+                                textOverflow: "ellipsis",
+                              }
+                            : {}),
                         }}
                       >
                         {getFileNameFromUrl(element)}
@@ -400,7 +418,7 @@ export const DocMsg = ({
           data={data}
         />
       )}
-      {!data.incoming && (
+      {!data.incoming && showAvatar && (
         <Stack alignItems="center" justifyContent="top">
           <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
         </Stack>
@@ -415,6 +433,7 @@ export const TextMsg = ({
   members = [],
   room_id,
   conversationType,
+  showAvatar,
 }) => {
   const [openModal, setOpenModal] = useState(false);
   const theme = useTheme();
@@ -441,7 +460,7 @@ export const TextMsg = ({
 
   return (
     <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      {data.incoming && (
+      {data.incoming && showAvatar && (
         <Stack alignItems="center" justifyContent="top" mr={1}>
           <Avatar
             alt="Avatar"
@@ -471,6 +490,10 @@ export const TextMsg = ({
                 ? theme.palette.background.default
                 : theme.palette.primary.main,
               borderRadius: 1.5,
+              border:
+                !showAvatar &&
+                data.incoming &&
+                "1px solid " + theme.palette.grey[600],
             }}
           >
             <Typography
@@ -523,7 +546,8 @@ export const TextMsg = ({
           data={data}
         />
       )}
-      {!data.incoming && (
+
+      {!data.incoming && showAvatar && (
         <Stack alignItems="center" justifyContent="top">
           <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
         </Stack>

@@ -1,91 +1,89 @@
 import {
-  Avatar,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Divider,
   IconButton,
-  Slide,
   Stack,
   Switch,
   Typography,
   useTheme,
 } from "@mui/material";
+
 import {
   Bell,
   CaretRight,
-  Phone,
   Prohibit,
   Star,
   Trash,
-  VideoCamera,
   X,
 } from "@phosphor-icons/react";
 import React from "react";
-import { useDispatch } from "react-redux";
-import { ToggleSidebar, UpdateSidebarType } from "../redux/slices/app";
-import { faker } from "@faker-js/faker";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  ToggleSidebar,
+  UpdateSidebarType,
+  getChatType,
+  getRoomId,
+} from "../../redux/slices/app";
+
 import { useState } from "react";
-
-const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
-const BlockDialog = ({ open, handleClose }) => {
-  return (
-    <Dialog
-      open={open}
-      TransitionComponent={Transition}
-      keepMounted
-      onClose={handleClose}
-      aria-describedby="alert-dialog-slide-description"
-    >
-      <DialogTitle>Block this content</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-slide-description">
-          Are you sure you want to block this Contact
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancle</Button>
-        <Button onClick={handleClose}>Yes</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-const DeleteDialog = ({ open, handleClose }) => {
-  return (
-    <Dialog
-      open={open}
-      TransitionComponent={Transition}
-      keepMounted
-      onClose={handleClose}
-      aria-describedby="alert-dialog-slide-description"
-    >
-      <DialogTitle>Delete this chat</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-slide-description">
-          Are you sure you want to delete this chat
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancle</Button>
-        <Button onClick={handleClose}>Yes</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
+import BlockDialog from "../BlockDialog";
+import DeleteDialog from "../DeleteDialog";
+import { getUserId } from "../../redux/slices/auth";
+import {
+  getDirectConversations,
+  getGroupConversations,
+} from "../../redux/slices/conversation";
+import UserCard from "./UserCard";
+import UserList from "./UserList";
 
 const Contact = () => {
+  const [selectedUserIndex, setSelectedUserIndex] = useState(0);
+
   const [openBlock, setOpenBlock] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const theme = useTheme();
   const dispatch = useDispatch();
+
+  const room_id = useSelector(getRoomId());
+  const chat_type = useSelector(getChatType());
+  const user_id = useSelector(getUserId());
+  const direct_msgs = useSelector(getDirectConversations()).current_meessages;
+  const group_msgs = useSelector(getGroupConversations()).current_meessages;
+  const { conversations: directConveration } = useSelector(
+    getDirectConversations()
+  );
+  const { conversations: groupConveration } = useSelector(
+    getGroupConversations()
+  );
+  let current_conversation;
+  let current_meessages = [];
+
+  if (chat_type === "OneToOne") {
+    current_conversation = directConveration;
+    current_meessages = direct_msgs;
+  }
+  if (chat_type === "OneToMany") {
+    current_conversation = groupConveration;
+    current_meessages = group_msgs;
+  }
+
+  const selectedConversation = current_conversation?.find(
+    (con) => con.id === room_id
+  );
+  const selectedUser = selectedConversation.user_info?.filter(
+    (user) => user.id !== user_id
+  );
+
+  const { about } = selectedUser || {};
+
+  const imagesAndDocs = current_meessages
+    ?.filter((msg) => msg.subtype === "img" || msg.subtype === "doc")
+    ?.reduce((acc, curr) => {
+      acc.push(curr.file);
+      return acc;
+    }, [])
+    .flat();
 
   const handleCloseBlock = () => {
     setOpenBlock(false);
@@ -93,6 +91,7 @@ const Contact = () => {
   const handleCloseDelete = () => {
     setOpenDelete(false);
   };
+
   return (
     <Box sx={{ width: 320, height: "100vh" }}>
       <Stack sx={{ height: "100%" }}>
@@ -131,43 +130,20 @@ const Contact = () => {
           p={3}
           spacing={3}
         >
-          <Stack alignItems="center" direction="row" spacing={2}>
-            <Avatar
-              src={faker.image.avatar()}
-              alt={faker.name.firstName()}
-              sx={{ height: 64, width: 64 }}
+          <UserCard user={selectedUser[selectedUserIndex]} />
+
+          {selectedUser.length > 1 && (
+            <UserList
+              users={selectedUser}
+              selectedUserIndex={selectedUserIndex}
+              setSelectedUserIndex={setSelectedUserIndex}
             />
-            <Stack spacing={0.5}>
-              <Typography variant="article" fontWeight={600}>
-                {faker.name.fullName()}
-              </Typography>
-              <Typography variant="article" fontWeight={600}>
-                {"+48 721 65 472"}
-              </Typography>
-            </Stack>
-          </Stack>
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-evenly"
-          >
-            <Stack spacing={1} alignItems="center">
-              <IconButton>
-                <Phone />
-              </IconButton>
-              <Typography variant="overline">Voice</Typography>
-            </Stack>
-            <Stack spacing={1} alignItems="center">
-              <IconButton>
-                <VideoCamera />
-              </IconButton>
-              <Typography variant="overline">Video</Typography>
-            </Stack>
-          </Stack>
+          )}
+
           <Divider />
           <Stack spacing={0.5}>
             <Typography variant="article">About</Typography>
-            <Typography variant="body2">Hi there i am only using </Typography>
+            {about && <Typography variant="body2">{about}</Typography>}
           </Stack>
           <Divider />
           <Stack
@@ -175,18 +151,18 @@ const Contact = () => {
             alignItems="center"
             justifyContent="space-between"
           >
-            <Typography typography="subtitle2">Media, Links & Docs</Typography>
+            <Typography typography="subtitle2">Media & Docs</Typography>
             <Button
               onClick={() => dispatch(UpdateSidebarType("SHARED"))}
               endIcon={<CaretRight />}
             >
-              401
+              {imagesAndDocs.length}
             </Button>
           </Stack>
           <Stack direction="row" spacing={2} alignItems="center">
-            {[1, 2, 3].map((e, i) => (
-              <Box key={i}>
-                <img src={faker.image.food()} alt={faker.name.fullName()} />
+            {imagesAndDocs?.slice(0, 3)?.map((e) => (
+              <Box key={e}>
+                <img src={e} alt={e} />
               </Box>
             ))}
           </Stack>
@@ -217,14 +193,7 @@ const Contact = () => {
             <Switch />
           </Stack>
           <Divider />
-          <Typography>1 groupe in common</Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={faker.image.avatar()} alt={faker.name.fullName()} />
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle2">Coding Monk</Typography>{" "}
-              <Typography variant="caption">Owl, Parrot, rabbit</Typography>
-            </Stack>
-          </Stack>
+
           <Stack direction="row" alignItems="center" spacing={2}>
             <Button
               onClick={() => setOpenBlock(true)}

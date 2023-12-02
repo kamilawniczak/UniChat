@@ -40,18 +40,28 @@ const Chat = () => {
     chat_type === "OneToOne" ? directConversations : groupConversations;
 
   const room_id = current_conversation.room_id;
+  const user_id = current_conversation.user_id;
   useEffect(() => {
     if (chat_type === "OneToOne") {
-      socket.emit("get_messages", current_conversation, async (data) => {
+      socket.emit("get_messages", { room_id, user_id }, async (data) => {
         dispatch(GetCurrentMessages({ messages: data }));
       });
     }
     if (chat_type === "OneToMany") {
-      socket.emit("get_group_messages", current_conversation, async (data) => {
+      socket.emit("get_group_messages", { room_id, user_id }, async (data) => {
         dispatch(GetCurrentGroupMessages({ messages: data }));
       });
     }
-  }, []);
+
+    return () => {
+      if (chat_type === "OneToOne") {
+        socket?.off("get_messages");
+      }
+      if (chat_type === "OneToMany") {
+        socket?.off("get_group_messages");
+      }
+    };
+  }, [chat_type, dispatch, room_id, user_id]);
 
   useEffect(() => {
     if (chat_type === "OneToOne") {
@@ -60,7 +70,7 @@ const Chat = () => {
     if (chat_type === "OneToMany") {
       dispatch(ReceiveGroupMessages({ room_id }));
     }
-  }, []);
+  }, [room_id, chat_type, dispatch]);
 
   const selectedMembers = current_conversations.find(
     (con) => con.id === room_id

@@ -9,10 +9,12 @@ const groupMessageSchema = new mongoose.Schema({
   ],
   messages: [
     {
-      to: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-      },
+      to: [
+        {
+          type: mongoose.Schema.ObjectId,
+          ref: "User",
+        },
+      ],
       from: {
         type: mongoose.Schema.ObjectId,
         ref: "User",

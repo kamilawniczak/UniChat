@@ -2,16 +2,15 @@
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 
 import Conversation from "../../components/Conversation";
-import Contact from "../../components/Contact";
 
 import { useSelector } from "react-redux";
-import SharedMsg from "../../components/SharedMsg";
-
-import StarredMsg from "../../components/StarredMsg";
 
 import SVG_No_Chat from "../../assets/Illustration/NoChat";
 import { getGroupRoomId } from "../../redux/slices/conversation";
 import GroupChat from "./GroupChat";
+import Contact from "../../components/sideBar/Contact";
+import StarredMsg from "../../components/sideBar/StarredMsg";
+import SharedMsg from "../../components/sideBar/SharedMsg";
 
 const handleSidebarType = (type) => {
   switch (type) {

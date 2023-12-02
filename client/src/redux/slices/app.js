@@ -31,6 +31,10 @@ const slice = createSlice({
       state.sideBar.open = !state.sideBar.open;
       state.sideBar.type = "CONTACT";
     },
+    closeSideBar(state) {
+      state.sideBar.open = false;
+      state.sideBar.type = "CONTACT";
+    },
     openSnackBar(state, action) {
       state.snackbar.open = true;
       state.snackbar.severity = action.payload.severity;
@@ -154,11 +158,13 @@ export function GetFriendRequests() {
 }
 export function SelectRoom({ room_id, isGroupChat }) {
   return (dispatch, getState) => {
+    dispatch(slice.actions.closeSideBar());
     dispatch(slice.actions.selectRoom({ room_id, isGroupChat }));
   };
 }
 export function ResetRoom() {
   return (dispatch, getState) => {
+    dispatch(slice.actions.closeSideBar());
     dispatch(slice.actions.resetRoom());
   };
 }
