@@ -21,7 +21,7 @@ const MessageAnnotation = ({ type, file, text, onReset }) => {
         return <Typography variant="body2">{text}</Typography>;
       case "img":
         return (
-          <CardMedia component="img" alt="Image" height="140" image={file} />
+          <CardMedia component="img" alt="Image" height="140" image={file[0]} />
         );
       case "doc":
         return <Typography variant="body2">{`File: ${file}`}</Typography>;

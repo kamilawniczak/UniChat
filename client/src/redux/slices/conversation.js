@@ -165,6 +165,7 @@ const slice = createSlice({
             outgoing: el.from === user_id,
             file: el.file,
             reaction: el.reaction,
+            isSaved: el.starredBy.some((user) => user.toString() === user_id),
           };
         } else {
           return {
@@ -184,6 +185,7 @@ const slice = createSlice({
             outgoing: el.from === user_id,
             file: el.file,
             reaction: el.reaction,
+            isSaved: el.starredBy.some((user) => user.toString() === user_id),
           };
         }
       });
@@ -235,6 +237,13 @@ const slice = createSlice({
               ? { ...msg, reaction: action.payload.reaction }
               : msg;
           }
+
+          if (action.payload?.save) {
+            return msg.id === action.payload.msgId
+              ? { ...msg, isSaved: msg.isSaved ? false : true }
+              : msg;
+          }
+
           return msg;
         });
 
@@ -404,6 +413,7 @@ const slice = createSlice({
             outgoing: el.from === user_id,
             file: el.file,
             reaction: el.reaction,
+            isSaved: el.starredBy.some((user) => user.toString() === user_id),
           };
         } else {
           return {
@@ -423,6 +433,7 @@ const slice = createSlice({
             outgoing: el.from === user_id,
             file: el.file,
             reaction: el.reaction,
+            isSaved: el.starredBy.some((user) => user.toString() === user_id),
           };
         }
       });
@@ -481,6 +492,13 @@ const slice = createSlice({
               ? { ...msg, reaction: action.payload.reaction }
               : msg;
           }
+
+          if (action.payload?.save) {
+            return msg.id === action.payload.msgId
+              ? { ...msg, isSaved: msg.isSaved ? false : true }
+              : msg;
+          }
+
           return msg;
         });
 
@@ -539,7 +557,9 @@ const slice = createSlice({
       // }
       // state.direct_chat.conversations = [];
     },
-    //-----------------others-----------------------------------------------------------------------
+
+    //-----------------others-----------------------------------------------------
+
     updateOnline(state, action) {
       const updatedConversation = action.payload.from;
 

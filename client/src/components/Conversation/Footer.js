@@ -1,24 +1,13 @@
 import {
   Avatar,
   Box,
-  Fab,
   IconButton,
-  InputAdornment,
   Stack,
-  TextField,
   Tooltip,
-  styled,
   useTheme,
 } from "@mui/material";
 
-import {
-  LinkSimple,
-  PaperPlaneTilt,
-  Smiley,
-  File,
-  Image,
-  XCircle,
-} from "@phosphor-icons/react";
+import { PaperPlaneTilt, XCircle } from "@phosphor-icons/react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import React, { useRef } from "react";
@@ -26,7 +15,6 @@ import { useState } from "react";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  getConversations,
   getDirectConversations,
   getGroupConversations,
 } from "../../redux/slices/conversation";
@@ -208,7 +196,6 @@ const Footer = () => {
       return updatedFiles;
     });
   };
-
   return (
     <Box
       sx={{

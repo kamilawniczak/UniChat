@@ -5,6 +5,8 @@ import { Message_options } from "../../data";
 import {
   DeleteDirectMessage,
   DeleteGroupMessage,
+  UpdateDirectMessage,
+  UpdateGroupMessage,
   getDirectConversations,
   getGroupConversations,
 } from "../../redux/slices/conversation";
@@ -50,6 +52,23 @@ function MessageOptions({
   const handleMsgsOptions = (id) => {
     handleClose();
     switch (id) {
+      case "save": {
+        socket.emit(
+          "saveMsg",
+          { msgId, chat_type, room_id: current_conversation.room_id, user_id },
+          () => {
+            if (chat_type === "OneToOne") {
+              dispatch(UpdateDirectMessage({ save: true, msgId }));
+            }
+            if (chat_type === "OneToMany") {
+              dispatch(UpdateGroupMessage({ save: true, msgId }));
+            }
+          }
+        );
+
+        break;
+      }
+
       case "replay": {
         onSetMsgId({ msgId, type: type || "text", text: message, file });
         break;
@@ -103,17 +122,13 @@ function MessageOptions({
         }}
       >
         <Stack spacing={1} px={1}>
-          {Message_options.map((e) => {
-            if (incoming && e.id === "deleteMsg") {
-              return;
-            }
-
-            return (
+          {Message_options.filter((e) => !incoming || e.id !== "deleteMsg").map(
+            (e) => (
               <MenuItem onClick={() => handleMsgsOptions(e.id)} key={e.id}>
                 {e.title}
               </MenuItem>
-            );
-          })}
+            )
+          )}
         </Stack>
       </Menu>
     </>

@@ -255,12 +255,15 @@ const DashboardLayout = () => {
     };
   }, [
     isLoggedIn,
-    socket,
     current_conversation,
     current_conversation?.room_id,
     current_group_conversation,
     current_group_conversation?.room_id,
     user_id,
+    conversations,
+    directRoomId,
+    groupRoomId,
+    group_conversation,
     dispatch,
   ]);
 

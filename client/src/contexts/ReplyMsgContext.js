@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState } from "react";
 
 const initialState = {
-  msgId: { msgId: null, type: null, file: null, text: null },
+  msgId: null,
+  type: null,
+  file: null,
+  text: null,
+
   onSetMsgId: () => {},
   onResetMsgId: () => {},
 };

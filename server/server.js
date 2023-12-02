@@ -534,6 +534,40 @@ io.on("connection", async (socket) => {
     }
   );
   //------------------------------------------------------------------
+
+  socket.on(
+    "saveMsg",
+    async ({ msgId, chat_type, room_id, user_id }, callback) => {
+      let conversation;
+      if (chat_type === "OneToOne") {
+        conversation = await Message.findById(room_id);
+      }
+      if (chat_type === "OneToMany") {
+        conversation = await GroupMessage.findById(room_id);
+      }
+
+      conversation.messages = conversation.messages.map((msg) => {
+        const alreadySaved =
+          msg.starredBy.filter((user) => user.toString() === user_id).length >
+          0;
+
+        if (msg._id.toString() === msgId) {
+          if (alreadySaved) {
+            msg.starredBy = msg.starredBy.filter(
+              (user) => user.toString() !== user_id
+            );
+          }
+          if (!alreadySaved) {
+            msg.starredBy.push(user_id);
+          }
+        }
+
+        return msg;
+      });
+      callback();
+      conversation.save();
+    }
+  );
   socket.on(
     "deleteMsg",
     async ({ msgId, chat_type, room_id, user_id }, callback) => {

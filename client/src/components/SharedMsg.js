@@ -9,18 +9,34 @@ import {
   useTheme,
 } from "@mui/material";
 
-import { CaretLeft } from "@phosphor-icons/react";
+import { CaretLeft, DownloadSimple, Image } from "@phosphor-icons/react";
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { UpdateSidebarType } from "../redux/slices/app";
+import { useDispatch, useSelector } from "react-redux";
+import { UpdateSidebarType, getChatType } from "../redux/slices/app";
 import { faker } from "@faker-js/faker";
-import { SHARED_DOCS, SHERED_LINKS } from "../data";
+import { SHARED_DOCS } from "../data";
 import { DocMsg } from "./Conversation/MsgTypes";
+import {
+  getDirectConversations,
+  getGroupConversations,
+} from "../redux/slices/conversation";
+import { getFileNameFromUrl, handleDownload } from "../utils/formatMsg";
 
 const SharedMsg = () => {
   const [value, setValue] = useState(0);
   const theme = useTheme();
   const dispatch = useDispatch();
+  const chat_type = useSelector(getChatType());
+  const direct_msgs = useSelector(getDirectConversations()).current_meessages;
+  const group_msgs = useSelector(getGroupConversations()).current_meessages;
+
+  let current_meessages = [];
+  if (chat_type === "OneToOne") {
+    current_meessages = direct_msgs;
+  }
+  if (chat_type === "OneToMany") {
+    current_meessages = group_msgs;
+  }
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -29,18 +45,72 @@ const SharedMsg = () => {
   const handleSelectedOption = (value) => {
     switch (value) {
       case 0:
+        const images = current_meessages
+          ?.filter((msg) => msg.subtype === "img")
+          ?.reduce((acc, curr) => {
+            if (curr.file.length === 1) {
+              acc.push(curr.file[0]);
+            } else if (curr.file.length > 1) {
+              acc.push(...curr.file.map((file) => file));
+            }
+            return acc;
+          }, []);
+
         return (
           <Grid container spacing={2}>
-            {[0, 1, 2, 3, 4, 5, 6, 6].map((e, i) => (
-              <Grid item xs={4} key={i}>
-                <img src={faker.image.avatar()} alt={faker.name.fullName()} />
+            {images.map((e) => (
+              <Grid item xs={4} key={e}>
+                <img src={e} alt={e} />
               </Grid>
             ))}
           </Grid>
         );
+      case 1:
+        const documents = current_meessages
+          ?.filter((msg) => msg.subtype === "doc")
+          ?.reduce((acc, curr) => {
+            if (curr.file.length === 1) {
+              acc.push(curr.file[0]);
+            } else if (curr.file.length > 1) {
+              acc.push(...curr.file.map((file) => file));
+            }
+            return acc;
+          }, []);
 
-      case 2:
-        return SHARED_DOCS.map((e, i) => <DocMsg data={e} key={i} />);
+        return documents.map((element) => (
+          <Stack
+            p={2}
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? theme.palette.background.paper
+                  : theme.palette.secondary.lighter,
+              borderRadius: 1,
+            }}
+            key={element}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                // color: data.incoming ? theme.palette.text : "#FFF",
+              }}
+            >
+              {getFileNameFromUrl(element)}
+            </Typography>
+            <IconButton onClick={() => handleDownload(element)}>
+              <DownloadSimple />
+            </IconButton>
+          </Stack>
+        ));
+
+      default:
+        return;
     }
   };
 
@@ -71,12 +141,12 @@ const SharedMsg = () => {
         </Box>
         <Tabs value={value} onChange={handleChange} sx={{ px: 2, pt: 2 }}>
           <Tab label="Media" />
-          <Tab label="Links" />
           <Tab label="Docs" />
         </Tabs>
         <Stack
           sx={{
             height: "100%",
+            width: "100%",
             position: "relative",
             flexGrow: 1,
             overflowY: "scroll",

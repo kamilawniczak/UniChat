@@ -44,7 +44,7 @@ const Chats = () => {
       dispatch(ClearConversation());
       dispatch(ResetRoom());
     };
-  }, [conversations.length]);
+  }, [conversations.length, dispatch]);
 
   useEffect(() => {
     dispatch(IsLoading(true));

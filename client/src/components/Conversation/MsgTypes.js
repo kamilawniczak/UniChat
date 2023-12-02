@@ -335,7 +335,7 @@ export const DocMsg = ({
                       <Typography
                         variant="caption"
                         sx={{
-                          color: data.incoming ? theme.palette.text : "#FFF",
+                          color: theme.palette.text,
                         }}
                       >
                         {getFileNameFromUrl(element)}

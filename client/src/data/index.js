@@ -283,6 +283,10 @@ const Chat_History = [
 
 const Message_options = [
   {
+    id: "save",
+    title: "Save",
+  },
+  {
     id: "replay",
     title: "Reply",
   },
