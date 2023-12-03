@@ -16,13 +16,13 @@ import logo from "../../assets/Images/logo_UniChat.png";
 import { Nav_Buttons, Profile_Menu } from "../../data";
 import { Gear } from "@phosphor-icons/react";
 import { faker } from "@faker-js/faker";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import useSettings from "../../hooks/useSettings";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCallback } from "react";
-import { LogoutUser } from "../../redux/slices/auth";
+import { LogoutUser, getUserInfo } from "../../redux/slices/auth";
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
   width: 61,
@@ -97,6 +97,8 @@ const SideBar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const dispatch = useDispatch();
   const open = Boolean(anchorEl);
+  const userInfo = useSelector(getUserInfo());
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -225,7 +227,7 @@ const SideBar = () => {
         <Stack alignItems="center" spacing={2}>
           <MaterialUISwitch defaultChecked onChange={onToggleMode} />
           <Avatar
-            src={faker.image.avatar()}
+            src={userInfo.avatar}
             id="account-menu"
             aria-controls={open ? "demo-positioned-menu" : undefined}
             aria-haspopup="true"

@@ -1,11 +1,4 @@
-import {
-  Box,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Divider, IconButton, Stack, Typography } from "@mui/material";
 import { CircleDashed, MagnifyingGlass, Users } from "@phosphor-icons/react";
 import React, { useEffect, useState } from "react";
 
@@ -16,7 +9,7 @@ import {
   SearchIconWrapper,
   StyledInputBase,
 } from "../../components/Search/index";
-import ChatElement from "../../components/ChatElement";
+
 import Friends from "../../sections/main/Friends";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,6 +21,7 @@ import {
   getDirectConversations,
 } from "../../redux/slices/conversation";
 import { ResetRoom } from "../../redux/slices/app";
+import ChatCategory from "../../components/ChatCategory";
 
 const Chats = () => {
   const theme = useTheme();
@@ -50,7 +44,6 @@ const Chats = () => {
     dispatch(IsLoading(true));
     socket.emit("get_direct_conversations", { user_id }, async (data) => {
       dispatch(GetDirectConversations({ conversations: data }));
-      dispatch(IsLoading(false));
     });
   }, [user_id, dispatch]);
 
@@ -61,8 +54,13 @@ const Chats = () => {
     setOpenDialog(false);
   };
 
-  const notPinnedConversations = conversations.filter((e) => !e.pinned);
-  const pinnedConversations = conversations.filter((e) => e.pinned);
+  const allConversations = conversations.filter(
+    (e) => !e.isBlocked && !e.pinned
+  );
+  const pinnedConversations = conversations.filter(
+    (e) => e.pinned && !e.isBlocked
+  );
+  const blockedConversations = conversations.filter((e) => e.isBlocked);
 
   return (
     <>
@@ -129,47 +127,21 @@ const Chats = () => {
               }}
               spacing={3}
             >
-              <Stack spacing={2.4}>
-                {isLoading && (
-                  <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                    Pinned
-                  </Typography>
-                )}
-                {!isLoading &&
-                  (pinnedConversations.length === 0 || (
-                    <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                      Pinned
-                    </Typography>
-                  ))}
-                {isLoading ||
-                  pinnedConversations.map((e) => (
-                    <ChatElement {...e} key={e.id} />
-                  ))}
-                {isLoading && (
-                  <Stack justifyContent="center" alignItems="center">
-                    <CircularProgress color="success" />
-                  </Stack>
-                )}
-              </Stack>
-              <Stack spacing={2.4}>
-                <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                  All Chats
-                </Typography>
-
-                {isLoading ||
-                  (notPinnedConversations.length === 0 && (
-                    <Typography>No chats</Typography>
-                  ))}
-                {isLoading ||
-                  notPinnedConversations.map((e) => {
-                    return <ChatElement {...e} key={e.id} />;
-                  })}
-                {isLoading && (
-                  <Stack justifyContent="center" alignItems="center">
-                    <CircularProgress color="success" />
-                  </Stack>
-                )}
-              </Stack>
+              <ChatCategory
+                title="Pinned chats"
+                conversations={pinnedConversations}
+                isLoading={isLoading}
+              />
+              <ChatCategory
+                title="All chats"
+                conversations={allConversations}
+                isLoading={isLoading}
+              />
+              <ChatCategory
+                title="Blocked chats"
+                conversations={blockedConversations}
+                isLoading={isLoading}
+              />
             </Stack>
           </Stack>
         </Stack>

@@ -59,7 +59,7 @@ const messageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
-  blockNotificationBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
+  mutedBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
 });
 
 const Message = new mongoose.model("Message", messageSchema);

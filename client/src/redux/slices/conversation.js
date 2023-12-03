@@ -44,6 +44,7 @@ const slice = createSlice({
               lastName: this_user.lastName,
               status: this_user.status,
               email: this_user.email,
+              about: this_user.about,
             },
           ],
           img: this_user.avatar,
@@ -52,10 +53,14 @@ const slice = createSlice({
           time: "9:36",
           unread: 0,
           pinned: pinned,
+          isMuted: e?.mutedBy?.includes(user_id),
+          isBlocked: e?.blockedBy?.includes(user_id),
+
           online: this_user.status === "Online",
           lastMessage: e.messages.length ? e.messages.at(-1)?.text : "",
         };
       });
+      state.isLoading = false;
 
       state.direct_chat.conversations = list;
 
@@ -74,15 +79,45 @@ const slice = createSlice({
     },
 
     updateDirectConversation(state, action) {
-      const updatedConversation = action.payload.conversation._id;
+      const type = action.payload.conversation.type;
 
-      state.direct_chat.conversations = state.direct_chat.conversations.map(
-        (con) => {
-          return con.id === updatedConversation
-            ? { ...con, pinned: !con.pinned }
-            : con;
-        }
-      );
+      if (type === "pinn") {
+        const updatedConversation = action.payload?.conversation?._id;
+        state.direct_chat.conversations = state.direct_chat.conversations.map(
+          (con) => {
+            return con.id === updatedConversation
+              ? { ...con, pinned: !con.pinned }
+              : con;
+          }
+        );
+      }
+      if (type === "block") {
+        const id = action.payload.conversation.room_id;
+
+        state.direct_chat.conversations = state.direct_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isBlocked: true } : con;
+          }
+        );
+      }
+      if (type === "unblock") {
+        const id = action.payload.conversation.room_id;
+        state.direct_chat.conversations = state.direct_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isBlocked: false } : con;
+          }
+        );
+      }
+
+      if (type === "mute") {
+        const id = action.payload.conversation.room_id;
+
+        state.direct_chat.conversations = state.direct_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isMuted: !con.isMuted } : con;
+          }
+        );
+      }
     },
 
     addDirectConversation(state, action) {
@@ -325,6 +360,7 @@ const slice = createSlice({
               lastName: user.lastName,
               status: user.status,
               email: user.email,
+              about: user.about,
             };
           }),
           img: faker.image.avatar(),
@@ -333,6 +369,8 @@ const slice = createSlice({
           time: "9:36",
           unread: 0,
           pinned: pinned,
+          isMuted: e?.mutedBy?.includes(user_id),
+          isBlocked: e?.blockedBy?.includes(user_id),
           online: false,
           lastMessage: e.messages.length ? e.messages.at(-1)?.text : "",
         };
@@ -354,15 +392,45 @@ const slice = createSlice({
       });
     },
     updateGroupConversation(state, action) {
-      const updatedConversation = action.payload.conversation._id;
+      const type = action.payload.conversation.type;
 
-      state.group_chat.conversations = state.group_chat.conversations.map(
-        (con) => {
-          return con.id === updatedConversation
-            ? { ...con, pinned: !con.pinned }
-            : con;
-        }
-      );
+      if (type === "pinn") {
+        const updatedConversation = action.payload?.conversation?._id;
+        state.group_chat.conversations = state.group_chat.conversations.map(
+          (con) => {
+            return con.id === updatedConversation
+              ? { ...con, pinned: !con.pinned }
+              : con;
+          }
+        );
+      }
+      if (type === "block") {
+        const id = action.payload.conversation.room_id;
+
+        state.group_chat.conversations = state.group_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isBlocked: true } : con;
+          }
+        );
+      }
+      if (type === "unBlock") {
+        const id = action.payload.conversation.room_id;
+        state.group_chat.conversations = state.group_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isBlocked: false } : con;
+          }
+        );
+      }
+
+      if (type === "mute") {
+        const id = action.payload.conversation.room_id;
+
+        state.group_chat.conversations = state.group_chat.conversations.map(
+          (con) => {
+            return con.id === id ? { ...con, isMuted: !con.isMuted } : con;
+          }
+        );
+      }
     },
 
     addGroupConversation(state, action) {

@@ -7,8 +7,13 @@ import { Slide, Snackbar } from "@mui/material";
 import { forwardRef, useEffect } from "react";
 import MuiAlert from "@mui/material/Alert";
 import { useDispatch, useSelector } from "react-redux";
-import { CloseSnackBar, getSnackBarApp } from "./redux/slices/app";
+import { CloseSnackBar, ResetRoom, getSnackBarApp } from "./redux/slices/app";
 import { LogoutUser } from "./redux/slices/auth";
+import {
+  ClearConversation,
+  ClearGroupConversation,
+} from "./redux/slices/conversation";
+import { socket } from "./socket";
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -20,15 +25,17 @@ function App() {
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      dispatch(LogoutUser());
-      window.localStorage.removeItem("user_id");
+      dispatch(LogoutUser({ fullLogout: false }));
+      // window.localStorage.removeItem("user_id");
+      dispatch(ResetRoom());
+      dispatch(ClearConversation());
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [dispatch]);
 
   return (
     <>

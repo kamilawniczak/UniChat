@@ -6,27 +6,30 @@ import {
   DialogContentText,
   DialogTitle,
   Slide,
+  Typography,
 } from "@mui/material";
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { socket } from "../socket";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserId } from "../redux/slices/auth";
-import { OpenSnackBar, getChatType } from "../redux/slices/app";
+import { OpenSnackBar } from "../redux/slices/app";
 import {
   UpdateDirectConversation,
   UpdateGroupConversation,
-  getRoomId,
 } from "../redux/slices/conversation";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const BlockDialog = ({ open, handleClose }) => {
-  const room_id = useSelector(getRoomId());
-  const chat_type = useSelector(getChatType());
+const UnblockDialog = ({ open, handleClose, info }) => {
+  let location = useLocation();
+  const room_id = info.id;
+  const chat_type = location.pathname === "/app" ? "OneToOne" : "OneToMany";
   const user_id = useSelector(getUserId());
   const dispatch = useDispatch();
+
   return (
     <Dialog
       open={open}
@@ -34,11 +37,13 @@ const BlockDialog = ({ open, handleClose }) => {
       keepMounted
       onClose={handleClose}
       aria-describedby="alert-dialog-slide-description"
+      maxWidth="md"
     >
-      <DialogTitle>Block this content</DialogTitle>
+      <DialogTitle>Unblock this conversation</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-slide-description">
-          Are you sure you want to block this conversation
+          Are you sure you want to unblock{" "}
+          <span style={{ fontSize: 18, fontWeight: 700 }}>{info.name}</span>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -47,7 +52,7 @@ const BlockDialog = ({ open, handleClose }) => {
           onClick={() => {
             handleClose();
             socket.emit(
-              "block",
+              "unblock",
               {
                 room_id,
                 user_id,
@@ -63,14 +68,14 @@ const BlockDialog = ({ open, handleClose }) => {
                 if (chat_type === "OneToOne") {
                   dispatch(
                     UpdateDirectConversation({
-                      conversation: { room_id, type: "block" },
+                      conversation: { room_id, type: "unblock" },
                     })
                   );
                 }
                 if (chat_type === "OneToMany") {
                   dispatch(
                     UpdateGroupConversation({
-                      conversation: { room_id, type: "block" },
+                      conversation: { room_id, type: "unblock" },
                     })
                   );
                 }
@@ -85,4 +90,4 @@ const BlockDialog = ({ open, handleClose }) => {
   );
 };
 
-export default BlockDialog;
+export default UnblockDialog;

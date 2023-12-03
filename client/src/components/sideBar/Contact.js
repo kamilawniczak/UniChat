@@ -31,11 +31,14 @@ import BlockDialog from "../BlockDialog";
 import DeleteDialog from "../DeleteDialog";
 import { getUserId } from "../../redux/slices/auth";
 import {
+  UpdateDirectConversation,
+  UpdateGroupConversation,
   getDirectConversations,
   getGroupConversations,
 } from "../../redux/slices/conversation";
 import UserCard from "./UserCard";
 import UserList from "./UserList";
+import { socket } from "../../socket";
 
 const Contact = () => {
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
@@ -50,6 +53,7 @@ const Contact = () => {
   const user_id = useSelector(getUserId());
   const direct_msgs = useSelector(getDirectConversations()).current_meessages;
   const group_msgs = useSelector(getGroupConversations()).current_meessages;
+
   const { conversations: directConveration } = useSelector(
     getDirectConversations()
   );
@@ -75,7 +79,7 @@ const Contact = () => {
     (user) => user.id !== user_id
   );
 
-  const { about } = selectedUser || {};
+  const about = chat_type === "OneToOne" ? selectedUser[0].about : "TODO";
 
   const imagesAndDocs = current_meessages
     ?.filter((msg) => msg.subtype === "img" || msg.subtype === "doc")
@@ -142,7 +146,9 @@ const Contact = () => {
 
           <Divider />
           <Stack spacing={0.5}>
-            <Typography variant="article">About</Typography>
+            <Typography variant="article">
+              {chat_type === "OneToOne" ? "About:" : "Group about:"}
+            </Typography>
             {about && <Typography variant="body2">{about}</Typography>}
           </Stack>
           <Divider />
@@ -190,7 +196,36 @@ const Contact = () => {
               <Bell size={26} />
               <Typography variant="subtitle2">Mute Notification</Typography>
             </Stack>
-            <Switch />
+            <Switch
+              onChange={(e) => {
+                socket.emit(
+                  "mute",
+                  {
+                    room_id,
+                    user_id,
+                    mute: e.target.checked,
+                    chat_type,
+                  },
+                  () => {
+                    if (chat_type === "OneToOne") {
+                      dispatch(
+                        UpdateDirectConversation({
+                          conversation: { room_id, type: "mute" },
+                        })
+                      );
+                    }
+                    if (chat_type === "OneToMany") {
+                      dispatch(
+                        UpdateGroupConversation({
+                          conversation: { room_id, type: "mute" },
+                        })
+                      );
+                    }
+                  }
+                );
+              }}
+              defaultChecked={selectedConversation.isMuted}
+            />
           </Stack>
           <Divider />
 

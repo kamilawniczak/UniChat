@@ -33,6 +33,7 @@ const slice = createSlice({
     },
     logOut(state, action) {
       const friends = action.payload.friends;
+      const fullLogout = action.payload.fullLogout;
 
       socket.emit("logout", { user_id: state.user_id });
       socket.emit("setStatus", {
@@ -40,6 +41,9 @@ const slice = createSlice({
         friends,
         online: false,
       });
+
+      if (!fullLogout) return;
+
       state.isLoggedIn = false;
       state.token = "";
       state.user_id = null;
@@ -98,7 +102,7 @@ export function LoginUser(formValues) {
   };
 }
 
-export function LogoutUser() {
+export function LogoutUser({ fullLogout }) {
   return async (dispatch, getValues) => {
     const conversations =
       getValues()?.coversations?.direct_chat?.conversations.map(
@@ -108,8 +112,8 @@ export function LogoutUser() {
       );
     const friends = conversations.flat();
 
-    window.localStorage.removeItem("user_id");
-    await dispatch(slice.actions.logOut({ friends }));
+    // window.localStorage.removeItem("user_id");
+    await dispatch(slice.actions.logOut({ friends, fullLogout }));
 
     await dispatch(
       OpenSnackBar({
@@ -126,7 +130,7 @@ export function ForgotPassword(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
-      const response = await axios.post(
+      await axios.post(
         "/auth/forgot-password",
         { ...formValues },
         {

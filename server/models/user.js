@@ -14,6 +14,16 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
   },
+  about: {
+    type: String,
+  },
+  phone: {
+    type: String,
+    validate: {
+      validator: (phone) => /^[0-9]{10}$/g.test(phone),
+      message: (props) => `${props.value} is not a valid phone number`,
+    },
+  },
   email: {
     type: String,
     required: [true, "Email is required"],

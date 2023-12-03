@@ -61,7 +61,7 @@ const groupMessageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
-  blockNotificationBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
+  mutedBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   title: {
     type: String,
   },

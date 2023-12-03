@@ -120,7 +120,7 @@ io.on("connection", async (socket) => {
   socket.on("get_direct_conversations", async ({ user_id }, callback) => {
     const existing_conversations = await Message.find({
       members: { $all: [user_id] },
-    }).populate("members", "firstName lastName avatar _id email status");
+    }).populate("members", "firstName lastName avatar about _id email status");
 
     await callback(existing_conversations);
   });
@@ -354,7 +354,7 @@ io.on("connection", async (socket) => {
       members: { $all: [user_id] },
     }).populate(
       "members",
-      "firstName lastName avatar _id email status sockte_id"
+      "firstName lastName avatar _id email status about sockte_id"
     );
 
     await callback(existing_conversations);
@@ -534,7 +534,68 @@ io.on("connection", async (socket) => {
     }
   );
   //------------------------------------------------------------------
+  socket.on("block", async ({ room_id, user_id, chat_type }, callback) => {
+    let conversation;
+    if (chat_type === "OneToOne") {
+      conversation = await Message.findById(room_id);
+    }
+    if (chat_type === "OneToMany") {
+      conversation = await GroupMessage.findById(room_id);
+    }
+    if (conversation === null) return;
 
+    if (conversation.blockedBy.includes(user_id)) {
+      return;
+    }
+    conversation.blockedBy.push(user_id);
+
+    await conversation.save();
+    callback();
+  });
+  socket.on("unblock", async ({ room_id, user_id, chat_type }, callback) => {
+    let conversation;
+    if (chat_type === "OneToOne") {
+      conversation = await Message.findById(room_id);
+    }
+    if (chat_type === "OneToMany") {
+      conversation = await GroupMessage.findById(room_id);
+    }
+    if (!conversation) return;
+
+    if (!conversation.blockedBy.includes(user_id)) return;
+
+    conversation.blockedBy = conversation.blockedBy.filter((id) => {
+      return id.toString() !== user_id;
+    });
+
+    await conversation.save();
+    callback();
+  });
+
+  socket.on("mute", async ({ room_id, user_id, mute, chat_type }, callback) => {
+    let conversation;
+    if (chat_type === "OneToOne") {
+      conversation = await Message.findById(room_id);
+    }
+    if (chat_type === "OneToMany") {
+      conversation = await GroupMessage.findById(room_id);
+    }
+    if (conversation === null) return;
+
+    if (mute === false) {
+      conversation.mutedBy = conversation.mutedBy.filter((id) => {
+        return id.toString() !== user_id;
+      });
+    }
+
+    if (mute === true) {
+      if (!conversation.mutedBy.includes(user_id)) {
+        conversation.mutedBy.push(user_id);
+      }
+    }
+    await conversation.save();
+    callback();
+  });
   socket.on(
     "saveMsg",
     async ({ msgId, chat_type, room_id, user_id }, callback) => {

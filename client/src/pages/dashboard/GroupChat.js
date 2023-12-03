@@ -28,6 +28,7 @@ import {
 } from "../../redux/slices/conversation";
 import { ResetRoom } from "../../redux/slices/app";
 import CreateGroup from "../../sections/main/CreateGroup";
+import ChatCategory from "../../components/ChatCategory";
 
 const GroupChat = () => {
   const theme = useTheme();
@@ -62,8 +63,13 @@ const GroupChat = () => {
     setOpenDialog(false);
   };
 
-  const notPinnedConversations = conversations.filter((e) => !e.pinned);
-  const pinnedConversations = conversations.filter((e) => e.pinned);
+  const allConversations = conversations.filter(
+    (e) => !e.isBlocked && !e.pinned
+  );
+  const pinnedConversations = conversations.filter(
+    (e) => e.pinned && !e.isBlocked
+  );
+  const blockedConversations = conversations.filter((e) => e.isBlocked);
 
   return (
     <>
@@ -116,47 +122,43 @@ const GroupChat = () => {
             </IconButton>
           </Stack>
           <Divider />
-          <Stack sx={{ flexGrow: 1, height: "100%", overflow: "auto" }}>
-            <Stack spacing={2.4}>
-              {isLoading && (
-                <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                  Pinned
-                </Typography>
-              )}
-              {!isLoading &&
-                (pinnedConversations.length === 0 || (
-                  <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                    Pinned
-                  </Typography>
-                ))}
-              {isLoading ||
-                pinnedConversations.map((e) => (
-                  <ChatElement {...e} key={e.id} isGroupChat={true} />
-                ))}
-              {isLoading && (
-                <Stack justifyContent="center" alignItems="center">
-                  <CircularProgress color="success" />
-                </Stack>
-              )}
-            </Stack>
-            <Stack spacing={2.4}>
-              <Typography variant="subtitle2" sx={{ color: "#676767" }}>
-                All Chats
-              </Typography>
-
-              {isLoading ||
-                (notPinnedConversations.length === 0 && (
-                  <Typography>No chats</Typography>
-                ))}
-              {isLoading ||
-                notPinnedConversations.map((e) => {
-                  return <ChatElement {...e} key={e.id} isGroupChat={true} />;
-                })}
-              {isLoading && (
-                <Stack justifyContent="center" alignItems="center">
-                  <CircularProgress color="success" />
-                </Stack>
-              )}
+          <Stack
+            direction="column"
+            spacing={1}
+            sx={{
+              flexGrow: 1,
+              height: "100%",
+              overflow: "hidden",
+            }}
+          >
+            <Stack
+              sx={{
+                overflow: "scroll",
+                overflowX: "hidden",
+                scrollbarGutter: "stable",
+                scrollbarWidth: "normal",
+              }}
+              spacing={3}
+            >
+              <ChatCategory
+                title="Pinned chats"
+                conversations={pinnedConversations}
+                isLoading={isLoading}
+                isGroupChat={true}
+              />
+              {allConversations.length > 0}
+              <ChatCategory
+                title="All chats"
+                conversations={allConversations}
+                isLoading={isLoading}
+                isGroupChat={true}
+              />
+              <ChatCategory
+                title="Blocked chats"
+                conversations={blockedConversations}
+                isLoading={isLoading}
+                isGroupChat={true}
+              />
             </Stack>
           </Stack>
         </Stack>

@@ -64,6 +64,10 @@ const SharedMsg = () => {
             return acc;
           }, []);
 
+        if (images.length < 1) {
+          return <Typography>There is no images :)</Typography>;
+        }
+
         return (
           <Grid container spacing={2}>
             {images?.map((e) => (
@@ -98,6 +102,9 @@ const SharedMsg = () => {
             return acc;
           }, []);
 
+        if (documents.length < 1) {
+          return <Typography>There is no documents :)</Typography>;
+        }
         return documents?.map((element) => (
           <Stack
             p={2}

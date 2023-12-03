@@ -1,14 +1,14 @@
 import { Autocomplete, Button, Stack, TextField } from "@mui/material";
 
-const UserList = ({
-  users,
-
-  selectedUserIndex,
-  setSelectedUserIndex,
-}) => {
+const UserList = ({ users, selectedUserIndex, setSelectedUserIndex }) => {
   const handleUserSelect = (e, value) => {
-    const selectedIndex = users.findIndex((user) => user.id === value.id);
-    setSelectedUserIndex(selectedIndex !== -1 ? selectedIndex : 0);
+    if (value && value.id) {
+      const selectedIndex = users?.findIndex((user) => user.id === value.id);
+
+      if (selectedIndex !== -1 && selectedIndex !== null) {
+        setSelectedUserIndex(selectedIndex);
+      }
+    }
   };
 
   const handlePrevUser = () => {

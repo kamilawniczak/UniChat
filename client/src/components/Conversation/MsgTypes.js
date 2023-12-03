@@ -8,7 +8,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { Download, DownloadSimple, Image } from "@phosphor-icons/react";
+import { Download, DownloadSimple } from "@phosphor-icons/react";
 import React from "react";
 import { useState } from "react";
 import ImgModal from "./ImgModal";

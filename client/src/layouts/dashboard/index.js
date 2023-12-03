@@ -42,6 +42,7 @@ const DashboardLayout = () => {
   const groupRoomId = useSelector(getGroupRoomId());
 
   useEffect(() => {
+    if (!user_id) return;
     if (isLoggedIn) {
       window.onload = () => {
         if (!window.location.hash) {

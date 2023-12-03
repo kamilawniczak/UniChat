@@ -26,6 +26,8 @@ const StarredMsg = () => {
     current_meessages = group_msgs;
   }
 
+  const savedMsgs = current_meessages?.filter((msg) => msg.isSaved);
+
   return (
     <Box sx={{ width: 320, height: "100vh" }}>
       <Stack sx={{ height: "100%" }} alignItems="center">
@@ -64,9 +66,12 @@ const StarredMsg = () => {
           p={3}
           spacing={3}
         >
-          {current_meessages
-            ?.filter((msg) => msg.isSaved)
-            ?.map((e, i) => (
+          {savedMsgs.length < 1 && (
+            <Typography>There is no starred messages :)</Typography>
+          )}
+
+          {savedMsgs.length > 0 &&
+            savedMsgs?.map((e, i) => (
               <Message data={e} key={i} avatar={false} small={true} />
             ))}
         </Stack>
