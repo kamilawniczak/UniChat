@@ -54,7 +54,7 @@ const GeneralApp = () => {
         ) : (
           <Stack
             spacing={2}
-            sx={{ height: "100vh", width: "100%" }}
+            sx={{ minHeight: "100%", width: "100%" }}
             alignItems="center"
             justifyContent="center"
           >

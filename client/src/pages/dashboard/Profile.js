@@ -47,7 +47,9 @@ const Profile = () => {
   return (
     <Box
       sx={{
-        height: "100vh",
+        minHeight: "100vh",
+        height: "100%",
+
         backgroundColor: (them) =>
           them.palette.mode === "light" ? "F8FAFF" : them.palette.background,
         width: "100%",
