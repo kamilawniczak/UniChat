@@ -2,13 +2,14 @@ import { Link, Stack, Typography } from "@mui/material";
 import React from "react";
 
 import { CaretLeft } from "@phosphor-icons/react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useParams } from "react-router-dom";
 
 import { useSelector } from "react-redux";
 import { getIsLoadingAuth } from "../../redux/slices/auth";
 import VerifyForm from "../../components/auth/VerifyForm";
 
 const Verify = () => {
+  const { email } = useParams();
   const isLoading = useSelector(getIsLoadingAuth());
   return (
     <>
@@ -18,9 +19,7 @@ const Verify = () => {
         </Typography>
 
         <Stack direction="row">
-          <Typography variant="body2">
-            Sent to email (emaple@gmail.com)
-          </Typography>
+          <Typography variant="body2">Sent to email ({email})</Typography>
         </Stack>
       </Stack>
       <VerifyForm />

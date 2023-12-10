@@ -223,7 +223,7 @@ export function RegisterNewUser(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
-      const response = await axios.post(
+      const loginPromise = await axios.post(
         "/auth/register",
         { ...formValues },
         {
@@ -232,13 +232,22 @@ export function RegisterNewUser(formValues) {
           },
         }
       );
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Login request timed out"));
+        }, 30000);
+      });
+
+      const response = await Promise.race([loginPromise, timeoutPromise]);
+
       dispatch(slice.actions.updateRegisterEmail({ email: formValues.email }));
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: false })
       );
       window.localStorage.setItem("user_id", response.data.user_id);
     } catch (error) {
-      console.log(error);
+      dispatch(OpenSnackBar({ message: error.message, severity: "error" }));
 
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: true })
@@ -265,7 +274,7 @@ export function VerifyEmail(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
-      const response = await axios.post(
+      const loginPromise = await axios.post(
         "/auth/verify",
         { ...formValues, email },
         {
@@ -274,6 +283,15 @@ export function VerifyEmail(formValues) {
           },
         }
       );
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Login request timed out"));
+        }, 30000);
+      });
+
+      const response = await Promise.race([loginPromise, timeoutPromise]);
+
       window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: false })
@@ -283,6 +301,7 @@ export function VerifyEmail(formValues) {
 
       window.localStorage.setItem("user_id", response.data.user_id);
     } catch (error) {
+      dispatch(OpenSnackBar({ message: error.message, severity: "error" }));
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: true })
       );
