@@ -527,6 +527,7 @@ const slice = createSlice({
             file: el.file,
             reaction: el.reaction,
             isSaved: el.starredBy.some((user) => user.toString() === user_id),
+            created_at: el.created_at,
           };
         } else {
           return {
@@ -547,6 +548,7 @@ const slice = createSlice({
             file: el.file,
             reaction: el.reaction,
             isSaved: el.starredBy.some((user) => user.toString() === user_id),
+            created_at: el.created_at,
           };
         }
       });

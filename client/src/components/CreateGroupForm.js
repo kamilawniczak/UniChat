@@ -47,7 +47,7 @@ const CreateGroupForm = ({ handleClose, handleImageUpload, isLoading }) => {
     lastName: userInfo.lastName,
   };
 
-  const options = [me, ...friends];
+  const options = [me, ...friends].filter((user) => user !== null);
 
   return (
     <>
@@ -92,11 +92,11 @@ const CreateGroupForm = ({ handleClose, handleImageUpload, isLoading }) => {
                   `${option.firstName} ${option.lastName}`
                 }
                 limitTags={3}
-                getOptionDisabled={(option) => option._id === userId}
+                getOptionDisabled={(option) => option?._id === userId}
                 onChange={(e, newValue) =>
                   onChange([
                     options.at(0),
-                    ...newValue.filter((option) => option._id !== userId),
+                    ...newValue.filter((option) => option?._id !== userId),
                   ])
                 }
                 value={value}
