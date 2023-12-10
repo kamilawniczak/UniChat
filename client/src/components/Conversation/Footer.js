@@ -20,19 +20,15 @@ import {
 } from "../../redux/slices/conversation";
 import { OpenSnackBar } from "../../redux/slices/app";
 
-import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_KEY, SUPABASE_URL } from "../../config";
 import { useReplayMsgContext } from "../../contexts/ReplyMsgContext";
 import MessageAnnotation from "./MessageAnnotation";
 import ChatInput from "../ChatInput";
-
-const supabaseUrl = SUPABASE_URL;
-const supabaseKey = SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "../../utils/supabase";
 
 const Footer = () => {
   const [fileInput, setFilesInput] = useState([]);
   const [openPicker, setOpenPicker] = React.useState(false);
+  const [openActions, setOpenActions] = useState(false);
 
   const theme = useTheme();
   const { replyMsgId, replyType, onResetMsgId, replyText, replyFile } =
@@ -158,6 +154,7 @@ const Footer = () => {
     setFilesInput([]);
     setOpenPicker(false);
     onResetMsgId();
+    setOpenActions(false);
   };
 
   const handleMsgType = (subtype) => {
@@ -242,53 +239,55 @@ const Footer = () => {
                 left: 430,
               }}
             >
-              {replyMsgId && (
-                <MessageAnnotation
-                  type={replyType}
-                  file={replyFile}
-                  text={replyText}
-                  onReset={onResetMsgId}
-                />
-              )}
-              {fileInput?.length > 0 &&
-                fileInput.map((file, index) => (
-                  <Stack key={index} direction="row">
-                    <Tooltip
-                      placement="top"
-                      title={file.name}
-                      sx={{
-                        position: "relative",
-                        display: "inline-block",
-                      }}
-                    >
-                      <Avatar
-                        alt="Selected Photo"
-                        src={URL.createObjectURL(file)}
-                        sx={{ width: 52, height: 52, borderRadius: "8px" }}
-                      />
-                    </Tooltip>
-                    <Stack position="relative">
-                      <IconButton
+              <Stack>
+                {fileInput?.length > 0 &&
+                  fileInput.map((file, index) => (
+                    <Stack key={index} direction="row">
+                      <Tooltip
+                        placement="top"
+                        title={file.name}
                         sx={{
-                          zIndex: 10,
-                          position: "absolute",
-                          top: 0,
-                          right: 0,
-                          margin: 0,
-                          padding: 0.1,
-                          transform: "translate(40%, -40%)",
-                          backgroundColor:
-                            theme.palette.mode === "light"
-                              ? "#F8FAFF"
-                              : theme.palette.background.paper,
+                          position: "relative",
+                          display: "inline-block",
                         }}
-                        onClick={() => removeFile(index)}
                       >
-                        <XCircle size={20} color="#c42121" weight="light" />
-                      </IconButton>
+                        <Avatar
+                          alt="Selected Photo"
+                          src={URL.createObjectURL(file)}
+                          sx={{ width: 52, height: 52, borderRadius: "8px" }}
+                        />
+                      </Tooltip>
+                      <Stack position="relative">
+                        <IconButton
+                          sx={{
+                            zIndex: 10,
+                            position: "absolute",
+                            top: 0,
+                            right: 0,
+                            margin: 0,
+                            padding: 0.1,
+                            transform: "translate(40%, -40%)",
+                            backgroundColor:
+                              theme.palette.mode === "light"
+                                ? "#F8FAFF"
+                                : theme.palette.background.paper,
+                          }}
+                          onClick={() => removeFile(index)}
+                        >
+                          <XCircle size={20} color="#c42121" weight="light" />
+                        </IconButton>
+                      </Stack>
                     </Stack>
-                  </Stack>
-                ))}
+                  ))}
+                {replyMsgId && (
+                  <MessageAnnotation
+                    type={replyType}
+                    file={replyFile}
+                    text={replyText}
+                    onReset={onResetMsgId}
+                  />
+                )}
+              </Stack>
             </Box>
             <ChatInput
               inputRef={inputRef}
@@ -298,6 +297,8 @@ const Footer = () => {
               setOpenPicker={setOpenPicker}
               handleMsgType={handleMsgType}
               handleClickEnter={handleClickEnter}
+              handleActions={setOpenActions}
+              openActions={openActions}
             />
 
             <input

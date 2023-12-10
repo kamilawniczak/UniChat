@@ -3,9 +3,10 @@ import React from "react";
 
 import { CaretLeft } from "@phosphor-icons/react";
 import { Link as RouterLink } from "react-router-dom";
-import VerifyForm from "../../sections/auth/VerifyForm";
+
 import { useSelector } from "react-redux";
 import { getIsLoadingAuth } from "../../redux/slices/auth";
+import VerifyForm from "../../components/auth/VerifyForm";
 
 const Verify = () => {
   const isLoading = useSelector(getIsLoadingAuth());

@@ -68,6 +68,12 @@ const SettingsProvider = ({ children }) => {
       themeMode: settings.themeMode === "light" ? "dark" : "light",
     });
   };
+  const setMode = (value) => {
+    setSettings({
+      ...settings,
+      themeMode: value,
+    });
+  };
 
   const onChangeMode = (event) => {
     setSettings({
@@ -169,6 +175,7 @@ const SettingsProvider = ({ children }) => {
         ...settings, // Mode
         onToggleMode,
         onChangeMode,
+        setMode,
 
         // Direction
         onToggleDirection,

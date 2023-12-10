@@ -22,6 +22,7 @@ import {
 } from "../../redux/slices/conversation";
 import { getFileNameFromUrl, handleDownload } from "../../utils/formatMsg";
 import { ScaledImage } from "../ScaledImage";
+import { isImage } from "../../utils/checkFile";
 
 const SharedMsg = () => {
   const [value, setValue] = useState(0);
@@ -53,16 +54,16 @@ const SharedMsg = () => {
 
     switch (value) {
       case 0:
-        const images = current_meessages
-          ?.filter((msg) => msg.subtype === "img")
-          ?.reduce((acc, curr) => {
-            if (curr.file.length === 1) {
-              acc.push(curr.file[0]);
-            } else if (curr.file.length > 1) {
-              acc.push(...curr.file.map((file) => file));
-            }
-            return acc;
-          }, []);
+        const images = current_meessages?.reduce((acc, curr) => {
+          if (curr.file.length === 1 && isImage(curr.file[0])) {
+            acc.push(curr.file[0]);
+          } else if (curr.file.length > 1) {
+            acc.push(
+              ...curr.file.filter((file) => isImage(file)).map((file) => file)
+            );
+          }
+          return acc;
+        }, []);
 
         if (images.length < 1) {
           return <Typography>There is no images :)</Typography>;
@@ -91,16 +92,20 @@ const SharedMsg = () => {
           </Grid>
         );
       case 1:
-        const documents = current_meessages
-          ?.filter((msg) => msg.subtype === "doc")
-          ?.reduce((acc, curr) => {
-            if (curr.file.length === 1) {
-              acc.push(curr.file[0]);
-            } else if (curr.file.length > 1) {
-              acc.push(...curr.file.map((file) => file));
-            }
-            return acc;
-          }, []);
+        const documents = current_meessages?.reduce((acc, curr) => {
+          if (
+            curr.file.length === 1 &&
+            !isImage(curr.file[0]) &&
+            curr.file[0].startsWith("https://")
+          ) {
+            acc.push(curr.file[0]);
+          } else if (curr.file.length > 1) {
+            acc.push(
+              ...curr.file.filter((file) => !isImage(file)).map((file) => file)
+            );
+          }
+          return acc;
+        }, []);
 
         if (documents.length < 1) {
           return <Typography>There is no documents :)</Typography>;

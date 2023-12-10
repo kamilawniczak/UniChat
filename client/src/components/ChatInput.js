@@ -42,8 +42,9 @@ const ChatInput = ({
   inputRef,
   handleMsgType,
   handleClickEnter,
+  handleActions,
+  openActions,
 }) => {
-  const [openActions, setOpenActions] = useState(false);
   const { isLoading } = useSelector(getConversations());
 
   return (
@@ -72,7 +73,7 @@ const ChatInput = ({
                 <Tooltip placement="right" title={el.title} key={el.title}>
                   <Fab
                     onClick={() => {
-                      setOpenActions(!openActions);
+                      handleActions(!openActions);
                       handleMsgType(el.title);
                     }}
                     sx={{
@@ -91,7 +92,7 @@ const ChatInput = ({
             <InputAdornment position="end">
               <IconButton
                 onClick={() => {
-                  setOpenActions(!openActions);
+                  handleActions(!openActions);
                 }}
               >
                 <LinkSimple />

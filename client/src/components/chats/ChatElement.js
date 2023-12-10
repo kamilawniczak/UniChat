@@ -8,9 +8,9 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import StyledBadge from "./StyledBadge";
+import StyledBadge from "../StyledBadge";
 import { useDispatch, useSelector } from "react-redux";
-import { SelectRoom } from "../redux/slices/app";
+import { SelectRoom, getRoomId } from "../../redux/slices/app";
 import {
   SetConversation,
   SetGroupConversation,
@@ -18,26 +18,28 @@ import {
   UpdateGroupConversation,
   getDirectConversations,
   getGroupConversations,
-} from "../redux/slices/conversation";
+} from "../../redux/slices/conversation";
 import { DotsThreeOutlineVertical, PlusCircle } from "@phosphor-icons/react";
 import { useState } from "react";
-import { socket } from "../socket";
-import UnblockDialog from "./UnblockDialog";
+import { socket } from "../../socket";
+import UnblockDialog from "../UnblockDialog";
+import { formatTimeDifference } from "../../utils/formatTime";
 
 const Conversation_Menu = [
-  // {
-  //   title: "Delete",
-  //   icon: <Trash size={20} color="#c42121" weight="light" />,
-  // },
   {
     title: "Pinn",
     icon: <PlusCircle size={20} color="#c42121" weight="light" />,
   },
 ];
 
-const checkMessage = (message) => {
-  if (message.length < 20) return message;
-  return message.split("").slice(0, 20).join("") + "...";
+const checkText = (message, maxLength) => {
+  if (message.length <= maxLength) return message;
+
+  const slicedMessage = message.slice(0, maxLength);
+
+  const trimmedMessage = slicedMessage.replace(/\s+$/, "");
+
+  return trimmedMessage + "...";
 };
 
 const ChatElement = ({
@@ -50,6 +52,7 @@ const ChatElement = ({
   online,
   user_id,
   lastMessage = "",
+  lastOnline,
   isGroupChat = false,
   isBlocked,
 }) => {
@@ -59,27 +62,22 @@ const ChatElement = ({
   const dispatch = useDispatch();
   const open = Boolean(anchorEl);
   const this_user_id = window.localStorage.getItem("user_id");
+  const room_id = useSelector(getRoomId());
 
   let unread_messages;
-  let current_conversation;
-  const {
-    unread_messages: unread_direct_messages,
-    current_conversation: current_direct_conversation,
-  } = useSelector(getDirectConversations());
-  const {
-    unread_messages: unread_group_messages,
-    current_conversation: current_group_conversation,
-  } = useSelector(getGroupConversations());
+
+  const { unread_messages: unread_direct_messages } = useSelector(
+    getDirectConversations()
+  );
+  const { unread_messages: unread_group_messages } = useSelector(
+    getGroupConversations()
+  );
 
   unread_messages = isGroupChat
     ? unread_group_messages
     : unread_direct_messages;
-  current_conversation = isGroupChat
-    ? current_direct_conversation
-    : current_group_conversation;
 
   const unread_msg = unread_messages.filter((msg) => msg.room_id === id);
-  const room_id = current_conversation?.room_id;
 
   let textToShow = unread_msg?.length
     ? unread_msg[unread_msg?.length - 1].message.message
@@ -93,49 +91,6 @@ const ChatElement = ({
     setAnchorEl(null);
 
     switch (e) {
-      // case "Delete":
-      // if (!isGroupChat) {
-      //   socket.emit(
-      //     "deleteConversation",
-      //     { room_id: id, user_id: this_user_id },
-      //     async (data) => {
-      //       if (!isGroupChat) {
-      //         dispatch(
-      //           OpenSnackBar({
-      //             severity: "success",
-      //             message: data.message,
-      //           })
-      //         );
-
-      //         dispatch(DeleteDirectConversation({ room_id: data.room_id }));
-      //         if (room_id === id) {
-      //           dispatch(ResetRoom());
-      //         }
-      //       }
-      //     }
-      //   );
-      // } else {
-      //   socket.emit(
-      //     "deleteGroupConversation",
-      //     { room_id: id, user_id: this_user_id },
-      //     async (data) => {
-      //       if (isGroupChat) {
-      //         dispatch(
-      //           OpenSnackBar({
-      //             severity: "success",
-      //             message: data.message,
-      //           })
-      //         );
-      //         dispatch(DeleteGroupConversation({ room_id: data.room_id }));
-      //         if (room_id === id) {
-      //           dispatch(ResetRoom());
-      //         }
-      //       }
-      //     }
-      //   );
-      // }
-
-      // break;
       case "Pinn":
         if (!isGroupChat) {
           socket.emit(
@@ -229,46 +184,59 @@ const ChatElement = ({
           sx={{ height: "100%" }}
         >
           <Stack direction="row" spacing={1}>
-            {online ? (
-              <StyledBadge
-                overlap="circular"
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                variant="dot"
-              >
+            <Stack>
+              {online ? (
+                <StyledBadge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  variant="dot"
+                >
+                  <Avatar src={img} />
+                </StyledBadge>
+              ) : (
                 <Avatar src={img} />
-              </StyledBadge>
-            ) : (
-              <Avatar src={img} />
-            )}
+              )}
+            </Stack>
 
-            <Stack spacing={0.3}>
-              <Typography variant="subtitle2">{name}</Typography>{" "}
+            <Stack spacing={0.3} sx={{ position: "relative" }}>
+              <Typography variant="subtitle2">{checkText(name, 14)}</Typography>
               {room_id === id || (
-                <Typography variant="caption">
-                  {checkMessage(textToShow)}
+                <Typography
+                  variant="caption"
+                  sx={{ position: "absolute", top: 20, whiteSpace: "nowrap" }}
+                >
+                  {checkText(textToShow, 17)}
                 </Typography>
               )}
             </Stack>
           </Stack>
-          <Stack spacing={2} alignItems="center">
-            {!isGroupChat && (
-              <Typography sx={{ fontWeight: 600 }} variant="caption">
-                {time}
-              </Typography>
-            )}
-            <Badge color="primary" badgeContent={unread_msg.length} />
-          </Stack>
-          <Stack>
-            <DotsThreeOutlineVertical
-              size={22}
-              color="#c42121"
-              weight="light"
-              id="account-menu"
-              aria-controls={open ? "demo-positioned-menu" : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? "true" : undefined}
-              onClick={handleClick}
-            />
+          <Stack direction="row" spacing={1}>
+            <Stack spacing={2} alignItems="center" sx={{ height: "100%" }}>
+              {
+                <Typography
+                  sx={{ fontWeight: 600, height: 17 }}
+                  variant="caption"
+                >
+                  {!isGroupChat &&
+                    !online &&
+                    user_id &&
+                    formatTimeDifference(time)}
+                </Typography>
+              }
+              <Badge color="primary" badgeContent={unread_msg.length} />
+            </Stack>
+            <Stack justifyContent="center">
+              <DotsThreeOutlineVertical
+                size={22}
+                color="#c42121"
+                weight="light"
+                id="account-menu"
+                aria-controls={open ? "demo-positioned-menu" : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? "true" : undefined}
+                onClick={handleClick}
+              />
+            </Stack>
           </Stack>
         </Stack>
 

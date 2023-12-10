@@ -60,8 +60,8 @@ const StarredMsg = () => {
             width: "100%",
             position: "relative",
             flexGrow: 1,
-            overflowY: "scroll",
-            overflowX: "hidden",
+            // overflowY: "scroll",
+            // overflowX: "hidden",
           }}
           p={3}
           spacing={3}

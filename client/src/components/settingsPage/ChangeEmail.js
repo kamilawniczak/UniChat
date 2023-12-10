@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,14 +5,15 @@ import {
   Slide,
   Stack,
 } from "@mui/material";
+import React from "react";
 
-import CreateGroupForm from "./CreateGroupForm";
+import ChangeEmailForm from "./ChangeEmailForm";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const CreateGroup = ({ open, handleClose }) => {
+const ChangeEmail = ({ open, handleClose }) => {
   return (
     <Dialog
       fullWidth
@@ -23,14 +23,14 @@ const CreateGroup = ({ open, handleClose }) => {
       keepMounted
       sx={{ p: 4 }}
     >
-      <DialogTitle>Create New Group</DialogTitle>
+      <DialogTitle>Change your email</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
-          <CreateGroupForm handleClose={handleClose} />
+          <ChangeEmailForm handleClose={handleClose} />
         </Stack>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default CreateGroup;
+export default ChangeEmail;

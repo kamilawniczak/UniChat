@@ -2,9 +2,10 @@ import { Link, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import React from "react";
 import { CaretLeft } from "@phosphor-icons/react";
-import ResetPasswordForm from "../../sections/auth/resetPasswordForm";
+
 import { useSelector } from "react-redux";
 import { getIsLoadingAuth } from "../../redux/slices/auth";
+import ResetPasswordForm from "../../components/auth/ResetPasswordForm";
 
 const ResetPassword = () => {
   const isLoading = useSelector(getIsLoadingAuth());

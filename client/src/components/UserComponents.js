@@ -11,7 +11,9 @@ import {
 } from "@mui/material";
 import React from "react";
 import { socket } from "../socket";
-import { Chat } from "@phosphor-icons/react";
+import { Chat, Trash } from "@phosphor-icons/react";
+import { useDispatch } from "react-redux";
+import { OpenSnackBar } from "../redux/slices/app";
 
 const user_id = window.localStorage.getItem("user_id");
 
@@ -52,7 +54,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 
 const UserElement = ({ img, firstName, lastName, online, _id }) => {
   const theme = useTheme();
-
+  const dispatch = useDispatch();
   const name = `${firstName} ${lastName}`;
 
   return (
@@ -90,9 +92,13 @@ const UserElement = ({ img, firstName, lastName, online, _id }) => {
         <Stack direction={"row"} spacing={2} alignItems={"center"}>
           <Button
             onClick={() => {
-              socket.emit("friend_request", { to: _id, from: user_id }, () => {
-                alert("request sent");
-              });
+              socket.emit(
+                "friend_request",
+                { to: _id, from: user_id },
+                ({ severity, message }) => {
+                  dispatch(OpenSnackBar({ severity, message }));
+                }
+              );
             }}
           >
             Send Request
@@ -104,6 +110,7 @@ const UserElement = ({ img, firstName, lastName, online, _id }) => {
 };
 
 const FriendElement = ({ img, firstName, lastName, online, _id }) => {
+  const dispatch = useDispatch();
   const theme = useTheme();
 
   const name = `${firstName} ${lastName}`;
@@ -140,13 +147,26 @@ const FriendElement = ({ img, firstName, lastName, online, _id }) => {
             <Typography variant="subtitle2">{name}</Typography>
           </Stack>
         </Stack>
-        <Stack direction={"row"} spacing={2} alignItems={"center"}>
+        <Stack direction={"row"} spacing={1} alignItems={"center"}>
           <IconButton
             onClick={() => {
               socket.emit("start_conversation", { to: _id, from: user_id });
             }}
           >
             <Chat />
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              socket.emit(
+                "removeFriend",
+                { to: _id, from: user_id },
+                ({ severity, message }) => {
+                  dispatch(OpenSnackBar({ severity, message }));
+                }
+              );
+            }}
+          >
+            <Trash color="#f63737" />
           </IconButton>
         </Stack>
       </Stack>
@@ -163,6 +183,7 @@ const FriendRequestElement = ({
   id,
 }) => {
   const theme = useTheme();
+  const dispatch = useDispatch();
 
   const name = `${firstName} ${lastName}`;
 
@@ -201,7 +222,13 @@ const FriendRequestElement = ({
         <Stack direction={"row"} spacing={2} alignItems={"center"}>
           <Button
             onClick={() => {
-              socket.emit("accept_request", { request_id: id });
+              socket.emit(
+                "accept_request",
+                { request_id: id },
+                ({ severity, message }) => {
+                  dispatch(OpenSnackBar({ severity, message }));
+                }
+              );
             }}
           >
             Accept Request

@@ -17,13 +17,19 @@ import { useSelector } from "react-redux";
 import { getUserInfo } from "../../redux/slices/auth";
 import MsgReaction from "./MsgReaction";
 import EmojiPickerModal from "./EmojiPickerModal";
-import { ReplyDocMsg, ReplyImgMsg, ReplyTextMsg } from "./ReplyMsgTypes";
+import {
+  ReplyDocMsg,
+  ReplyFile,
+  ReplyImgMsg,
+  ReplyTextMsg,
+} from "./ReplyMsgTypes";
 import {
   getFileNameFromUrl,
   handleDownload,
   handleMsgReaction,
   splitMessage,
 } from "../../utils/formatMsg";
+import { isImage } from "../../utils/checkFile";
 
 const replayMsg = (
   type,
@@ -42,7 +48,14 @@ const replayMsg = (
       );
     case "img":
       return (
-        <ReplyImgMsg
+        // <ReplyImgMsg
+        //   created_at={created_at}
+        //   file={replyFile}
+        //   from={replyFrom}
+        //   text={replyText}
+        //   type={replyType}
+        // />
+        <ReplyFile
           created_at={created_at}
           file={replyFile}
           from={replyFrom}
@@ -52,26 +65,173 @@ const replayMsg = (
       );
     case "doc":
       return (
-        <ReplyDocMsg
+        <ReplyFile
           created_at={created_at}
           file={replyFile}
           from={replyFrom}
           text={replyText}
           type={replyType}
         />
+        // <ReplyDocMsg
+        //   created_at={created_at}
+        //   file={replyFile}
+        //   from={replyFrom}
+        //   text={replyText}
+        //   type={replyType}
+        // />
       );
     default:
       return null;
   }
 };
 
-export const MediaMsg = ({
+export const TextMsg = ({
   data,
   menu,
   members = [],
   room_id,
   conversationType,
   showAvatar,
+}) => {
+  const [openModal, setOpenModal] = useState(false);
+  const theme = useTheme();
+  const { avatar } = useSelector(getUserInfo());
+  const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
+  const {
+    created_at,
+    file: replyFile,
+    from: replyFrom,
+    text: replyText,
+    type: replyType,
+  } = data.replyData || {};
+
+  const member = members.find((mem) => mem.id === data.from);
+  const otherAvatar = member?.avatar;
+
+  const handleOpenPicker = () => {
+    setOpenModal(true);
+  };
+
+  const handleClosePicker = () => {
+    setOpenModal(false);
+  };
+
+  return (
+    <Stack
+      direction="row"
+      justifyContent={data.incoming ? "start" : "end"}
+      width={"100%"}
+    >
+      {data.incoming && showAvatar && (
+        <Stack alignItems="center" justifyContent="top" mr={1}>
+          <Avatar
+            alt="Avatar"
+            src={otherAvatar}
+            sx={{ width: 32, height: 32, marginLeft: 1 }}
+          />
+        </Stack>
+      )}
+      <Stack>
+        <Stack
+          alignItems={data.incoming ? "flex-start" : "flex-end"}
+          sx={{ position: "relative" }}
+          direction={"column"}
+          width={"100%"}
+        >
+          {data.replyData &&
+            replayMsg(data.replyData.type, {
+              created_at,
+              replyFile,
+              replyText,
+              replyFrom,
+              replyType,
+            })}
+          <Box
+            p={1.5}
+            sx={{
+              width: "100%",
+              backgroundColor: data.incoming
+                ? theme.palette.background.default
+                : theme.palette.primary.main,
+              borderRadius: 1.5,
+              border:
+                !showAvatar &&
+                data.incoming &&
+                "1px solid " + theme.palette.grey[600],
+            }}
+          >
+            <Typography
+              variant="body2"
+              color={data.incoming ? theme.palette.text : "#fff"}
+              width={"100%"}
+              sx={{ overflowWrap: "anywhere" }}
+            >
+              {link ? (
+                <>
+                  {textBeforeLink}{" "}
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: data.incoming ? theme.palette.text : "#fff",
+                    }}
+                  >
+                    {link}
+                  </a>{" "}
+                  {textAfterLink}
+                </>
+              ) : (
+                data.message
+              )}
+            </Typography>
+          </Box>
+        </Stack>
+        <MsgReaction reactions={data.reaction} />
+      </Stack>
+
+      <EmojiPickerModal
+        open={openModal}
+        onClose={handleClosePicker}
+        onEmojiSelect={(emoji) => {
+          handleMsgReaction({
+            emoji: emoji.native,
+            id: data.id,
+            room_id,
+            chatType: conversationType,
+          });
+          handleClosePicker();
+        }}
+      />
+
+      {menu && (
+        <Stack>
+          <MessageOptions
+            msgId={data.id}
+            incoming={data.incoming}
+            openPicker={handleOpenPicker}
+            data={data}
+          />
+        </Stack>
+      )}
+
+      {!data.incoming && showAvatar && (
+        <Stack alignItems="center" justifyContent="top">
+          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+        </Stack>
+      )}
+    </Stack>
+  );
+};
+
+export const FileMsg = ({
+  data,
+  menu,
+  members = [],
+  room_id,
+  conversationType,
+  showAvatar,
+  small,
 }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -148,48 +308,96 @@ export const MediaMsg = ({
                   "1px solid " + theme.palette.grey[600],
               }}
             >
-              <Stack spacing={2}>
+              <Stack spacing={2} alignItems="end">
                 {isLoading ? (
                   <CircularProgress size={104} color="inherit" />
                 ) : (
                   <>
-                    {data.file.map((element, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          position: "relative",
-                          display: "inline-block",
-                        }}
-                        onMouseEnter={() => handleMouseEnter(index)}
-                        onMouseLeave={handleMouseLeave}
-                      >
-                        <img
-                          src={element}
-                          alt={getFileNameFromUrl(element) || element}
+                    {data.file.map((element, index) =>
+                      isImage(element) ? (
+                        <div
+                          key={index}
                           style={{
-                            maxHeight: "210px",
-                            borderRadius: "10px",
+                            position: "relative",
+                            display: "flex",
+                            justifyContent: "center",
                           }}
-                          onClick={() => handleImageClick(element)}
-                        />
-                        {hoveredIndex === index && (
-                          <IconButton
+                          onMouseEnter={() => handleMouseEnter(index)}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <img
+                            src={element}
+                            alt={getFileNameFromUrl(element) || element}
                             style={{
-                              position: "absolute",
-                              top: "50%",
-                              left: "50%",
-                              transform: "translate(-50%, -50%)",
-                              backgroundColor: "rgba(255, 255, 255, 0.7)",
+                              maxHeight: "210px",
+                              borderRadius: "10px",
                             }}
-                            onClick={(event) =>
-                              handleDownloadClick(event, element)
-                            }
+                            onClick={() => handleImageClick(element)}
+                          />
+                          {hoveredIndex === index && (
+                            <IconButton
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                              }}
+                              onClick={(event) =>
+                                handleDownloadClick(event, element)
+                              }
+                            >
+                              <Download />
+                            </IconButton>
+                          )}
+                        </div>
+                      ) : (
+                        <Stack
+                          p={2}
+                          direction="row"
+                          spacing={3}
+                          alignItems="center"
+                          justifyContent={"end"}
+                          sx={{
+                            width: "min-content",
+                            backgroundColor: theme.palette.background.paper,
+                            borderRadius: 1,
+                          }}
+                          key={index}
+                        >
+                          {small || (
+                            <Avatar
+                              src={`https://pro.alchemdigital.com/api/extension-image/${element
+                                .split(".")
+                                .pop()
+                                .toLowerCase()}`}
+                              alt={element}
+                              variant="square"
+                            />
+                          )}
+
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: theme.palette.text,
+                              ...(small
+                                ? {
+                                    maxWidth: "150px",
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                    textOverflow: "ellipsis",
+                                  }
+                                : {}),
+                            }}
                           >
-                            <Download />
+                            {getFileNameFromUrl(element)}
+                          </Typography>
+                          <IconButton onClick={() => handleDownload(element)}>
+                            <DownloadSimple />
                           </IconButton>
-                        )}
-                      </div>
-                    ))}
+                        </Stack>
+                      )
+                    )}
                   </>
                 )}
                 {data.message && (
@@ -255,304 +463,6 @@ export const MediaMsg = ({
 
       <ImgModal img={selectedImage} onClose={() => setSelectedImage(null)} />
     </>
-  );
-};
-export const DocMsg = ({
-  data,
-  menu,
-  showAvatar,
-  small,
-  members = [],
-  room_id,
-  conversationType,
-}) => {
-  const [openModal, setOpenModal] = useState(false);
-  const theme = useTheme();
-  const { avatar } = useSelector(getUserInfo());
-
-  const {
-    created_at,
-    file: replyFile,
-    from: replyFrom,
-    text: replyText,
-    type: replyType,
-  } = data.replyData || {};
-  const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
-  const isLoading = data.file?.length > 0 && data.file[0] === "true";
-
-  const member = members.find((mem) => mem.id === data.from);
-  const otherAvatar = member?.avatar;
-
-  const handleOpenPicker = () => {
-    setOpenModal(true);
-  };
-
-  const handleClosePicker = () => {
-    setOpenModal(false);
-  };
-
-  return (
-    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      {data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top" mr={1}>
-          <Avatar
-            alt="Avatar"
-            src={otherAvatar}
-            sx={{ width: 32, height: 32, marginLeft: 1 }}
-          />
-        </Stack>
-      )}
-      <Stack>
-        <Stack alignItems={data.incoming ? "start" : "end"}>
-          {data.replyData &&
-            replayMsg(data.replyData.type, {
-              created_at,
-              replyFile,
-              replyText,
-              replyFrom,
-              replyType,
-            })}
-          <Box
-            p={1.5}
-            sx={{
-              backgroundColor: data.incoming
-                ? theme.palette.background.default
-                : theme.palette.primary.main,
-              borderRadius: 1.5,
-              border:
-                !showAvatar &&
-                data.incoming &&
-                "1px solid " + theme.palette.grey[600],
-            }}
-          >
-            <Stack spacing={2}>
-              {isLoading ? (
-                <CircularProgress size={104} color="inherit" />
-              ) : (
-                <>
-                  {data.file.map((element, index) => (
-                    <Stack
-                      p={2}
-                      direction="row"
-                      spacing={3}
-                      alignItems="center"
-                      sx={{
-                        backgroundColor: theme.palette.background.paper,
-                        borderRadius: 1,
-                      }}
-                      key={index}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: theme.palette.text,
-                          ...(small
-                            ? {
-                                maxWidth: "150px",
-                                overflow: "hidden",
-                                whiteSpace: "nowrap",
-                                textOverflow: "ellipsis",
-                              }
-                            : {}),
-                        }}
-                      >
-                        {getFileNameFromUrl(element)}
-                      </Typography>
-                      <IconButton onClick={() => handleDownload(element)}>
-                        <DownloadSimple />
-                      </IconButton>
-                    </Stack>
-                  ))}
-                </>
-              )}
-
-              {data.message && (
-                <Typography
-                  variant="body2"
-                  sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
-                >
-                  {link ? (
-                    <>
-                      {textBeforeLink}{" "}
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          color: "#fff",
-                        }}
-                      >
-                        {link}
-                      </a>{" "}
-                      {textAfterLink}
-                    </>
-                  ) : (
-                    data.message
-                  )}
-                </Typography>
-              )}
-            </Stack>
-          </Box>
-        </Stack>
-        <MsgReaction reactions={data.reaction} />
-      </Stack>
-      <EmojiPickerModal
-        open={openModal}
-        onClose={handleClosePicker}
-        onEmojiSelect={(emoji) => {
-          handleMsgReaction({
-            emoji: emoji.native,
-            id: data.id,
-            room_id,
-            chatType: conversationType,
-          });
-          handleClosePicker();
-        }}
-      />
-      {menu && (
-        <MessageOptions
-          msgId={data.id}
-          incoming={data.incoming}
-          openPicker={handleOpenPicker}
-          type={"doc"}
-          data={data}
-        />
-      )}
-      {!data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top">
-          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
-        </Stack>
-      )}
-    </Stack>
-  );
-};
-
-export const TextMsg = ({
-  data,
-  menu,
-  members = [],
-  room_id,
-  conversationType,
-  showAvatar,
-}) => {
-  const [openModal, setOpenModal] = useState(false);
-  const theme = useTheme();
-  const { avatar } = useSelector(getUserInfo());
-  const { textBeforeLink, textAfterLink, link } = splitMessage(data.message);
-  const {
-    created_at,
-    file: replyFile,
-    from: replyFrom,
-    text: replyText,
-    type: replyType,
-  } = data.replyData || {};
-
-  const member = members.find((mem) => mem.id === data.from);
-  const otherAvatar = member?.avatar;
-
-  const handleOpenPicker = () => {
-    setOpenModal(true);
-  };
-
-  const handleClosePicker = () => {
-    setOpenModal(false);
-  };
-
-  return (
-    <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-      {data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top" mr={1}>
-          <Avatar
-            alt="Avatar"
-            src={otherAvatar}
-            sx={{ width: 32, height: 32, marginLeft: 1 }}
-          />
-        </Stack>
-      )}
-      <Stack>
-        <Stack
-          alignItems={data.incoming ? "flex-start" : "flex-end"}
-          sx={{ position: "relative" }}
-          direction={"column"}
-        >
-          {data.replyData &&
-            replayMsg(data.replyData.type, {
-              created_at,
-              replyFile,
-              replyText,
-              replyFrom,
-              replyType,
-            })}
-          <Box
-            p={1.5}
-            sx={{
-              backgroundColor: data.incoming
-                ? theme.palette.background.default
-                : theme.palette.primary.main,
-              borderRadius: 1.5,
-              border:
-                !showAvatar &&
-                data.incoming &&
-                "1px solid " + theme.palette.grey[600],
-            }}
-          >
-            <Typography
-              variant="body2"
-              color={data.incoming ? theme.palette.text : "#fff"}
-            >
-              {link ? (
-                <>
-                  {textBeforeLink}{" "}
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: data.incoming ? theme.palette.text : "#fff",
-                    }}
-                  >
-                    {link}
-                  </a>{" "}
-                  {textAfterLink}
-                </>
-              ) : (
-                data.message
-              )}
-            </Typography>
-          </Box>
-        </Stack>
-        <MsgReaction reactions={data.reaction} />
-      </Stack>
-
-      <EmojiPickerModal
-        open={openModal}
-        onClose={handleClosePicker}
-        onEmojiSelect={(emoji) => {
-          handleMsgReaction({
-            emoji: emoji.native,
-            id: data.id,
-            room_id,
-            chatType: conversationType,
-          });
-          handleClosePicker();
-        }}
-      />
-
-      {menu && (
-        <MessageOptions
-          msgId={data.id}
-          incoming={data.incoming}
-          openPicker={handleOpenPicker}
-          data={data}
-        />
-      )}
-
-      {!data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top">
-          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
-        </Stack>
-      )}
-    </Stack>
   );
 };
 

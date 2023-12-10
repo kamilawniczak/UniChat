@@ -7,6 +7,7 @@ const groupMessageSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+
   messages: [
     {
       to: [
@@ -63,6 +64,10 @@ const groupMessageSchema = new mongoose.Schema({
   },
   mutedBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   title: {
+    type: String,
+  },
+  about: { type: String },
+  image: {
     type: String,
   },
   created_at: {

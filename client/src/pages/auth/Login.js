@@ -1,7 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import React from "react";
-
-import LoginForm from "../../sections/auth/LoginForm";
+import LoginForm from "../../components/auth/LoginForm";
 
 const Login = () => {
   return (

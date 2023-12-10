@@ -13,7 +13,7 @@ const customStorage = {
 
 const rootPersistConfig = {
   key: "root",
-  storage: storage,
+  storage: customStorage,
   keyPrefix: "redux-",
 };
 

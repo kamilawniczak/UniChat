@@ -1,8 +1,7 @@
 import { Link, Stack, Typography } from "@mui/material";
 
 import React from "react";
-
-import RegisterForm from "../../sections/auth/RegisterForm";
+import RegisterForm from "../../components/auth/RegisterForm";
 
 const Register = () => {
   return (

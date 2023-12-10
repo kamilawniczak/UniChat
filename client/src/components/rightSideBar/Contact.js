@@ -40,6 +40,8 @@ import UserCard from "./UserCard";
 import UserList from "./UserList";
 import { socket } from "../../socket";
 
+import { isImage } from "../../utils/checkFile";
+
 const Contact = () => {
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
 
@@ -79,7 +81,10 @@ const Contact = () => {
     (user) => user.id !== user_id
   );
 
-  const about = chat_type === "OneToOne" ? selectedUser[0].about : "TODO";
+  const about =
+    chat_type === "OneToOne"
+      ? selectedUser[0].about
+      : selectedConversation.about;
 
   const imagesAndDocs = current_meessages
     ?.filter((msg) => msg.subtype === "img" || msg.subtype === "doc")
@@ -98,7 +103,7 @@ const Contact = () => {
 
   return (
     <Box sx={{ width: 320, height: "100vh" }}>
-      <Stack sx={{ height: "100%" }}>
+      <Stack sx={{ height: "100%", position: "relative" }}>
         {/* Header */}
         <Box
           sx={{
@@ -123,6 +128,7 @@ const Contact = () => {
             </IconButton>
           </Stack>
         </Box>
+
         {/* BODy */}
         <Stack
           sx={{
@@ -145,13 +151,29 @@ const Contact = () => {
           )}
 
           <Divider />
-          <Stack spacing={0.5}>
-            <Typography variant="article">
-              {chat_type === "OneToOne" ? "About:" : "Group about:"}
-            </Typography>
-            {about && <Typography variant="body2">{about}</Typography>}
-          </Stack>
-          <Divider />
+          {about && (
+            <>
+              <Stack spacing={0.5}>
+                <Typography variant="article">
+                  {chat_type === "OneToOne" ? "About:" : "Group about:"}
+                </Typography>
+                <Typography variant="body2">{about}</Typography>
+              </Stack>
+              <Divider />
+            </>
+          )}
+
+          {chat_type === "OneToMany" && (
+            <>
+              <Stack spacing={0.5}>
+                <Typography variant="article">
+                  Members: {selectedUser.length + 1}
+                </Typography>
+              </Stack>
+              <Divider />
+            </>
+          )}
+
           <Stack
             direction="row"
             alignItems="center"
@@ -165,13 +187,37 @@ const Contact = () => {
               {imagesAndDocs.length}
             </Button>
           </Stack>
-          <Stack direction="row" spacing={2} alignItems="center">
-            {imagesAndDocs?.slice(0, 3)?.map((e) => (
-              <Box key={e}>
-                <img src={e} alt={e} />
-              </Box>
-            ))}
-          </Stack>
+          {imagesAndDocs.length > 0 && (
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              justifyContent={"center"}
+            >
+              {imagesAndDocs?.slice(0, 3)?.map((e) => (
+                <Box
+                  key={e}
+                  height={"100%"}
+                  width={"100%"}
+                  alignItems="center"
+                  justifyContent={"center"}
+                  display="flex"
+                >
+                  {isImage(e) ? (
+                    <img src={e} alt={e} />
+                  ) : (
+                    <img
+                      src={`https://pro.alchemdigital.com/api/extension-image/${e
+                        .split(".")
+                        .pop()
+                        .toLowerCase()}`}
+                      alt={e}
+                    />
+                  )}
+                </Box>
+              ))}
+            </Stack>
+          )}
           <Divider />
           <Stack
             direction="row"

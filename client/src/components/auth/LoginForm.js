@@ -17,7 +17,7 @@ import { LoginUser, getIsLoadingAuth } from "../../redux/slices/auth";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { register, formState, handleSubmit, reset } = useForm();
+  const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
   const dispatch = useDispatch();
 

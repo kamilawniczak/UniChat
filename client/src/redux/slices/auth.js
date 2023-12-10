@@ -33,26 +33,53 @@ const slice = createSlice({
     },
     logOut(state, action) {
       const friends = action.payload.friends;
-      const fullLogout = action.payload.fullLogout;
 
-      socket.emit("logout", { user_id: state.user_id });
-      socket.emit("setStatus", {
-        user_id: state.user_id,
-        friends,
-        online: false,
-      });
+      if (state.user_id) {
+        socket.emit("logout", { user_id: state.user_id });
+        socket.emit("setStatus", {
+          user_id: state.user_id,
+          friends,
+          online: false,
+        });
+      }
 
-      if (!fullLogout) return;
+      window.localStorage.removeItem("user_id");
 
       state.isLoggedIn = false;
       state.token = "";
+      state.isLoading = false;
       state.user_id = null;
+      state.email = "";
+      state.error = false;
+      state.userInfo = {
+        firstName: "",
+        lastName: "",
+        avatar: "",
+      };
     },
     updateRegisterEmail(state, action) {
       state.email = action.payload.email;
     },
     userInfo(state, action) {
       state.userInfo = action.payload;
+    },
+    updateUserInfo(state, action) {
+      const { firstName, lastName, phone, about, avatar, email } =
+        action.payload;
+
+      state.userInfo = {
+        firstName: avatar ? state.userInfo.firstName : firstName,
+        lastName: avatar ? state.userInfo.lastName : lastName,
+        phone: avatar ? state.userInfo.phone : phone,
+        about: avatar ? state.userInfo.about : about,
+        avatar: avatar || state.userInfo.avatar,
+        email: email || state.userInfo.email,
+      };
+    },
+    updateEmail(state, action) {
+      const { email } = action.payload;
+
+      state.userInfo.email = email;
     },
   },
 });
@@ -66,7 +93,8 @@ export function LoginUser(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
-      const response = await axios.post(
+
+      const loginPromise = axios.post(
         "/auth/login",
         { ...formValues },
         {
@@ -75,7 +103,17 @@ export function LoginUser(formValues) {
           },
         }
       );
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Login request timed out"));
+        }, 15000);
+      });
+
+      const response = await Promise.race([loginPromise, timeoutPromise]);
+
       window.localStorage.setItem("user_id", response.data.user_id);
+
       dispatch(
         slice.actions.logIn({
           isLoggedIn: true,
@@ -102,7 +140,7 @@ export function LoginUser(formValues) {
   };
 }
 
-export function LogoutUser({ fullLogout }) {
+export function LogoutUser() {
   return async (dispatch, getValues) => {
     const conversations =
       getValues()?.coversations?.direct_chat?.conversations.map(
@@ -112,8 +150,7 @@ export function LogoutUser({ fullLogout }) {
       );
     const friends = conversations.flat();
 
-    // window.localStorage.removeItem("user_id");
-    await dispatch(slice.actions.logOut({ friends, fullLogout }));
+    await dispatch(slice.actions.logOut({ friends }));
 
     await dispatch(
       OpenSnackBar({
@@ -157,7 +194,7 @@ export function NewPassword(formValues) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: true, error: false })
       );
-      const response = await axios.post(
+      await axios.post(
         "/auth/new-password",
         { ...formValues },
         {
@@ -166,11 +203,11 @@ export function NewPassword(formValues) {
           },
         }
       );
+
+      window.location.href = "/auth/login";
+
       dispatch(
-        slice.actions.logIn({ isLoggedIn: true, token: response.data.token })
-      );
-      dispatch(
-        slice.actions.updateIsLoading({ isLoading: true, error: false })
+        slice.actions.updateIsLoading({ isLoading: false, error: false })
       );
     } catch (error) {
       dispatch(
@@ -239,20 +276,52 @@ export function VerifyEmail(formValues) {
       );
       window.localStorage.setItem("user_id", response.data.user_id);
       dispatch(
-        slice.actions.logIn({
-          isLoggedIn: true,
-          token: response.data.token,
-        })
+        slice.actions.updateIsLoading({ isLoading: false, error: false })
       );
-      dispatch(
-        slice.actions.updateIsLoading({ isLoading: true, error: false })
-      );
+
+      window.location.href = "/auth/login";
+
       window.localStorage.setItem("user_id", response.data.user_id);
     } catch (error) {
       dispatch(
         slice.actions.updateIsLoading({ isLoading: false, error: true })
       );
     }
+  };
+}
+export function UpdateUserInfo({
+  firstName,
+  lastName,
+  phone,
+  about,
+  avatar,
+  email,
+}) {
+  return (dispatch, getState) => {
+    dispatch(
+      slice.actions.updateUserInfo({
+        firstName,
+        lastName,
+        phone,
+        about,
+        avatar,
+        email,
+      })
+    );
+  };
+}
+export function UpdateEmail({ email }) {
+  return (dispatch, getState) => {
+    dispatch(
+      slice.actions.updateEmail({
+        email,
+      })
+    );
+  };
+}
+export function UpdateIsLoading({ isLoading }) {
+  return (dispatch, getState) => {
+    dispatch(slice.actions.updateIsLoading({ isLoading }));
   };
 }
 

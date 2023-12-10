@@ -1,21 +1,13 @@
-import {
-  Autocomplete,
-  Avatar,
-  Button,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, Button, Stack, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import { GetFriends, OpenSnackBar, getFriends } from "../../redux/slices/app";
+import { GetFriends, getFriends } from "../redux/slices/app";
 import { useEffect } from "react";
-import { socket } from "../../socket";
-import { getUserId, getUserInfo } from "../../redux/slices/auth";
+import { socket } from "../socket";
+import { getUserId, getUserInfo } from "../redux/slices/auth";
 
-const CreateGroupForm = ({ handleClose }) => {
-  const { register, formState, handleSubmit, reset, getValues, control } =
-    useForm();
+const CreateGroupForm = ({ handleClose, handleImageUpload, isLoading }) => {
+  const { register, formState, handleSubmit, reset, control } = useForm();
   const { errors } = formState;
   const dispatch = useDispatch();
   const friends = useSelector(getFriends());
@@ -28,14 +20,22 @@ const CreateGroupForm = ({ handleClose }) => {
 
   const onSubmit = async (data) => {
     try {
-      const { title } = data;
+      const { title, about } = data;
       const chosenFriends = data.members.map((fri) => fri._id);
+
+      const image = await handleImageUpload();
+
       reset();
+
       socket.emit("start_group_conversation", {
         title,
+        about,
         members: chosenFriends,
         user_id: userId,
+        image,
       });
+
+      handleClose();
     } catch (error) {
       console.log("errro", error);
     }
@@ -55,6 +55,7 @@ const CreateGroupForm = ({ handleClose }) => {
         <Stack spacing={3} mt={3}>
           <TextField
             id="title"
+            disabled={isLoading}
             fullWidth
             helperText={errors?.title?.message && errors?.title?.message}
             label="Title"
@@ -63,10 +64,25 @@ const CreateGroupForm = ({ handleClose }) => {
               required: "This field is required",
             })}
           />
+          <TextField
+            id="about"
+            fullWidth
+            disabled={isLoading}
+            helperText={errors?.about?.message && errors?.about?.message}
+            label="About"
+            error={!!errors?.about?.message}
+            inputProps={{ maxLength: 101 }}
+            {...register("about", {
+              validate: (value) =>
+                value.length <= 100 ||
+                "About must be less than or equal to 100 characters",
+            })}
+          />
 
           <Controller
             name="members"
             control={control}
+            disabled={isLoading}
             defaultValue={[options.at(0)]}
             render={({ field: { onChange, value } }) => (
               <Autocomplete
@@ -109,7 +125,7 @@ const CreateGroupForm = ({ handleClose }) => {
             justifyContent="end"
           >
             <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" disabled={isLoading}>
               Create
             </Button>
           </Stack>

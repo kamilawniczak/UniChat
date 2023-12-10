@@ -3,8 +3,8 @@ const crypto = require("crypto");
 const mailService = require("../services/mailer");
 const User = require("../models/user");
 const otpGenerator = require("otp-generator");
-const otp = require("../Templates/Mail/otp");
-const resetPassword = require("../Templates/Mail/ResetPassword");
+const otp = require("../Templates/Mail/otp.js");
+const resetPassword = require("../Templates/Mail/resetPassword.js");
 const filterObject = require("../utils/filterObject");
 const { promisify } = require("util");
 
@@ -29,10 +29,14 @@ exports.register = async (req, res, next) => {
       message: "Email already in use, Please login.",
     });
   } else if (existing_user) {
-    await User.findOneAndUpdate({ email }, filteredBody, {
-      new: true,
-      validateModifiedOnly: true,
-    });
+    await User.findOneAndUpdate(
+      { email },
+      { ...filteredBody, mode: "light" },
+      {
+        new: true,
+        validateModifiedOnly: true,
+      }
+    );
 
     req.userId = existing_user._id;
     next();
@@ -141,11 +145,15 @@ exports.login = async (req, res, next) => {
   user.save();
 
   const token = signToken(user._id);
+
   const userInfo = {
     firstName: user.firstName,
     lastName: user.lastName,
-    avatar: user.avatar,
+    avatar: user.avatar || null,
     email: user.email,
+    about: user.about || null,
+    phone: user.phone || null,
+    mode: user.mode || null,
   };
 
   return res.status(200).json({

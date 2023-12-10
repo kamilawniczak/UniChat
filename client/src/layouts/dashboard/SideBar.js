@@ -15,7 +15,6 @@ import {
 import logo from "../../assets/Images/logo_UniChat.png";
 import { Nav_Buttons, Profile_Menu } from "../../data";
 import { Gear } from "@phosphor-icons/react";
-import { faker } from "@faker-js/faker";
 import { useDispatch, useSelector } from "react-redux";
 
 import useSettings from "../../hooks/useSettings";
@@ -23,6 +22,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCallback } from "react";
 import { LogoutUser, getUserInfo } from "../../redux/slices/auth";
+import { socket } from "../../socket";
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
   width: 61,
@@ -127,7 +127,7 @@ const SideBar = () => {
       sx={{
         backgroundColor: theme.palette.background.paper,
         boxShadow: "0px 0px 2px  rgba(0,0,0,0.25)",
-        height: "100vh",
+        height: "minmax(100vh , 100%)",
         width: 100,
         padding: 2,
       }}
@@ -225,7 +225,18 @@ const SideBar = () => {
           </Stack>
         </Stack>
         <Stack alignItems="center" spacing={2}>
-          <MaterialUISwitch defaultChecked onChange={onToggleMode} />
+          <MaterialUISwitch
+            defaultChecked
+            onChange={() => {
+              onToggleMode();
+              const user_id = window.localStorage.getItem("user_id");
+
+              socket.emit("changeMode", {
+                user_id,
+                mode: theme.palette.mode === "light" ? "dark" : "light",
+              });
+            }}
+          />
           <Avatar
             src={userInfo.avatar}
             id="account-menu"
@@ -276,7 +287,7 @@ const SideBar = () => {
                   onClick={() => {
                     handleClose(e.title);
 
-                    i === 2 && dispatch(LogoutUser());
+                    i === 2 && dispatch(LogoutUser({ fullLogout: true }));
                   }}
                   key={i}
                 >

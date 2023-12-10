@@ -8,12 +8,12 @@ import {
   getFriendRequests,
   getFriends,
   getUsers,
-} from "../../redux/slices/app";
+} from "../redux/slices/app";
 import {
   FriendElement,
   FriendRequestElement,
   UserElement,
-} from "../../components/UserComponents";
+} from "./UserComponents";
 
 const UserList = () => {
   const dispatch = useDispatch();

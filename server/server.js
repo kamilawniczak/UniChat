@@ -67,60 +67,113 @@ io.on("connection", async (socket) => {
   }
   socket.on("logout", async ({ user_id }) => {
     await User.findByIdAndUpdate(user_id, {
+      lastOnline: Date.now(),
       status: "Offline",
     });
   });
 
-  // We can write our socket event listeners in here...
-  socket.on("friend_request", async (data) => {
+  socket.on("friend_request", async (data, callback) => {
     const to = await User.findById(data.to).select("socket_id");
     const from = await User.findById(data.from).select("socket_id");
 
-    if (to === from) return;
+    if (!to || !from || to.socket_id === from.socket_id) {
+      return;
+    }
 
-    // create a friend request
-    await FriendRequest.create({
-      sender: data.from,
-      reciever: data.to,
+    const existingRequest = await FriendRequest.findOne({
+      $or: [
+        { sender: data.from, reciever: data.to },
+        { sender: data.to, reciever: data.from },
+      ],
     });
-    // emit event request received to recipient
 
-    io.to(to?.socket_id).emit("new_friend_request", {
-      message: "New friend request received",
-    });
-    io.to(from?.socket_id).emit("request_sent", {
-      message: "Request Sent successfully!",
-    });
+    if (existingRequest) {
+      callback({ severity: "info", message: "Friend request already sent" });
+    } else {
+      await FriendRequest.create({
+        sender: data.from,
+        reciever: data.to,
+      });
+
+      // Emit events
+      io.to(to.socket_id).emit("new_friend_request", {
+        message: "New friend request received",
+      });
+      callback({
+        severity: "success",
+        message: "Friend request sent successfully!",
+      });
+    }
   });
 
-  socket.on("accept_request", async (data) => {
-    // accept friend request => add ref of each other in friends array
-    const request_doc = await FriendRequest.findById(data.request_id);
+  socket.on("accept_request", async (data, callback) => {
+    try {
+      // Accept friend request: add references of each other in friends array
+      const requestDoc = await FriendRequest.findById(data.request_id);
 
-    const sender = await User.findById(request_doc.sender.valueOf());
-    const reciever = await User.findById(request_doc.reciever.valueOf());
+      if (!requestDoc) {
+        return callback({
+          severity: "error",
+          message: "Friend request not found or already accepted.",
+        });
+      }
 
-    sender.friends.push(request_doc.reciever.valueOf());
-    reciever.friends.push(request_doc.sender.valueOf());
+      const sender = await User.findById(requestDoc.sender);
+      const receiver = await User.findById(requestDoc.reciever);
 
-    await reciever.save({ new: true, validateModifiedOnly: true });
-    await sender.save({ new: true, validateModifiedOnly: true });
+      if (!sender || !receiver) {
+        return callback({
+          severity: "error",
+          message: "Sender or receiver not found.",
+        });
+      }
 
-    await FriendRequest.findByIdAndDelete(data.request_id);
+      // Check if users are already friends
+      if (
+        sender.friends.includes(requestDoc.reciever) ||
+        receiver.friends.includes(requestDoc.sender)
+      ) {
+        return callback({
+          severity: "info",
+          message: "Users are already friends.",
+        });
+      }
 
-    io.to(sender?.socket_id).emit("request_accepted", {
-      message: "Friend Request Accepted",
-    });
-    io.to(reciever?.socket_id).emit("request_accepted", {
-      message: "Friend Request Accepted",
-    });
-    return;
+      // Add references in friends array
+      sender.friends.push(requestDoc.reciever);
+      receiver.friends.push(requestDoc.sender);
+
+      // Save changes
+      await receiver.save({ new: true, validateModifiedOnly: true });
+      await sender.save({ new: true, validateModifiedOnly: true });
+
+      // Delete friend request
+      await FriendRequest.findByIdAndDelete(data.request_id);
+
+      // Emit events
+      callback({
+        severity: "success",
+        message: "Friend request accepted successfully.",
+      });
+      io.to(receiver.socket_id).emit("request_accepted", {
+        message: "Friend request accepted",
+      });
+    } catch (error) {
+      console.error(error);
+      callback({
+        severity: "error",
+        message: "Error accepting friend request.",
+      });
+    }
   });
 
   socket.on("get_direct_conversations", async ({ user_id }, callback) => {
     const existing_conversations = await Message.find({
       members: { $all: [user_id] },
-    }).populate("members", "firstName lastName avatar about _id email status");
+    }).populate(
+      "members",
+      "firstName lastName avatar about phone _id email status lastOnline"
+    );
 
     await callback(existing_conversations);
   });
@@ -140,7 +193,7 @@ io.on("connection", async (socket) => {
 
         const chat = await Message.findById(new_chat._id.toString()).populate(
           "members",
-          "firstName lastName _id email status socket_id"
+          "firstName lastName _id email status avatar about phone socket_id"
         );
 
         chat.members.forEach((mem) => {
@@ -268,15 +321,22 @@ io.on("connection", async (socket) => {
 
     callback(lastMessage._id);
 
-    io.to(to_user?.socket_id).emit("new_message", {
-      user_info: {
-        id: from_user._id,
-        firstName: from_user.firstName,
-        lastName: from_user.lastName,
-      },
-      conversation_id,
-      message: lastMessage,
-    });
+    if (chat.mutedBy.includes(to) || chat.blockedBy.includes(to)) {
+      io.to(to_user?.socket_id).emit("new_message", {
+        conversation_id,
+        message: lastMessage,
+      });
+    } else {
+      io.to(to_user?.socket_id).emit("new_message", {
+        user_info: {
+          id: from_user._id,
+          firstName: from_user.firstName,
+          lastName: from_user.lastName,
+        },
+        conversation_id,
+        message: lastMessage,
+      });
+    }
 
     io.to(from_user?.socket_id).emit("new_message", {
       conversation_id,
@@ -327,34 +387,39 @@ io.on("connection", async (socket) => {
 
   //------------------------group------------------------------------------
 
-  socket.on("start_group_conversation", async ({ title, members, user_id }) => {
-    try {
-      const new_chat = await GroupMessage.create({
-        members,
-        title,
-      });
+  socket.on(
+    "start_group_conversation",
+    async ({ title, about, members, user_id, image }) => {
+      try {
+        const new_chat = await GroupMessage.create({
+          members,
+          title,
+          about,
+          image,
+        });
 
-      const chat = await GroupMessage.findById(new_chat._id.toString())
-        .populate({
-          path: "members",
-          select: "firstName lastName _id email status socket_id",
-        })
-        .select("title");
+        const chat = await GroupMessage.findById(new_chat._id.toString())
+          .populate({
+            path: "members",
+            select: "firstName lastName _id email status socket_id",
+          })
+          .select("title image about");
 
-      chat.members.forEach((mem) => {
-        io.to(mem.socket_id).emit("start_group_chat", chat);
-      });
-    } catch (error) {
-      console.error("Error in start_conversation:", error);
+        chat.members.forEach((mem) => {
+          io.to(mem.socket_id).emit("start_group_chat", chat);
+        });
+      } catch (error) {
+        console.error("Error in start_conversation:", error);
+      }
     }
-  });
+  );
 
   socket.on("get_group_conversations", async ({ user_id }, callback) => {
     const existing_conversations = await GroupMessage.find({
       members: { $all: [user_id] },
     }).populate(
       "members",
-      "firstName lastName avatar _id email status about sockte_id"
+      "firstName lastName avatar _id email status about phone sockte_id"
     );
 
     await callback(existing_conversations);
@@ -473,15 +538,22 @@ io.on("connection", async (socket) => {
     for (const friend of to) {
       const to_user = await User.findById(friend).select("socket_id");
 
-      io.to(to_user?.socket_id).emit("new_group_message", {
-        user_info: {
-          id: from_user._id,
-          firstName: from_user.firstName,
-          lastName: from_user.lastName,
-        },
-        conversation_id,
-        message: lastMessage,
-      });
+      if (chat.mutedBy.includes(friend) || chat.blockedBy.includes(friend)) {
+        io.to(to_user?.socket_id).emit("new_group_message", {
+          conversation_id,
+          message: lastMessage,
+        });
+      } else {
+        io.to(to_user?.socket_id).emit("new_group_message", {
+          user_info: {
+            id: from_user._id,
+            firstName: from_user.firstName,
+            lastName: from_user.lastName,
+          },
+          conversation_id,
+          message: lastMessage,
+        });
+      }
     }
     io.to(from_user?.socket_id).emit("new_group_message", {
       conversation_id,
@@ -534,6 +606,22 @@ io.on("connection", async (socket) => {
     }
   );
   //------------------------------------------------------------------
+  socket.on("changeMode", async ({ user_id, mode }) => {
+    console.log(user_id, mode);
+    try {
+      await User.findByIdAndUpdate(user_id, { mode });
+    } catch (error) {
+      console.log(error);
+    }
+  });
+  socket.on("changeMode", async ({ user_id, mode }) => {
+    try {
+      await User.findByIdAndUpdate(user_id, { mode });
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
   socket.on("block", async ({ room_id, user_id, chat_type }, callback) => {
     let conversation;
     if (chat_type === "OneToOne") {
@@ -814,13 +902,123 @@ io.on("connection", async (socket) => {
   );
   socket.on("setStatus", async ({ user_id, friends, online }) => {
     const this_user_id = socket.handshake.query["user_id"];
-    for (const friend of friends) {
-      const user = await User.findById(friend).select("socket_id");
-      io.to(user.socket_id).emit("statusChanged", {
-        to: user._id,
-        online,
-        from: this_user_id,
+
+    const userDoc = await User.findById(this_user_id).select("lastOnline");
+
+    if (userDoc) {
+      const { lastOnline } = userDoc;
+
+      for (const friend of friends) {
+        if (!friend) continue;
+
+        const friendDoc = await User.findById(friend).select("socket_id");
+
+        if (friendDoc) {
+          io.to(friendDoc.socket_id).emit("statusChanged", {
+            to: friendDoc._id,
+            online,
+            from: this_user_id,
+            lastOnline,
+          });
+        }
+      }
+    }
+  });
+
+  socket.on(
+    "editUser",
+    async (
+      { user_id, firstName, lastName, phone, about, avatar },
+      callback
+    ) => {
+      try {
+        await User.findByIdAndUpdate(user_id, {
+          firstName,
+          lastName,
+          phone,
+          about,
+          avatar,
+        });
+        callback({ success: true, message: "User updated successfully" });
+      } catch (error) {
+        callback({ success: false, message: "Error updating user" });
+      }
+    }
+  );
+
+  socket.on("removeUser", async ({ user_id }, callback) => {
+    try {
+      const deletedUser = await User.findByIdAndDelete(user_id);
+
+      if (deletedUser) {
+        const { friends } = deletedUser;
+
+        await User.updateMany(
+          { _id: { $in: friends } },
+          { $pull: { friends: user_id } }
+        );
+
+        callback({
+          severity: "success",
+          message: "User deleted successfully.",
+        });
+      } else {
+        // User not found
+        callback({ severity: "error", message: "User not found." });
+      }
+    } catch (error) {
+      // Handle errors
+      console.error(error);
+      callback({ severity: "error", message: "Error deleting user." });
+    }
+  });
+  socket.on("removeFriend", async ({ to, from }, callback) => {
+    try {
+      const fromUser = await User.findById(from);
+
+      if (fromUser) {
+        if (!fromUser.friends.includes(to)) {
+          return callback({
+            severity: "info",
+            message: "User already removed.",
+          });
+        }
+
+        fromUser.friends.pull(to);
+        await fromUser.save();
+      } else {
+        return callback({
+          severity: "error",
+          message: "User not found.",
+        });
+      }
+
+      const toUser = await User.findById(to);
+      if (toUser) {
+        toUser.friends.pull(from);
+        await toUser.save();
+      } else {
+        return callback({
+          severity: "error",
+          message: "User not found.",
+        });
+      }
+
+      callback({
+        severity: "success",
+        message: "Friend removed successfully.",
       });
+    } catch (error) {
+      console.error(error);
+      callback({ severity: "error", message: "Error removing friend." });
+    }
+  });
+  socket.on("editEmail", async ({ user_id, newEmail }, callback) => {
+    try {
+      await User.findByIdAndUpdate(user_id, { email: newEmail });
+      callback({ severity: "success", message: "Email updated successfully." });
+    } catch (error) {
+      callback({ severity: "error", message: "Error updating email." });
     }
   });
 });

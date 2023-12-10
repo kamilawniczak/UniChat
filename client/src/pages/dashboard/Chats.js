@@ -1,16 +1,10 @@
 import { Box, Divider, IconButton, Stack, Typography } from "@mui/material";
-import { CircleDashed, MagnifyingGlass, Users } from "@phosphor-icons/react";
+import { Users } from "@phosphor-icons/react";
 import React, { useEffect, useState } from "react";
 
 import { useTheme } from "@emotion/react";
 
-import {
-  Search,
-  SearchIconWrapper,
-  StyledInputBase,
-} from "../../components/Search/index";
-
-import Friends from "../../sections/main/Friends";
+import Friends from "../../components/Friends";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -21,10 +15,12 @@ import {
   getDirectConversations,
 } from "../../redux/slices/conversation";
 import { ResetRoom } from "../../redux/slices/app";
-import ChatCategory from "../../components/ChatCategory";
+import ChatCategory from "../../components/chats/ChatCategory";
+import SearchInput from "../../components/chats/SearchInput";
 
 const Chats = () => {
   const theme = useTheme();
+
   const [openDialog, setOpenDialog] = useState(false);
 
   const user_id = window.localStorage.getItem("user_id");
@@ -34,6 +30,7 @@ const Chats = () => {
 
   useEffect(() => {
     dispatch(ClearConversation());
+    dispatch(ResetRoom());
     return () => {
       dispatch(ClearConversation());
       dispatch(ResetRoom());
@@ -54,7 +51,7 @@ const Chats = () => {
     setOpenDialog(false);
   };
 
-  const allConversations = conversations.filter(
+  const unpinnedConversations = conversations.filter(
     (e) => !e.isBlocked && !e.pinned
   );
   const pinnedConversations = conversations.filter(
@@ -76,11 +73,12 @@ const Chats = () => {
           boxShadow: "0px 0px 2px rgba(0, 0 , 0 ,0.25)",
         }}
       >
-        <Stack p={3} spacing={2} sx={{ height: "100%" }}>
+        <Stack p={3} spacing={2} sx={{ maxHeight: "100vh" }}>
           <Stack
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            height={40}
           >
             <Typography variant="h5">Chats</Typography>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -91,21 +89,13 @@ const Chats = () => {
               >
                 <Users />
               </IconButton>
-              <IconButton>
-                <CircleDashed />
-              </IconButton>
             </Stack>
           </Stack>
-          <Stack sx={{ width: "100%" }}>
-            <Stack sx={{ position: "relative" }}>
-              <Search>
-                <SearchIconWrapper>
-                  <MagnifyingGlass color="#709CE6" />
-                </SearchIconWrapper>
-                <StyledInputBase placeholder="Search..." />
-              </Search>
-            </Stack>
-          </Stack>
+
+          <SearchInput
+            conversations={conversations.filter((e) => !e.isBlocked)}
+            isGroupChat={false}
+          />
           <Stack spacing={1}>
             <Divider />
           </Stack>
@@ -131,11 +121,13 @@ const Chats = () => {
                 title="Pinned chats"
                 conversations={pinnedConversations}
                 isLoading={isLoading}
+                defaultOpen={pinnedConversations?.length > 0 ? true : false}
               />
               <ChatCategory
-                title="All chats"
-                conversations={allConversations}
+                title="Unpinned Chats"
+                conversations={unpinnedConversations}
                 isLoading={isLoading}
+                defaultOpen={true}
               />
               <ChatCategory
                 title="Blocked chats"

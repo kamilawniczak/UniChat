@@ -12,9 +12,13 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   DeleteDirectConversation,
   DeleteGroupConversation,
-  getRoomId,
 } from "../redux/slices/conversation";
-import { OpenSnackBar, ResetRoom, getChatType } from "../redux/slices/app";
+import {
+  OpenSnackBar,
+  ResetRoom,
+  getChatType,
+  getRoomId,
+} from "../redux/slices/app";
 import { getUserId } from "../redux/slices/auth";
 import { socket } from "../socket";
 
@@ -54,20 +58,16 @@ const DeleteDialog = ({ open, handleClose }) => {
                 "deleteConversation",
                 { room_id, user_id },
                 async (data) => {
-                  if (!isGroupChat) {
-                    dispatch(
-                      OpenSnackBar({
-                        severity: "success",
-                        message: data.message,
-                      })
-                    );
+                  dispatch(
+                    OpenSnackBar({
+                      severity: "success",
+                      message: data.message,
+                    })
+                  );
 
-                    dispatch(
-                      DeleteDirectConversation({ room_id: data.room_id })
-                    );
+                  dispatch(DeleteDirectConversation({ room_id: data.room_id }));
 
-                    dispatch(ResetRoom());
-                  }
+                  dispatch(ResetRoom());
                 }
               );
             } else {
@@ -75,19 +75,15 @@ const DeleteDialog = ({ open, handleClose }) => {
                 "deleteGroupConversation",
                 { room_id, user_id },
                 async (data) => {
-                  if (isGroupChat) {
-                    dispatch(
-                      OpenSnackBar({
-                        severity: "success",
-                        message: data.message,
-                      })
-                    );
-                    dispatch(
-                      DeleteGroupConversation({ room_id: data.room_id })
-                    );
+                  dispatch(
+                    OpenSnackBar({
+                      severity: "success",
+                      message: data.message,
+                    })
+                  );
+                  dispatch(DeleteGroupConversation({ room_id: data.room_id }));
 
-                    dispatch(ResetRoom());
-                  }
+                  dispatch(ResetRoom());
                 }
               );
             }

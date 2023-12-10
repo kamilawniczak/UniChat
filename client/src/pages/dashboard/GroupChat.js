@@ -1,22 +1,9 @@
-import {
-  Box,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { Box, Divider, IconButton, Stack, Typography } from "@mui/material";
+import { Plus } from "@phosphor-icons/react";
 import React, { useEffect, useState } from "react";
 
 import { useTheme } from "@emotion/react";
 
-import {
-  Search,
-  SearchIconWrapper,
-  StyledInputBase,
-} from "../../components/Search/index";
-import ChatElement from "../../components/ChatElement";
 import { socket } from "../../socket";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -27,8 +14,9 @@ import {
   getGroupConversations,
 } from "../../redux/slices/conversation";
 import { ResetRoom } from "../../redux/slices/app";
-import CreateGroup from "../../sections/main/CreateGroup";
-import ChatCategory from "../../components/ChatCategory";
+import CreateGroup from "../../components/CreateGroup";
+import ChatCategory from "../../components/chats/ChatCategory";
+import SearchInput from "../../components/chats/SearchInput";
 
 const GroupChat = () => {
   const theme = useTheme();
@@ -42,7 +30,11 @@ const GroupChat = () => {
   useEffect(() => {
     dispatch(ClearGroupConversation());
     dispatch(ResetRoom());
-  }, [conversations.length]);
+    return () => {
+      dispatch(ClearGroupConversation());
+      dispatch(ResetRoom());
+    };
+  }, [conversations.length, dispatch]);
 
   useEffect(() => {
     dispatch(IsLoading(true));
@@ -50,10 +42,6 @@ const GroupChat = () => {
       dispatch(GetGroupConversations({ conversations: data }));
       dispatch(IsLoading(false));
     });
-
-    // return () => {
-    //   dispatch(ClearConversation());
-    // };
   }, [user_id, dispatch]);
 
   const handleOpenDialog = () => {
@@ -63,7 +51,7 @@ const GroupChat = () => {
     setOpenDialog(false);
   };
 
-  const allConversations = conversations.filter(
+  const unpinnedConversations = conversations.filter(
     (e) => !e.isBlocked && !e.pinned
   );
   const pinnedConversations = conversations.filter(
@@ -75,16 +63,14 @@ const GroupChat = () => {
     <>
       <Box
         sx={{
-          overflowY: "scroll",
-
-          height: "100vh",
+          position: "relative",
+          height: "100dvh",
           width: 320,
-          backgroundColor: (theme) =>
+          backgroundColor:
             theme.palette.mode === "light"
               ? "#F8FAFF"
-              : theme.palette.background,
-
-          boxShadow: "0px 0px 2px rgba(0, 0, 0, 0.25)",
+              : theme.palette.background.default,
+          boxShadow: "0px 0px 2px rgba(0, 0 , 0 ,0.25)",
         }}
       >
         <Stack p={3} spacing={2} sx={{ maxHeight: "100vh" }}>
@@ -92,19 +78,15 @@ const GroupChat = () => {
             alignItems={"center"}
             justifyContent="space-between"
             direction="row"
+            height={40}
           >
             <Typography variant="h5">Groups</Typography>
           </Stack>
           <Stack sx={{ width: "100%" }}>
-            <Search>
-              <SearchIconWrapper>
-                <MagnifyingGlass color="#709CE6" />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Search…"
-                inputProps={{ "aria-label": "search" }}
-              />
-            </Search>
+            <SearchInput
+              conversations={conversations.filter((e) => !e.isBlocked)}
+              isGroupChat={true}
+            />
           </Stack>
           <Stack
             justifyContent={"space-between"}
@@ -145,13 +127,15 @@ const GroupChat = () => {
                 conversations={pinnedConversations}
                 isLoading={isLoading}
                 isGroupChat={true}
+                defaultOpen={pinnedConversations?.length > 0 ? true : false}
               />
-              {allConversations.length > 0}
+
               <ChatCategory
-                title="All chats"
-                conversations={allConversations}
+                title="Unpinned Chats"
+                conversations={unpinnedConversations}
                 isLoading={isLoading}
                 isGroupChat={true}
+                defaultOpen={true}
               />
               <ChatCategory
                 title="Blocked chats"

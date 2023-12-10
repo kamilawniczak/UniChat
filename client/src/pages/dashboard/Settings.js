@@ -1,7 +1,6 @@
 import React from "react";
 import { useState } from "react";
 import {
-  Avatar,
   Box,
   Divider,
   IconButton,
@@ -9,84 +8,34 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import {
-  Bell,
-  CaretLeft,
-  Image,
-  Info,
-  Key,
-  Keyboard,
-  Lock,
-  Note,
-  PencilCircle,
-} from "@phosphor-icons/react";
-import { faker } from "@faker-js/faker";
-import Shortcuts from "../../sections/settings/Shortcuts";
+import { CaretLeft, EnvelopeSimple, Trash } from "@phosphor-icons/react";
+import RemoveUser from "../../components/settingsPage/RemoveUser";
+import ChangeEmail from "../../components/settingsPage/ChangeEmail";
+import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
-  const [openTheme, setOpenTheme] = useState(false);
-  const [openShortcuts, setOpenShortcuts] = useState(false);
   const theme = useTheme();
+  const [openDeleteUserModal, setOpenDeleteUserModal] = useState(false);
+  const [openChangeEmail, setOpenChangeEmail] = useState(false);
 
-  const handleOpenTheme = () => {
-    setOpenTheme(true);
-  };
-
-  const handleOpenShortcuts = () => {
-    setOpenShortcuts(true);
-  };
-  const handleCloseShortcuts = () => {
-    setOpenShortcuts(false);
-  };
+  const navigate = useNavigate();
 
   const list = [
     {
       key: 0,
-      icon: <Bell size={20} />,
-      title: "Notifications",
-      onClick: () => {},
+      icon: <Trash size={20} />,
+      title: "Remove your accout",
+      onClick: () => {
+        setOpenDeleteUserModal(true);
+      },
     },
     {
       key: 1,
-      icon: <Lock size={20} />,
-      title: "Privacy",
-      onClick: () => {},
-    },
-    {
-      key: 2,
-      icon: <Key size={20} />,
-      title: "Security",
-      onClick: () => {},
-    },
-    {
-      key: 3,
-      icon: <PencilCircle size={20} />,
-      title: "Theme",
-      onClick: handleOpenTheme,
-    },
-    {
-      key: 4,
-      icon: <Image size={20} />,
-      title: "Chat Wallpaper",
-      onClick: () => {},
-    },
-    {
-      key: 5,
-      icon: <Note size={20} />,
-      title: "Request Account Info",
-      onClick: () => {},
-    },
-    {
-      key: 6,
-      icon: <Keyboard size={20} />,
-      title: "Keyboard Shortcuts",
-      onClick: handleOpenShortcuts,
-    },
-    {
-      key: 7,
-      icon: <Info size={20} />,
-      title: "Help",
-      onClick: () => {},
+      icon: <EnvelopeSimple size={20} />,
+      title: "Change your email",
+      onClick: () => {
+        setOpenChangeEmail(true);
+      },
     },
   ];
 
@@ -107,24 +56,12 @@ const Settings = () => {
         >
           <Stack spacing={5} p={3}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <IconButton>
+              <IconButton onClick={() => navigate("/app")}>
                 <CaretLeft size={24} color="#4B4B4B" />
               </IconButton>
               <Typography variant="h6">Settings</Typography>
             </Stack>
-            <Stack direction="row" spacing={3}>
-              <Avatar
-                sx={{ height: 56, width: 56 }}
-                src={faker.image.avatar()}
-                alt={faker.name.fullName()}
-              />
-              <Stack spacing={0.5}>
-                <Typography variant="article">
-                  {faker.name.fullName()}
-                </Typography>
-                <Typography variant="body">{faker.random.word()}</Typography>
-              </Stack>
-            </Stack>
+
             <Stack spacing={4}>
               {list.map(({ key, icon, title, onClick }) => (
                 <Stack
@@ -145,7 +82,14 @@ const Settings = () => {
         </Box>
         <Box></Box>
       </Stack>
-      <Shortcuts open={openShortcuts} handleClose={handleCloseShortcuts} />
+      <RemoveUser
+        open={openDeleteUserModal}
+        handleClose={() => setOpenDeleteUserModal(false)}
+      />
+      <ChangeEmail
+        open={openChangeEmail}
+        handleClose={() => setOpenChangeEmail(false)}
+      />
     </>
   );
 };

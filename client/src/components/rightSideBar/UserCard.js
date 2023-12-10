@@ -1,7 +1,7 @@
 import { Avatar, Stack, Typography } from "@mui/material";
 
 const UserCard = ({ user }) => {
-  const { firstName, lastName, avatar, phone, email } = user;
+  const { firstName, lastName, avatar, phone, email } = user || {};
 
   return (
     <Stack alignItems="center" direction="column" spacing={2}>

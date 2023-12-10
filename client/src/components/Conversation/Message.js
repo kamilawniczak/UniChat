@@ -1,6 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import React from "react";
-import { DocMsg, MediaMsg, TextMsg, Timeline } from "./MsgTypes";
+import { FileMsg, TextMsg, Timeline } from "./MsgTypes";
 import { useSelector } from "react-redux";
 import { getChatType, getRoomId } from "../../redux/slices/app";
 import { getGroupRoomId } from "../../redux/slices/conversation";
@@ -19,10 +19,11 @@ const showMessage = (
       switch (message.subtype) {
         case "img":
           return (
-            <MediaMsg
+            <FileMsg
               data={message}
               menu={menu}
               showAvatar={avatar}
+              small={small}
               members={members}
               room_id={room_id}
               conversationType={chat_type}
@@ -30,7 +31,7 @@ const showMessage = (
           );
         case "doc":
           return (
-            <DocMsg
+            <FileMsg
               data={message}
               menu={menu}
               showAvatar={avatar}

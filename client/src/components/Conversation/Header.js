@@ -46,15 +46,16 @@ const Header = () => {
   const selectedConversation = current_conversation?.find(
     (con) => con.id === room_id
   );
+
   const selectedUser = selectedConversation.user_info?.filter(
     (user) => user.id !== user_id
   )[0];
 
-  const { firstName, lastName, status, avatar } = selectedUser || {};
+  const { firstName, lastName, avatar } = selectedUser || {};
 
   if (chat_type === "OneToOne") {
     name = `${firstName} ${lastName}`;
-    online = status;
+    online = selectedConversation.online;
   }
   if (chat_type === "OneToMany") {
     name = selectedConversation.name;
@@ -92,10 +93,16 @@ const Header = () => {
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 variant="dot"
               >
-                <Avatar alt={avatar} src={avatar} />
+                <Avatar
+                  alt={selectedConversation.img}
+                  src={selectedConversation.img}
+                />
               </StyledBadge>
             ) : (
-              <Avatar alt={avatar} src={avatar} />
+              <Avatar
+                alt={selectedConversation.img}
+                src={selectedConversation.img}
+              />
             )}
           </Box>
           {chat_type === "OneToMany" ? (

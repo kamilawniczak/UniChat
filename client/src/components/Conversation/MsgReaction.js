@@ -7,7 +7,9 @@ const MsgReaction = ({ reactions }) => {
       (e) => e?.icon === currentValue.reaction
     );
 
-    const fullName = `${currentValue.by.firstName} ${currentValue.by.lastName} \n`;
+    const fullName = `${currentValue.by?.firstName || "Unknown"} ${
+      currentValue.by?.lastName || "user"
+    } \n`;
 
     if (reactionObject) {
       reactionObject.amount += 1;

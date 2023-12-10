@@ -13,7 +13,6 @@ import {
   ClearConversation,
   ClearGroupConversation,
 } from "./redux/slices/conversation";
-import { socket } from "./socket";
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -26,9 +25,9 @@ function App() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       dispatch(LogoutUser({ fullLogout: false }));
-      // window.localStorage.removeItem("user_id");
       dispatch(ResetRoom());
       dispatch(ClearConversation());
+      dispatch(ClearGroupConversation());
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 

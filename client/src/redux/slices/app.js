@@ -156,6 +156,7 @@ export function GetFriendRequests() {
     }
   };
 }
+
 export function SelectRoom({ room_id, isGroupChat }) {
   return (dispatch, getState) => {
     dispatch(slice.actions.closeSideBar());

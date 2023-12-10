@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import SideBar from "./SideBar";
 import { Stack } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { getIsLoggedIn } from "../../redux/slices/auth";
+import { getIsLoggedIn, getUserInfo } from "../../redux/slices/auth";
 import { useEffect } from "react";
 import { connectSocket, socket } from "../../socket";
 import { OpenSnackBar, ResetRoom } from "../../redux/slices/app";
@@ -16,6 +16,7 @@ import {
   AddUnreadMessage,
   DeleteDirectConversation,
   DeleteDirectMessage,
+  DeleteGroupConversation,
   DeleteGroupMessage,
   UpdateDirectMessage,
   UpdateGroupMessage,
@@ -25,10 +26,17 @@ import {
   getGroupRoomId,
   getRoomId,
 } from "../../redux/slices/conversation";
+import { StateProvider } from "../../contexts/ProfileContext";
+
+import useSettings from "../../hooks/useSettings";
 
 const DashboardLayout = () => {
   const isLoggedIn = useSelector(getIsLoggedIn());
   const user_id = window.localStorage.getItem("user_id");
+
+  const { setMode } = useSettings();
+  const info = useSelector(getUserInfo());
+
   const { conversations, current_conversation } = useSelector(
     getDirectConversations()
   );
@@ -40,6 +48,10 @@ const DashboardLayout = () => {
 
   const directRoomId = useSelector(getRoomId());
   const groupRoomId = useSelector(getGroupRoomId());
+
+  useEffect(() => {
+    if (info?.mode) setMode(info.mode);
+  }, []);
 
   useEffect(() => {
     if (!user_id) return;
@@ -179,9 +191,9 @@ const DashboardLayout = () => {
           );
         }
       });
-      socket.on("statusChanged", ({ to, from, online }) => {
+      socket.on("statusChanged", ({ to, from, online, lastOnline }) => {
         if (to === user_id) {
-          dispatch(UpdateOnline({ online, from }));
+          dispatch(UpdateOnline({ online, from, lastOnline }));
         }
       });
       socket.on("receiveFiles", (data) => {
@@ -226,7 +238,7 @@ const DashboardLayout = () => {
         );
       });
       socket.on("deletedGroupConversationClientSide", ({ room_id }) => {
-        dispatch(DeleteDirectConversation({ room_id }));
+        dispatch(DeleteGroupConversation({ room_id }));
         if (directRoomId === room_id || groupRoomId === room_id) {
           dispatch(ResetRoom());
           dispatch(
@@ -275,7 +287,9 @@ const DashboardLayout = () => {
   return (
     <Stack direction="row">
       <SideBar />
-      <Outlet />
+      <StateProvider>
+        <Outlet />
+      </StateProvider>
     </Stack>
   );
 };

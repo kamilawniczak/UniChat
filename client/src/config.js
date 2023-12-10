@@ -13,7 +13,9 @@ export const defaultSettings = {
   themeStretch: false,
 };
 
-export const BASE_URL = "http://localhost:8000";
+// export const BASE_URL = "http://localhost:8000";
+
+export const BASE_URL = "https://unichat-app-server.onrender.com";
 export const LENGTH_OF_OTP = 6;
 
 export const SUPABASE_KEY =

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { faker } from "@faker-js/faker";
+
 import { socket } from "../../socket";
 
 const initialState = {
@@ -33,39 +33,47 @@ const slice = createSlice({
 
         const pinned = e.pinnedBy.includes(user_id);
 
+        const fullName = this_user
+          ? `${this_user.firstName || "Unknown"} ${
+              this_user.lastName || "user"
+            }`
+          : "Unknown user";
+
         return {
           id: e._id,
-          user_id: this_user._id,
+          user_id: this_user ? this_user._id : null,
           user_info: [
             {
-              id: this_user._id,
-              avatar: this_user.avatar,
-              firstName: this_user.firstName,
-              lastName: this_user.lastName,
-              status: this_user.status,
-              email: this_user.email,
-              about: this_user.about,
+              id: this_user ? this_user._id : null,
+              avatar: this_user ? this_user.avatar : null,
+              firstName: this_user
+                ? this_user.firstName || "Unknown"
+                : "Unknown",
+              lastName: this_user ? this_user.lastName || "user" : "user",
+              status: this_user ? this_user.status : null,
+              email: this_user ? this_user.email : null,
+              about: this_user ? this_user.about : null,
+              phone: this_user ? this_user.phone || null : null,
             },
           ],
-          img: this_user.avatar,
-          name: `${this_user.firstName} ${this_user.lastName}`,
-          msg: faker.music.songName(),
-          time: "9:36",
+          img: this_user ? this_user.avatar : null,
+          name: fullName,
+          msg: null,
+          time: this_user ? this_user.lastOnline : null,
           unread: 0,
           pinned: pinned,
           isMuted: e?.mutedBy?.includes(user_id),
           isBlocked: e?.blockedBy?.includes(user_id),
 
-          online: this_user.status === "Online",
+          online: this_user ? this_user.status === "Online" : false,
           lastMessage: e.messages.length ? e.messages.at(-1)?.text : "",
         };
       });
-      state.isLoading = false;
 
+      state.isLoading = false;
       state.direct_chat.conversations = list;
 
-      //send notification to other users
-
+      // send notification to other users
       const chats = list.map((conversation) => {
         return conversation.user_id;
       });
@@ -133,9 +141,21 @@ const slice = createSlice({
         state.direct_chat.conversations.push({
           id: this_conversation._id,
           user_id: user._id,
-          img: faker.image.avatar(),
+          user_info: [
+            {
+              id: user ? user._id : null,
+              avatar: user ? user.avatar : null,
+              firstName: user ? user.firstName || "Unknown" : "Unknown",
+              lastName: user ? user.lastName || "user" : "user",
+              status: user ? user.status : null,
+              email: user ? user.email : null,
+              about: user ? user.about : null,
+              phone: user ? user.phone || null : null,
+            },
+          ],
+          img: user.avatar || null,
           name: `${user.firstName} ${user.lastName}`,
-          msg: faker.music.songName(),
+          msg: null,
           time: "9:36",
           unread: 0,
           pinned: false,
@@ -338,12 +358,13 @@ const slice = createSlice({
       // state.direct_chat.conversations = [];
     },
     //-----------------------Group Msg-------------------------------------------------
+
     getGroupConversations(state, action) {
       const user_id = window.localStorage.getItem("user_id");
 
       const list = action.payload.conversations.map((e) => {
         const restOfUsersInfo = e.members;
-        const restOfUsers = e.members
+        const restOfUserIds = e.members
           .filter((member) => member._id.toString() !== user_id)
           .map((member) => member._id);
 
@@ -351,22 +372,24 @@ const slice = createSlice({
 
         return {
           id: e._id,
-          user_id: restOfUsers,
+          user_id: restOfUserIds,
           user_info: restOfUsersInfo.map((user) => {
             return {
-              id: user._id,
-              avatar: user.avatar,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              status: user.status,
-              email: user.email,
-              about: user.about,
+              id: user?._id || null,
+              avatar: user?.avatar || null,
+              firstName: user?.firstName || "Unknown",
+              lastName: user?.lastName || "user",
+              status: user?.status || null,
+              email: user?.email || null,
+              about: user?.about || null,
+              phone: user?.phone || null,
             };
           }),
-          img: faker.image.avatar(),
-          name: e.title,
+          img: e.image || null,
+          name: e.title || "Unknown Group",
+          about: e.about || null,
           msg: "",
-          time: "9:36",
+          time: "",
           unread: 0,
           pinned: pinned,
           isMuted: e?.mutedBy?.includes(user_id),
@@ -378,8 +401,7 @@ const slice = createSlice({
 
       state.group_chat.conversations = list;
 
-      //send notification to other users
-
+      // send notification to other users
       const chats = list.map((conversation) => {
         return conversation.user_id;
       });
@@ -391,6 +413,7 @@ const slice = createSlice({
         online: true,
       });
     },
+
     updateGroupConversation(state, action) {
       const type = action.payload.conversation.type;
 
@@ -434,8 +457,14 @@ const slice = createSlice({
     },
 
     addGroupConversation(state, action) {
-      // const user_id = window.localStorage.getItem("user_id");
+      const user_id = window.localStorage.getItem("user_id");
+
       const this_conversation = action.payload;
+
+      const restOfUsersInfo = this_conversation.members;
+      const restOfUserIds = this_conversation.members
+        .filter((member) => member._id.toString() !== user_id)
+        .map((member) => member._id);
 
       if (
         !state.group_chat.conversations.some(
@@ -444,9 +473,23 @@ const slice = createSlice({
       ) {
         state.group_chat.conversations.push({
           id: this_conversation._id,
-          user_id: null,
-          img: faker.image.avatar(),
+          user_id: restOfUserIds,
+          user_info: restOfUsersInfo.map((user) => {
+            return {
+              id: user?._id || null,
+              avatar: user?.avatar || null,
+              firstName: user?.firstName || "Unknown",
+              lastName: user?.lastName || "user",
+              status: user?.status || null,
+              email: user?.email || null,
+              about: user?.about || null,
+              phone: user?.phone || null,
+            };
+          }),
+
+          img: this_conversation.image,
           name: this_conversation.title,
+          about: this_conversation.about,
           msg: "",
           time: "9:36",
           unread: 0,
@@ -634,7 +677,11 @@ const slice = createSlice({
       state.direct_chat.conversations = state.direct_chat.conversations.map(
         (con) => {
           return con.user_id === updatedConversation
-            ? { ...con, online: action.payload.online }
+            ? {
+                ...con,
+                online: action.payload.online,
+                time: action.payload.lastOnline,
+              }
             : con;
         }
       );
@@ -797,9 +844,9 @@ export function IsLoading(isLoading) {
     dispatch(slice.actions.isLoading(isLoading));
   };
 }
-export function UpdateOnline({ online, from }) {
+export function UpdateOnline({ online, from, lastOnline }) {
   return async (dispatch, getState) => {
-    dispatch(slice.actions.updateOnline({ from, online }));
+    dispatch(slice.actions.updateOnline({ from, online, lastOnline }));
   };
 }
 

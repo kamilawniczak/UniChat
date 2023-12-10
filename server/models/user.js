@@ -19,10 +19,6 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    validate: {
-      validator: (phone) => /^[0-9]{10}$/g.test(phone),
-      message: (props) => `${props.value} is not a valid phone number`,
-    },
   },
   email: {
     type: String,
@@ -51,12 +47,19 @@ const userSchema = new mongoose.Schema({
     // unselect
     type: Date,
   },
+  mode: {
+    type: String,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now(),
   },
   updatedAt: {
     // unselect
+    type: Date,
+  },
+  lastOnline: {
     type: Date,
   },
   verified: {
