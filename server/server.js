@@ -73,10 +73,18 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("friend_request", async (data, callback) => {
-    const to = await User.findById(data.to).select("socket_id");
-    const from = await User.findById(data.from).select("socket_id");
+    const to = await User.findById(data.to).select("socket_id friends");
+    const from = await User.findById(data.from).select("socket_id friends");
 
     if (!to || !from || to.socket_id === from.socket_id) {
+      return;
+    }
+
+    const areAlreadyFriends =
+      to.friends.includes(from._id) || from.friends.includes(to._id);
+
+    if (areAlreadyFriends) {
+      callback({ severity: "info", message: "Users are already friends" });
       return;
     }
 
