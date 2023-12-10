@@ -201,8 +201,7 @@ const ChatElement = ({
             <Stack spacing={0.3} sx={{ position: "relative" }}>
               <Typography
                 variant="subtitle2"
-                sx={{ whiteSpace: "nowrap" }}
-                mr={0.5}
+                sx={{ whiteSpace: "nowrap", paddingRight: 2 }}
               >
                 {checkText(name, 14)}
               </Typography>
