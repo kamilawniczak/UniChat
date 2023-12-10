@@ -199,7 +199,9 @@ const ChatElement = ({
             </Stack>
 
             <Stack spacing={0.3} sx={{ position: "relative" }}>
-              <Typography variant="subtitle2">{checkText(name, 14)}</Typography>
+              <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap" }}>
+                {checkText(name, 14)}
+              </Typography>
               {room_id === id || (
                 <Typography
                   variant="caption"
