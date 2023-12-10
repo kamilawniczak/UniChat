@@ -171,6 +171,7 @@ const Footer = () => {
   };
 
   const handleFileChange = (event) => {
+    console.log("Wow");
     const selectedFiles = Array.from(event.target.files);
 
     if (selectedFiles.length > 10) {
@@ -178,6 +179,22 @@ const Footer = () => {
         OpenSnackBar({
           severity: "warning",
           message: "Too many files :( max 10",
+        })
+      );
+      return;
+    }
+
+    const totalSize = selectedFiles.reduce((acc, file) => acc + file.size, 0);
+
+    const maxSizeInBytes = 40 * 1024 * 1024;
+
+    if (totalSize > maxSizeInBytes) {
+      dispatch(
+        OpenSnackBar({
+          severity: "warning",
+          message: `Total size exceeds 40MB, currently ${Math.round(
+            totalSize / (1024 * 1024)
+          )} MB`,
         })
       );
       return;
@@ -240,45 +257,47 @@ const Footer = () => {
               }}
             >
               <Stack>
-                {fileInput?.length > 0 &&
-                  fileInput.map((file, index) => (
-                    <Stack key={index} direction="row">
-                      <Tooltip
-                        placement="top"
-                        title={file.name}
-                        sx={{
-                          position: "relative",
-                          display: "inline-block",
-                        }}
-                      >
-                        <Avatar
-                          alt="Selected Photo"
-                          src={URL.createObjectURL(file)}
-                          sx={{ width: 52, height: 52, borderRadius: "8px" }}
-                        />
-                      </Tooltip>
-                      <Stack position="relative">
-                        <IconButton
+                <Stack direction="row" spacing={1}>
+                  {fileInput?.length > 0 &&
+                    fileInput.map((file, index) => (
+                      <Stack key={index} direction="row">
+                        <Tooltip
+                          placement="top"
+                          title={file.name}
                           sx={{
-                            zIndex: 10,
-                            position: "absolute",
-                            top: 0,
-                            right: 0,
-                            margin: 0,
-                            padding: 0.1,
-                            transform: "translate(40%, -40%)",
-                            backgroundColor:
-                              theme.palette.mode === "light"
-                                ? "#F8FAFF"
-                                : theme.palette.background.paper,
+                            position: "relative",
+                            display: "inline-block",
                           }}
-                          onClick={() => removeFile(index)}
                         >
-                          <XCircle size={20} color="#c42121" weight="light" />
-                        </IconButton>
+                          <Avatar
+                            alt="Selected Photo"
+                            src={URL.createObjectURL(file)}
+                            sx={{ width: 52, height: 52, borderRadius: "8px" }}
+                          />
+                        </Tooltip>
+                        <Stack position="relative">
+                          <IconButton
+                            sx={{
+                              zIndex: 10,
+                              position: "absolute",
+                              top: 0,
+                              right: 0,
+                              margin: 0,
+                              padding: 0.1,
+                              transform: "translate(40%, -40%)",
+                              backgroundColor:
+                                theme.palette.mode === "light"
+                                  ? "#F8FAFF"
+                                  : theme.palette.background.paper,
+                            }}
+                            onClick={() => removeFile(index)}
+                          >
+                            <XCircle size={20} color="#c42121" weight="light" />
+                          </IconButton>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  ))}
+                    ))}
+                </Stack>
                 {replyMsgId && (
                   <MessageAnnotation
                     type={replyType}

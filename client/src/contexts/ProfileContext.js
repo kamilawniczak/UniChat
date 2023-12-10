@@ -4,6 +4,7 @@ import { UpdateUserInfo, getUserId } from "../redux/slices/auth";
 import { socket } from "../socket";
 import { OpenSnackBar } from "../redux/slices/app";
 import { supabase } from "../utils/supabase";
+import { isImage } from "../utils/checkFile";
 
 const initialState = {
   handleFormSubmit: () => {},
@@ -57,6 +58,41 @@ const StateProvider = ({ children }) => {
   };
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
+    const fileSize = file.size;
+    const maxSizeInBytes = 20 * 1024 * 1024;
+
+    if (!file?.name) {
+      dispatch(
+        OpenSnackBar({
+          severity: "error",
+          message: "Some error accrued",
+        })
+      );
+      return;
+    }
+
+    if (!isImage(file.name)) {
+      dispatch(
+        OpenSnackBar({
+          severity: "warning",
+          message: "Only images allowed",
+        })
+      );
+      return;
+    }
+    if (fileSize > maxSizeInBytes) {
+      dispatch(
+        OpenSnackBar({
+          severity: "warning",
+          message: `Total size exceeds 20MB, currently ${Math.round(
+            fileSize / (1024 * 1024)
+          )} MB`,
+        })
+      );
+      return;
+    }
+
     setImage(file);
   };
 
