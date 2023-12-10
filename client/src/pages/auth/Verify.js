@@ -2,15 +2,19 @@ import { Link, Stack, Typography } from "@mui/material";
 import React from "react";
 
 import { CaretLeft } from "@phosphor-icons/react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 
 import { useSelector } from "react-redux";
 import { getIsLoadingAuth } from "../../redux/slices/auth";
 import VerifyForm from "../../components/auth/VerifyForm";
 
 const Verify = () => {
-  const { email } = useParams();
   const isLoading = useSelector(getIsLoadingAuth());
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const email = queryParams.get("email");
+
   return (
     <>
       <Stack spacing={2} sx={{ mb: 5, position: "relative" }}>
