@@ -121,6 +121,7 @@ const DashboardLayout = () => {
           incoming: message.to === user_id,
           outgoing: message.from === user_id,
           file: message.file,
+          created_at: message.created_at,
         };
         if (message.replyData) {
           fittedMessage.replyData = {
@@ -131,7 +132,7 @@ const DashboardLayout = () => {
             type: message.replyData?.type,
           };
         }
-
+        // console.log(fittedMessage);
         if (current_conversation?.room_id === data?.conversation_id) {
           dispatch(AddDirectMessage(fittedMessage));
         }
@@ -159,6 +160,7 @@ const DashboardLayout = () => {
           from: message.from,
           subtype: message?.subtype,
           message: message.text,
+          created_at: message.created_at,
           reaction: [],
           incoming: message.to?.some((user) => user.toString() === user_id),
           outgoing: message.from === user_id,

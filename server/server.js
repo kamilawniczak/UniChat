@@ -307,14 +307,16 @@ io.on("connection", async (socket) => {
           from: lastMessage.from,
           type: lastMessage.type,
           subtype: lastMessage.subtype,
-          created_at: lastMessage.created_at,
+
           text: lastMessage.text,
+          created_at: lastMessage.created_at,
           reply: lastMessage.repy,
           replyType: lastMessage.replyType,
           file: lastMessage.file,
           starredBy: lastMessage.starredBy,
           reaction: lastMessage.reaction,
           _id: lastMessage._id,
+
           replyData: {
             text: replayedMsg.text,
             file: replayedMsg.file,

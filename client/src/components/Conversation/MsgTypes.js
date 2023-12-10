@@ -17,12 +17,7 @@ import { useSelector } from "react-redux";
 import { getUserInfo } from "../../redux/slices/auth";
 import MsgReaction from "./MsgReaction";
 import EmojiPickerModal from "./EmojiPickerModal";
-import {
-  ReplyDocMsg,
-  ReplyFile,
-  ReplyImgMsg,
-  ReplyTextMsg,
-} from "./ReplyMsgTypes";
+import { ReplyFile, ReplyTextMsg } from "./ReplyMsgTypes";
 import {
   getFileNameFromUrl,
   handleDownload,
@@ -48,13 +43,6 @@ const replayMsg = (
       );
     case "img":
       return (
-        // <ReplyImgMsg
-        //   created_at={created_at}
-        //   file={replyFile}
-        //   from={replyFrom}
-        //   text={replyText}
-        //   type={replyType}
-        // />
         <ReplyFile
           created_at={created_at}
           file={replyFile}
@@ -72,13 +60,6 @@ const replayMsg = (
           text={replyText}
           type={replyType}
         />
-        // <ReplyDocMsg
-        //   created_at={created_at}
-        //   file={replyFile}
-        //   from={replyFrom}
-        //   text={replyText}
-        //   type={replyType}
-        // />
       );
     default:
       return null;
@@ -117,109 +98,124 @@ export const TextMsg = ({
   };
 
   return (
-    <Stack
-      direction="row"
-      justifyContent={data.incoming ? "start" : "end"}
-      width={"100%"}
-    >
-      {data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top" mr={1}>
-          <Avatar
-            alt="Avatar"
-            src={otherAvatar}
-            sx={{ width: 32, height: 32, marginLeft: 1 }}
-          />
-        </Stack>
-      )}
-      <Stack>
-        <Stack
-          alignItems={data.incoming ? "flex-start" : "flex-end"}
-          sx={{ position: "relative" }}
-          direction={"column"}
-          width={"100%"}
-        >
-          {data.replyData &&
-            replayMsg(data.replyData.type, {
-              created_at,
-              replyFile,
-              replyText,
-              replyFrom,
-              replyType,
-            })}
-          <Box
-            p={1.5}
-            sx={{
-              width: "100%",
-              backgroundColor: data.incoming
-                ? theme.palette.background.default
-                : theme.palette.primary.main,
-              borderRadius: 1.5,
-              border:
-                !showAvatar &&
-                data.incoming &&
-                "1px solid " + theme.palette.grey[600],
-            }}
+    <Stack alignItems={"center"}>
+      <Typography
+        variant={"subtitle1"}
+        sx={{ fontSize: 11 }}
+        // sx={{ position: "absolute", top: -20, zIndex: 20 }}
+      >
+        {new Intl.DateTimeFormat("en-US", {
+          day: "numeric",
+          month: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+        }).format(new Date(data.created_at))}
+      </Typography>
+      <Stack
+        direction="row"
+        justifyContent={data.incoming ? "start" : "end"}
+        width={"100%"}
+      >
+        {data.incoming && showAvatar && (
+          <Stack alignItems="center" justifyContent="top" mr={1}>
+            <Avatar
+              alt="Avatar"
+              src={otherAvatar}
+              sx={{ width: 32, height: 32, marginLeft: 1 }}
+            />
+          </Stack>
+        )}
+        <Stack sx={{ position: "relative" }}>
+          <Stack
+            alignItems={data.incoming ? "flex-start" : "flex-end"}
+            sx={{ position: "relative" }}
+            direction={"column"}
+            width={"100%"}
           >
-            <Typography
-              variant="body2"
-              color={data.incoming ? theme.palette.text : "#fff"}
-              width={"100%"}
-              sx={{ overflowWrap: "anywhere" }}
+            {data.replyData &&
+              replayMsg(data.replyData.type, {
+                created_at,
+                replyFile,
+                replyText,
+                replyFrom,
+                replyType,
+              })}
+            <Box
+              p={1.5}
+              sx={{
+                width: "100%",
+                backgroundColor: data.incoming
+                  ? theme.palette.background.default
+                  : theme.palette.primary.main,
+                borderRadius: 1.5,
+                border:
+                  !showAvatar &&
+                  data.incoming &&
+                  "1px solid " + theme.palette.grey[600],
+              }}
             >
-              {link ? (
-                <>
-                  {textBeforeLink}{" "}
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: data.incoming ? theme.palette.text : "#fff",
-                    }}
-                  >
-                    {link}
-                  </a>{" "}
-                  {textAfterLink}
-                </>
-              ) : (
-                data.message
-              )}
-            </Typography>
-          </Box>
+              <Typography
+                variant="body2"
+                color={data.incoming ? theme.palette.text : "#fff"}
+                width={"100%"}
+                sx={{ overflowWrap: "anywhere" }}
+              >
+                {link ? (
+                  <>
+                    {textBeforeLink}{" "}
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        color: data.incoming ? theme.palette.text : "#fff",
+                      }}
+                    >
+                      {link}
+                    </a>{" "}
+                    {textAfterLink}
+                  </>
+                ) : (
+                  data.message
+                )}
+              </Typography>
+            </Box>
+          </Stack>
+          <MsgReaction reactions={data.reaction} />
         </Stack>
-        <MsgReaction reactions={data.reaction} />
+
+        <EmojiPickerModal
+          open={openModal}
+          onClose={handleClosePicker}
+          onEmojiSelect={(emoji) => {
+            handleMsgReaction({
+              emoji: emoji.native,
+              id: data.id,
+              room_id,
+              chatType: conversationType,
+            });
+            handleClosePicker();
+          }}
+        />
+
+        {menu && (
+          <Stack>
+            <MessageOptions
+              msgId={data.id}
+              incoming={data.incoming}
+              openPicker={handleOpenPicker}
+              data={data}
+            />
+          </Stack>
+        )}
+
+        {!data.incoming && showAvatar && (
+          <Stack alignItems="center" justifyContent="top">
+            <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
+          </Stack>
+        )}
       </Stack>
-
-      <EmojiPickerModal
-        open={openModal}
-        onClose={handleClosePicker}
-        onEmojiSelect={(emoji) => {
-          handleMsgReaction({
-            emoji: emoji.native,
-            id: data.id,
-            room_id,
-            chatType: conversationType,
-          });
-          handleClosePicker();
-        }}
-      />
-
-      {menu && (
-        <Stack>
-          <MessageOptions
-            msgId={data.id}
-            incoming={data.incoming}
-            openPicker={handleOpenPicker}
-            data={data}
-          />
-        </Stack>
-      )}
-
-      {!data.incoming && showAvatar && (
-        <Stack alignItems="center" justifyContent="top">
-          <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
-        </Stack>
-      )}
     </Stack>
   );
 };
@@ -275,190 +271,213 @@ export const FileMsg = ({
 
   return (
     <>
-      <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
-        {data.incoming && showAvatar && (
-          <Stack alignItems="center" justifyContent="top" mr={1}>
-            <Avatar
-              alt="Avatar"
-              src={otherAvatar}
-              sx={{ width: 32, height: 32, marginLeft: 1 }}
-            />
-          </Stack>
+      <Stack>
+        {data.created_at && (
+          <Typography
+            variant={"subtitle1"}
+            sx={{ fontSize: 11 }}
+            alignSelf="center"
+          >
+            {new Intl.DateTimeFormat("en-US", {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+            }).format(new Date(data.created_at))}
+          </Typography>
         )}
-        <Stack>
-          <Stack alignItems={data.incoming ? "start" : "end"}>
-            {data.replyData &&
-              replayMsg(data.replyData.type, {
-                created_at,
-                replyFile,
-                replyText,
-                replyFrom,
-                replyType,
-              })}
-            <Box
-              p={1.5}
-              sx={{
-                backgroundColor: data.incoming
-                  ? theme.palette.background.default
-                  : theme.palette.primary.main,
-                borderRadius: 1.5,
-                border:
-                  !showAvatar &&
-                  data.incoming &&
-                  "1px solid " + theme.palette.grey[600],
-              }}
-            >
-              <Stack spacing={2} alignItems="end">
-                {isLoading ? (
-                  <CircularProgress size={104} color="inherit" />
-                ) : (
-                  <>
-                    {data.file.map((element, index) =>
-                      isImage(element) ? (
-                        <div
-                          key={index}
-                          style={{
-                            position: "relative",
-                            display: "flex",
-                            justifyContent: "center",
-                          }}
-                          onMouseEnter={() => handleMouseEnter(index)}
-                          onMouseLeave={handleMouseLeave}
-                        >
-                          <img
-                            src={element}
-                            alt={getFileNameFromUrl(element) || element}
+        <Stack direction="row" justifyContent={data.incoming ? "start" : "end"}>
+          {data.incoming && showAvatar && (
+            <Stack alignItems="center" justifyContent="top" mr={1}>
+              <Avatar
+                alt="Avatar"
+                src={otherAvatar}
+                sx={{ width: 32, height: 32, marginLeft: 1 }}
+              />
+            </Stack>
+          )}
+          <Stack>
+            <Stack alignItems={data.incoming ? "start" : "end"}>
+              {data.replyData &&
+                replayMsg(data.replyData.type, {
+                  created_at,
+                  replyFile,
+                  replyText,
+                  replyFrom,
+                  replyType,
+                })}
+              <Box
+                p={1.5}
+                sx={{
+                  backgroundColor: data.incoming
+                    ? theme.palette.background.default
+                    : theme.palette.primary.main,
+                  borderRadius: 1.5,
+                  border:
+                    !showAvatar &&
+                    data.incoming &&
+                    "1px solid " + theme.palette.grey[600],
+                }}
+              >
+                <Stack spacing={2} alignItems="end">
+                  {isLoading ? (
+                    <CircularProgress size={104} color="inherit" />
+                  ) : (
+                    <>
+                      {data.file.map((element, index) =>
+                        isImage(element) ? (
+                          <div
+                            key={index}
                             style={{
-                              maxHeight: "210px",
-                              borderRadius: "10px",
+                              position: "relative",
+                              display: "flex",
+                              justifyContent: "center",
                             }}
-                            onClick={() => handleImageClick(element)}
-                          />
-                          {hoveredIndex === index && (
-                            <IconButton
+                            onMouseEnter={() => handleMouseEnter(index)}
+                            onMouseLeave={handleMouseLeave}
+                          >
+                            <img
+                              src={element}
+                              alt={getFileNameFromUrl(element) || element}
                               style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
-                                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                                maxHeight: "210px",
+                                borderRadius: "10px",
                               }}
-                              onClick={(event) =>
-                                handleDownloadClick(event, element)
-                              }
-                            >
-                              <Download />
-                            </IconButton>
-                          )}
-                        </div>
-                      ) : (
-                        <Stack
-                          p={2}
-                          direction="row"
-                          spacing={3}
-                          alignItems="center"
-                          justifyContent={"end"}
-                          sx={{
-                            width: "min-content",
-                            backgroundColor: theme.palette.background.paper,
-                            borderRadius: 1,
-                          }}
-                          key={index}
-                        >
-                          {small || (
-                            <Avatar
-                              src={`https://pro.alchemdigital.com/api/extension-image/${element
-                                .split(".")
-                                .pop()
-                                .toLowerCase()}`}
-                              alt={element}
-                              variant="square"
+                              onClick={() => handleImageClick(element)}
                             />
-                          )}
-
-                          <Typography
-                            variant="caption"
+                            {hoveredIndex === index && (
+                              <IconButton
+                                style={{
+                                  position: "absolute",
+                                  top: "50%",
+                                  left: "50%",
+                                  transform: "translate(-50%, -50%)",
+                                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                                }}
+                                onClick={(event) =>
+                                  handleDownloadClick(event, element)
+                                }
+                              >
+                                <Download />
+                              </IconButton>
+                            )}
+                          </div>
+                        ) : (
+                          <Stack
+                            p={2}
+                            direction="row"
+                            spacing={3}
+                            alignItems="center"
+                            justifyContent={"end"}
                             sx={{
-                              color: theme.palette.text,
-                              ...(small
-                                ? {
-                                    maxWidth: "150px",
-                                    overflow: "hidden",
-                                    whiteSpace: "nowrap",
-                                    textOverflow: "ellipsis",
-                                  }
-                                : {}),
+                              width: "min-content",
+                              backgroundColor: theme.palette.background.paper,
+                              borderRadius: 1,
+                            }}
+                            key={index}
+                          >
+                            {small || (
+                              <Avatar
+                                src={`https://pro.alchemdigital.com/api/extension-image/${element
+                                  .split(".")
+                                  .pop()
+                                  .toLowerCase()}`}
+                                alt={element}
+                                variant="square"
+                              />
+                            )}
+
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: theme.palette.text,
+                                ...(small
+                                  ? {
+                                      maxWidth: "150px",
+                                      overflow: "hidden",
+                                      whiteSpace: "nowrap",
+                                      textOverflow: "ellipsis",
+                                    }
+                                  : {}),
+                              }}
+                            >
+                              {getFileNameFromUrl(element)}
+                            </Typography>
+                            <IconButton onClick={() => handleDownload(element)}>
+                              <DownloadSimple />
+                            </IconButton>
+                          </Stack>
+                        )
+                      )}
+                    </>
+                  )}
+                  {data.message && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: data.incoming ? theme.palette.text : "#FFF",
+                      }}
+                    >
+                      {link ? (
+                        <>
+                          {textBeforeLink}{" "}
+                          <a
+                            href={link}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              color: "#fff",
                             }}
                           >
-                            {getFileNameFromUrl(element)}
-                          </Typography>
-                          <IconButton onClick={() => handleDownload(element)}>
-                            <DownloadSimple />
-                          </IconButton>
-                        </Stack>
-                      )
-                    )}
-                  </>
-                )}
-                {data.message && (
-                  <Typography
-                    variant="body2"
-                    sx={{ color: data.incoming ? theme.palette.text : "#FFF" }}
-                  >
-                    {link ? (
-                      <>
-                        {textBeforeLink}{" "}
-                        <a
-                          href={link}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            color: "#fff",
-                          }}
-                        >
-                          {link}
-                        </a>{" "}
-                        {textAfterLink}
-                      </>
-                    ) : (
-                      data.message
-                    )}
-                  </Typography>
-                )}
-              </Stack>
-            </Box>
+                            {link}
+                          </a>{" "}
+                          {textAfterLink}
+                        </>
+                      ) : (
+                        data.message
+                      )}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
+            <MsgReaction reactions={data.reaction} />
           </Stack>
-          <MsgReaction reactions={data.reaction} />
-        </Stack>
 
-        <EmojiPickerModal
-          open={openModal}
-          onClose={handleClosePicker}
-          onEmojiSelect={(emoji) => {
-            handleMsgReaction({
-              emoji: emoji.native,
-              id: data.id,
-              room_id,
-              chatType: conversationType,
-            });
-            handleClosePicker();
-          }}
-        />
-        {menu && (
-          <MessageOptions
-            msgId={data.id}
-            incoming={data.incoming}
-            openPicker={handleOpenPicker}
-            type={"img"}
-            data={data}
+          <EmojiPickerModal
+            open={openModal}
+            onClose={handleClosePicker}
+            onEmojiSelect={(emoji) => {
+              handleMsgReaction({
+                emoji: emoji.native,
+                id: data.id,
+                room_id,
+                chatType: conversationType,
+              });
+              handleClosePicker();
+            }}
           />
-        )}
+          {menu && (
+            <MessageOptions
+              msgId={data.id}
+              incoming={data.incoming}
+              openPicker={handleOpenPicker}
+              type={"img"}
+              data={data}
+            />
+          )}
 
-        {!data.incoming && showAvatar && (
-          <Stack alignItems="center" justifyContent="top">
-            <Avatar alt="Avatar" src={avatar} sx={{ width: 32, height: 32 }} />
-          </Stack>
-        )}
+          {!data.incoming && showAvatar && (
+            <Stack alignItems="center" justifyContent="top">
+              <Avatar
+                alt="Avatar"
+                src={avatar}
+                sx={{ width: 32, height: 32 }}
+              />
+            </Stack>
+          )}
+        </Stack>
       </Stack>
 
       <ImgModal img={selectedImage} onClose={() => setSelectedImage(null)} />
