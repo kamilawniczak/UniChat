@@ -1,74 +1,64 @@
-https://uni-chat-1dqr.vercel.app/auth/login
+# UniChat Messaging App
 
-# UniChat
+## Overview
+UniChat is a real-time messaging application built with the MERN stack (MongoDB, Express.js, React, Node.js). It allows users to communicate in real-time and provides a user-friendly experience.
 
-UniChat is a messaging application built with the MERN stack (MongoDB, Express.js, React, Node.js) that allows real-time communication.
+## Key Features
+- **Real-time Communication**: Using `socket.io-client` and `socket.io`, UniChat provides real-time communication between users.
+- **User Authentication**: With `jsonwebtoken` and `bcrypt`, the app ensures secure user authentication.
+- **File Upload**: `express-fileupload` and `multer` are used for handling file uploads.
+- **Data Validation**: `express-validator` and `yup` are used for server-side and client-side data validation respectively.
+- **State Management**: `redux` and `@reduxjs/toolkit` are used for state management.
+- **Routing**: `react-router-dom` is used for efficient page navigation and routing throughout the application.
 
-## Table of Contents
-- [UniChat Client](#unichat-client)
-- [UniChat Server](#unichat-server)
+## Technologies Used
+Here are the main technologies and libraries used in this project:
 
----
+### Client
+- `react` and `react-dom` for building the user interface
+- `socket.io-client` for real-time communication
+- `redux` and `@reduxjs/toolkit` for state management
+- `react-router-dom` for routing and navigation
+- `@emotion/react` and `@emotion/styled` for styling components
+- `@dhaiwat10/react-link-preview` for link preview functionality
+- `@emoji-mart/data` and `@emoji-mart/react` for emoji support
+- `@iconify/react` for icons
+- `@mui/material` and `@mui/lab` for Material-UI components
+- `axios` for making HTTP requests
+- `react-hook-form` and `@hookform/resolvers` for form handling and validation
+- `yup` for schema validation
 
-## UniChat Client
+### Server
+- `express` for server setup
+- `socket.io` for real-time communication
+- `jsonwebtoken` for token-based authentication
+- `bcrypt` for password hashing
+- `mongodb` and `mongoose` for database management
+- `express-fileupload` and `multer` for handling file uploads
+- `express-validator` for server-side data validation
+- `cors` for enabling CORS
+- `dotenv` for environment variable management
+- `morgan` for logging HTTP requests
+- `helmet` for securing Express apps
 
-UniChat Client is the front-end part of the UniChat application.
+## Installation
+To install the necessary dependencies for the client and server, follow these steps:
 
-### Features
+1. Navigate to the client directory:
+```bash
+cd client
 
-- Real-time messaging
-- Link preview using [@dhaiwat10/react-link-preview](https://www.npmjs.com/package/@dhaiwat10/react-link-preview)
-- Emoji support with [@emoji-mart/react](https://www.npmjs.com/package/@emoji-mart/react)
-- Form handling with [@hookform/resolvers](https://www.npmjs.com/package/@hookform/resolvers)
-- ...
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/UniChat.git
-   cd UniChat/client
-
-
-## UniChat Server
-
-UniChat Server is the back-end part of the UniChat application.
-
-### Features
-
-- Real-time messaging
-- Email integration using @sendgrid/mail
-- Password encryption with bcrypt
-- File upload with express-fileupload and multer
-- ...
-
-### Installation
-
-
-Install dependencies:
-Copy code
+Install the client dependencies:
 npm install
 
-Set up environment variables:
+Navigate to the server directory:
+cd ../server
 
-Create a .env file with necessary configurations.
-###Usage
-Start the server:
+Install the server dependencies:
+npm install
 
-Copy code
-npm start
-### Dependencies
-MongoDB
-Node.js
-Express.js
-...
-For a full list of dependencies, refer to package.json.
+```
 
-### Scripts
-- npm run start: Start the server using nodemon.
-- npm run test: Run tests.
-Contributing
-- Feel free to contribute by opening issues or pull requests.
-
-### License
-This project is licensed under the ISC License.
+![uk l](https://github.com/kamilawniczak/SkyCast/assets/113726168/74bfaab2-2b99-451b-9b6c-53ec68735559)
+![uk r](https://github.com/kamilawniczak/SkyCast/assets/113726168/010bf25c-3717-4274-9333-eb4201b139f2)
+![uh 1](https://github.com/kamilawniczak/SkyCast/assets/113726168/da3ca54f-8552-44d9-b31b-bc29c1e7ace0)
